@@ -260,12 +260,16 @@ function stepStory(l) {
   return { render(body, foot, done) {
     // Illustration, sobald vorhanden; sonst Fallback aufs Emoji. Fehlt die Datei,
     // entfernt onerror das Bild sauber (Story-Text bleibt).
-    const media = l.image
-      ? `<img class="storyimg" src="${esc(l.image)}" alt="" loading="lazy" onerror="this.remove()"/>`
-      : `<div class="storyicon">${l.icon}</div>`;
+    // Mit Bild: freigestellte Illustration schwebt über der Text-Karte (kein Rahmen).
+    // Ohne Bild: Emoji in der Karte (Fallback).
+    const illus = l.image
+      ? `<img class="story-illus" src="${esc(l.image)}" alt="" loading="lazy" onerror="this.remove()"/>`
+      : '';
+    const iconInCard = l.image ? '' : `<div class="storyicon">${l.icon}</div>`;
     body.innerHTML = `<div class="step-label">Kapitel ${l.order}</div>
       <div class="step-title">${esc(l.title)}</div>
-      <div class="storycard">${media}<p>${l.story}</p></div>`;
+      ${illus}
+      <div class="storycard">${iconInCard}<p>${l.story}</p></div>`;
     foot.innerHTML = `<button class="btn" id="n">Los geht’s</button>`;
     foot.querySelector('#n').onclick = done;
   }};
