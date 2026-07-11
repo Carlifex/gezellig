@@ -56,8 +56,13 @@ function renderToday() {
 
   app.innerHTML = `
     <div class="stack">
-      <div><div class="eyebrow">Gezellig · Deine Reise</div>
-        <div class="greet">${greet}<small>${goalMetToday() ? 'Tagesziel geschafft — schön! 🎉' : 'Bereit für heute?'}</small></div></div>
+      <div class="hero">
+        <img src="illustrations/hero.webp" alt="Carlsson, Eni und die Katzen an einer Utrechter Gracht" loading="eager" onerror="this.closest('.hero').classList.add('noimg')"/>
+        <div class="hero-cap">
+          <div class="eyebrow">Gezellig · Deine Reise</div>
+          <div class="greet">${greet}<small>${goalMetToday() ? 'Tagesziel geschafft — schön! 🎉' : 'Bereit für heute?'}</small></div>
+        </div>
+      </div>
 
       <div class="card levelcard">
         <div class="levelrow">
