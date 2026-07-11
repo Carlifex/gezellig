@@ -12,7 +12,7 @@
 // werden automatisch nachgezogen. (CACHE-Version nur bumpen, wenn man alle
 // Caches hart leeren will.)
 
-const CACHE = 'gezellig-v7';
+const CACHE = 'gezellig-v8';
 const ASSETS = [
   './',
   './index.html',
@@ -26,6 +26,7 @@ const ASSETS = [
   './manifest.webmanifest',
   './icons/icon.svg',
   './icons/maskable.svg',
+  './illustrations/hero.webp',
 ];
 
 self.addEventListener('install', (e) => {
