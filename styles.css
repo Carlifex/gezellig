@@ -1,28 +1,39 @@
-:root{
-  --orange:#f26a1b; --orange-soft:#fbe4d3; --orange-ink:#b64d0b;
-  --blue:#1d4e89; --blue-2:#2f6fb0;
-  --ink:#12202f; --muted:#5a6b7b; --line:#e2e8f0;
-  --card:#ffffff; --bg:#f6f8fb; --bg-2:#eef2f7;
-  --good:#2e8b57; --bad:#c0392b; --warn:#c77b12;
+/* ===== Neon-Nacht Design-System (an den Illustrations-Stil angelehnt) ===== */
+:root{ /* Default = Light (hell, aber vibrierend) */
+  --orange:#ef5f14; --orange-soft:#ffe6d6; --orange-ink:#b8480c;
+  --blue:#e7ecff; --blue-2:#0a84d8;
+  --cyan:#0aa5c0; --magenta:#d61f8f; --violet:#7c3aed; --neon:#5fb800;
+  --ink:#141a2b; --muted:#5a6382; --line:#e4e7f2;
+  --card:#ffffff; --bg:#f5f6fc; --bg-2:#eceef7;
+  --good:#1e9e5a; --bad:#d63b46; --warn:#c77b12;
+  --grad:linear-gradient(90deg,#0aa5c0,#d61f8f,#ef5f14);
+  --glow:0 6px 20px rgba(214,31,143,.22);
   --shadow:0 1px 2px rgba(16,30,54,.06), 0 8px 26px rgba(16,30,54,.08);
   --radius:16px;
 }
 @media (prefers-color-scheme:dark){
-  :root{
-    --orange:#ff8a3d; --orange-soft:#3a2417; --orange-ink:#ffab77;
-    --blue:#6fa8dc; --blue-2:#4d8bc9;
-    --ink:#e9eef5; --muted:#9aa8b8; --line:#233246;
-    --card:#131f2e; --bg:#0e1622; --bg-2:#0a121c;
-    --good:#3fa76a; --bad:#e06a5c; --warn:#e0a44a;
-    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.4);
+  :root{ /* Dark = die Bühne: tiefes Blau-Schwarz + Neon */
+    --orange:#ff7a2f; --orange-soft:#2a1a10; --orange-ink:#ffb27a;
+    --blue:#1b2145; --blue-2:#3ad2ff;
+    --cyan:#22d3ee; --magenta:#ff3ea5; --violet:#b57bff; --neon:#b6ff3a;
+    --ink:#eef1fa; --muted:#98a2c4; --line:#242a44;
+    --card:#141829; --bg:#0a0b14; --bg-2:#06070e;
+    --good:#3fd48a; --bad:#ff5c72; --warn:#ffca4a;
+    --grad:linear-gradient(90deg,#22d3ee,#ff3ea5,#ff7a2f);
+    --glow:0 0 26px rgba(255,62,165,.45);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px rgba(0,0,0,.55);
   }
 }
-:root[data-theme="light"]{ --orange:#f26a1b; --orange-soft:#fbe4d3; --orange-ink:#b64d0b; --blue:#1d4e89; --blue-2:#2f6fb0; --ink:#12202f; --muted:#5a6b7b; --line:#e2e8f0; --card:#fff; --bg:#f6f8fb; --bg-2:#eef2f7; --good:#2e8b57; --bad:#c0392b; --warn:#c77b12; --shadow:0 1px 2px rgba(16,30,54,.06), 0 8px 26px rgba(16,30,54,.08); }
-:root[data-theme="dark"]{ --orange:#ff8a3d; --orange-soft:#3a2417; --orange-ink:#ffab77; --blue:#6fa8dc; --blue-2:#4d8bc9; --ink:#e9eef5; --muted:#9aa8b8; --line:#233246; --card:#131f2e; --bg:#0e1622; --bg-2:#0a121c; --good:#3fa76a; --bad:#e06a5c; --warn:#e0a44a; --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.4); }
+:root[data-theme="light"]{ --orange:#ef5f14; --orange-soft:#ffe6d6; --orange-ink:#b8480c; --blue:#e7ecff; --blue-2:#0a84d8; --cyan:#0aa5c0; --magenta:#d61f8f; --violet:#7c3aed; --neon:#5fb800; --ink:#141a2b; --muted:#5a6382; --line:#e4e7f2; --card:#fff; --bg:#f5f6fc; --bg-2:#eceef7; --good:#1e9e5a; --bad:#d63b46; --warn:#c77b12; --grad:linear-gradient(90deg,#0aa5c0,#d61f8f,#ef5f14); --glow:0 6px 20px rgba(214,31,143,.22); --shadow:0 1px 2px rgba(16,30,54,.06), 0 8px 26px rgba(16,30,54,.08); }
+:root[data-theme="dark"]{ --orange:#ff7a2f; --orange-soft:#2a1a10; --orange-ink:#ffb27a; --blue:#1b2145; --blue-2:#3ad2ff; --cyan:#22d3ee; --magenta:#ff3ea5; --violet:#b57bff; --neon:#b6ff3a; --ink:#eef1fa; --muted:#98a2c4; --line:#242a44; --card:#141829; --bg:#0a0b14; --bg-2:#06070e; --good:#3fd48a; --bad:#ff5c72; --warn:#ffca4a; --grad:linear-gradient(90deg,#22d3ee,#ff3ea5,#ff7a2f); --glow:0 0 26px rgba(255,62,165,.45); --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px rgba(0,0,0,.55); }
 
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);
+  background-image:
+    radial-gradient(60% 42% at 12% -2%, color-mix(in srgb,var(--cyan) 16%,transparent), transparent 70%),
+    radial-gradient(55% 40% at 102% 102%, color-mix(in srgb,var(--magenta) 16%,transparent), transparent 70%);
+  background-attachment:fixed;
   font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
   line-height:1.55;-webkit-font-smoothing:antialiased;
   padding-bottom:calc(72px + env(safe-area-inset-bottom));min-height:100vh}
@@ -33,7 +44,7 @@ button{font-family:inherit}
 #app{max-width:560px;margin:0 auto;padding:clamp(16px,4vw,26px) clamp(14px,4vw,22px) 8px}
 
 /* ---- shared bits ---- */
-.eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--orange)}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--magenta)}
 .muted{color:var(--muted)}
 .center{text-align:center}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
@@ -44,7 +55,8 @@ button{font-family:inherit}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;
   border:none;border-radius:12px;padding:14px 16px;font-size:15.5px;font-weight:750;cursor:pointer;
-  background:var(--orange);color:#fff;box-shadow:0 4px 14px rgba(242,106,27,.28);transition:transform .06s}
+  background:linear-gradient(135deg,var(--magenta),var(--orange));color:#fff;
+  box-shadow:0 6px 22px rgba(255,62,165,.32), 0 2px 10px rgba(255,122,47,.28);transition:transform .06s}
 .btn:active{transform:translateY(1px)}
 .btn.secondary{background:transparent;color:var(--blue-2);border:1.6px solid var(--blue-2);box-shadow:none}
 .btn.ghost{background:var(--bg-2);color:var(--ink);box-shadow:none}
@@ -63,7 +75,8 @@ button{font-family:inherit}
 .greet small{display:block;color:var(--muted);font-weight:600;font-size:14px;margin-top:2px}
 .goal{display:flex;align-items:center;gap:16px}
 .dial{width:74px;height:74px;flex:0 0 74px;border-radius:50%;display:grid;place-items:center;
-  background:conic-gradient(var(--orange) var(--p,0%), var(--line) 0);transition:background .4s}
+  background:conic-gradient(var(--magenta) var(--p,0%), var(--line) 0);transition:background .4s;
+  box-shadow:0 0 18px rgba(255,62,165,.35)}
 .dial i{width:58px;height:58px;border-radius:50%;background:var(--card);display:grid;place-items:center;
   font-style:normal;font-weight:800;font-size:15px}
 .goal .txt b{font-size:15px}.goal .txt div{font-size:13px;color:var(--muted)}
@@ -198,7 +211,7 @@ button{font-family:inherit}
 .levelrow .lvnum b{font-size:15px;color:var(--orange)}
 .levelrow .lvnum span{display:block;font-size:11px;color:var(--muted);font-weight:700}
 .xpbar{height:9px;border-radius:5px;background:var(--bg-2);overflow:hidden}
-.xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--orange),#ffb020);transition:width .5s}
+.xpbar i{display:block;height:100%;background:var(--grad);transition:width .5s;box-shadow:0 0 12px rgba(255,62,165,.5)}
 .xpmeta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-weight:600}
 
 /* ---- v2: daily tasks ---- */
