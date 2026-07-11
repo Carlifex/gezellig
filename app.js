@@ -260,7 +260,7 @@ function stepStory(l) {
   return { render(body, foot, done) {
     // Illustration, sobald vorhanden; sonst Fallback aufs Emoji. Fehlt die Datei,
     // entfernt onerror das Bild sauber (Story-Text bleibt).
-    // Mit Bild: freigestellte Illustration schwebt über der Text-Karte (kein Rahmen).
+    // Mit Bild: gerahmte Szenen-Illustration über der Text-Karte.
     // Ohne Bild: Emoji in der Karte (Fallback).
     const illus = l.image
       ? `<img class="story-illus" src="${esc(l.image)}" alt="" loading="lazy" onerror="this.remove()"/>`
