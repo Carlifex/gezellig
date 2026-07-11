@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Gezellig — Nederlands leren</title>
+  <meta name="description" content="Niederländisch lernen für deutsche Muttersprachler — Phase-0-Prototyp." />
+  <meta name="theme-color" content="#1d4e89" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" aria-live="polite"></div>
+  <nav id="tabbar" hidden>
+    <button data-tab="today" class="on"><span>🏠</span>Vandaag</button>
+    <button data-tab="vocab"><span>🔁</span>Woorden</button>
+    <button data-tab="chat"><span>💬</span>Praten</button>
+    <button data-tab="profile"><span>📈</span>Profiel</button>
+  </nav>
+
+  <script type="module" src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

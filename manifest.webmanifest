@@ -1,0 +1,16 @@
+{
+  "name": "Gezellig — Nederlands leren",
+  "short_name": "Gezellig",
+  "description": "Niederländisch lernen für deutsche Muttersprachler.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e1622",
+  "theme_color": "#1d4e89",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icons/maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
