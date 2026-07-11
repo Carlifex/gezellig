@@ -48,7 +48,7 @@ button{font-family:inherit}
 .muted{color:var(--muted)}
 .center{text-align:center}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  padding:18px;box-shadow:var(--shadow)}
+  padding:18px;box-shadow:var(--shadow), inset 0 1px 0 color-mix(in srgb,var(--ink) 9%,transparent)}
 .stack{display:flex;flex-direction:column;gap:14px}
 .row{display:flex;gap:10px;align-items:center}
 .spacer{flex:1}
@@ -198,6 +198,10 @@ button{font-family:inherit}
 #tabbar button.on span{filter:none;opacity:1}
 
 .section-title{font-size:22px;font-weight:800;margin-bottom:4px}
+.section-title::after{content:"";display:block;width:52px;height:5px;margin-top:9px;border-radius:3px;
+  background:var(--grad);box-shadow:0 0 10px rgba(255,62,165,.4)}
+.greet::after{content:"";display:block;width:44px;height:5px;margin-top:10px;border-radius:3px;
+  background:var(--grad);box-shadow:0 0 10px rgba(255,62,165,.4)}
 .section-sub{color:var(--muted);font-size:14px;margin-bottom:16px}
 
 /* ---- v2: level bar ---- */
@@ -283,3 +287,13 @@ button{font-family:inherit}
 .lchip{font-size:11px;font-weight:800;color:var(--orange);letter-spacing:.04em}
 
 @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
+
+/* ===== Atmosphäre: Körnung + Grachtenhaus-Skyline (typisch NL) ===== */
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  opacity:.055;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+body::before{content:"";position:fixed;left:0;right:0;
+  bottom:calc(72px + env(safe-area-inset-bottom));height:54px;z-index:-1;pointer-events:none;
+  opacity:.17;background:var(--violet);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20234%2070%27%20preserveAspectRatio%3D%27xMidYMax%20meet%27%3E%0A%3Cg%20fill%3D%27%23fff%27%3E%0A%3Crect%20x%3D%272%27%20y%3D%2730%27%20width%3D%2744%27%20height%3D%2740%27%2F%3E%0A%3Cpolygon%20points%3D%272%2C30%202%2C24%2012%2C24%2012%2C18%2020%2C18%2020%2C12%2028%2C12%2028%2C18%2036%2C18%2036%2C24%2046%2C24%2046%2C30%27%2F%3E%0A%3Crect%20x%3D%2750%27%20y%3D%2726%27%20width%3D%2742%27%20height%3D%2744%27%2F%3E%0A%3Cpath%20d%3D%27M50%2026%20C50%208%2092%208%2092%2026%20Z%27%2F%3E%0A%3Crect%20x%3D%2796%27%20y%3D%2734%27%20width%3D%2738%27%20height%3D%2736%27%2F%3E%0A%3Cpolygon%20points%3D%2796%2C34%20115%2C14%20134%2C34%27%2F%3E%0A%3Crect%20x%3D%27138%27%20y%3D%2728%27%20width%3D%2744%27%20height%3D%2742%27%2F%3E%0A%3Cpolygon%20points%3D%27138%2C28%20138%2C22%20150%2C22%20150%2C10%20170%2C10%20170%2C22%20182%2C22%20182%2C28%27%2F%3E%0A%3Crect%20x%3D%27186%27%20y%3D%2732%27%20width%3D%2744%27%20height%3D%2738%27%2F%3E%0A%3Cpolygon%20points%3D%27186%2C32%20208%2C15%20230%2C32%27%2F%3E%0A%3C%2Fg%3E%3C%2Fsvg%3E") repeat-x bottom / auto 100%;
+          mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20234%2070%27%20preserveAspectRatio%3D%27xMidYMax%20meet%27%3E%0A%3Cg%20fill%3D%27%23fff%27%3E%0A%3Crect%20x%3D%272%27%20y%3D%2730%27%20width%3D%2744%27%20height%3D%2740%27%2F%3E%0A%3Cpolygon%20points%3D%272%2C30%202%2C24%2012%2C24%2012%2C18%2020%2C18%2020%2C12%2028%2C12%2028%2C18%2036%2C18%2036%2C24%2046%2C24%2046%2C30%27%2F%3E%0A%3Crect%20x%3D%2750%27%20y%3D%2726%27%20width%3D%2742%27%20height%3D%2744%27%2F%3E%0A%3Cpath%20d%3D%27M50%2026%20C50%208%2092%208%2092%2026%20Z%27%2F%3E%0A%3Crect%20x%3D%2796%27%20y%3D%2734%27%20width%3D%2738%27%20height%3D%2736%27%2F%3E%0A%3Cpolygon%20points%3D%2796%2C34%20115%2C14%20134%2C34%27%2F%3E%0A%3Crect%20x%3D%27138%27%20y%3D%2728%27%20width%3D%2744%27%20height%3D%2742%27%2F%3E%0A%3Cpolygon%20points%3D%27138%2C28%20138%2C22%20150%2C22%20150%2C10%20170%2C10%20170%2C22%20182%2C22%20182%2C28%27%2F%3E%0A%3Crect%20x%3D%27186%27%20y%3D%2732%27%20width%3D%2744%27%20height%3D%2738%27%2F%3E%0A%3Cpolygon%20points%3D%27186%2C32%20208%2C15%20230%2C32%27%2F%3E%0A%3C%2Fg%3E%3C%2Fsvg%3E") repeat-x bottom / auto 100%}
