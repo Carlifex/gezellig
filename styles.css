@@ -253,4 +253,19 @@ button{font-family:inherit}
 .hl{color:var(--orange);font-weight:800}
 .hl2{color:var(--blue-2);font-weight:800}
 
+/* ---- story & culture cards ---- */
+.storycard{background:linear-gradient(150deg,color-mix(in srgb,var(--orange) 12%,var(--card)),var(--card));
+  border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:12px}
+.storycard .storyicon{font-size:34px;line-height:1}
+.storycard p{font-size:15.5px;line-height:1.6}
+.storycard i{color:var(--orange-ink);font-style:italic}
+.culturecard{background:linear-gradient(150deg,color-mix(in srgb,var(--blue) 12%,var(--card)),var(--card));
+  border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:12px}
+.culturecard .cultureicon{font-size:30px;line-height:1}
+.culturecard p{font-size:14.5px;line-height:1.6}
+.culturecard b{color:var(--blue-2)}
+.lchip{font-size:11px;font-weight:800;color:var(--orange);letter-spacing:.04em}
+
 @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }

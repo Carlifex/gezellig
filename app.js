@@ -100,12 +100,12 @@ function taskRow(t) {
 function renderLessons() {
   app.innerHTML = `
     <div class="section-title">Lektionen</div>
-    <div class="section-sub">Wähle selbst, welche Alltagssituation du übst.</div>
+    <div class="section-sub">Carlssons Geschichte in 9 Kapiteln — wähle selbst, wo du weitermachst.</div>
     <div class="lgrid">${LESSONS.map(l => {
       const st = lessonStatus(l.id);
       return `<button class="lesson" data-id="${l.id}">
         <span class="lem">${l.icon}</span>
-        <span class="lmain"><b>${esc(l.title)}</b><span>${esc(GRAMMAR[l.grammar].title)}</span></span>
+        <span class="lmain"><span class="lchip">KAPITEL ${l.order}</span><b>${esc(l.title)}</b><span>${esc(l.situation)}</span></span>
         <span class="lst ${st}">${st}</span></button>`;
     }).join('')}</div>`;
   app.querySelectorAll('.lesson').forEach(b => b.onclick = () => openLesson(b.dataset.id));
@@ -239,8 +239,11 @@ function closeFlow() { if (flowEl) { flowEl.remove(); flowEl = null; } tabbar.st
 /* ---------- LEKTION (erst blocken) ---------- */
 function openLesson(lessonId) {
   const l = LESSONS.find(x => x.id === lessonId);
-  const steps = [ stepGrammar(l.grammar, 'Grammatik'), stepLearn(l.vocab), stepQuiz(l.vocab), stepDialogue(l), stepGrammarCheck(l.grammar) ];
+  const steps = [];
+  if (l.story) steps.push(stepStory(l));
+  steps.push(stepGrammar(l.grammar, 'Grammatik'), stepLearn(l.vocab), stepQuiz(l.vocab), stepDialogue(l), stepGrammarCheck(l.grammar));
   if (l.speak && l.speak.length) steps.push(stepSpeak(l.speak));
+  if (l.culture) steps.push(stepCulture(l));
   openFlow(steps, (fe) => {
     const res = completeLesson(lessonId);
     flushUnlocks();
@@ -253,6 +256,25 @@ function openLesson(lessonId) {
   });
 }
 
+function stepStory(l) {
+  return { render(body, foot, done) {
+    body.innerHTML = `<div class="step-label">Kapitel ${l.order}</div>
+      <div class="step-title">${esc(l.title)}</div>
+      <div class="storycard"><div class="storyicon">${l.icon}</div><p>${l.story}</p></div>`;
+    foot.innerHTML = `<button class="btn" id="n">Los geht’s</button>`;
+    foot.querySelector('#n').onclick = done;
+  }};
+}
+function stepCulture(l) {
+  const c = l.culture;
+  return { render(body, foot, done) {
+    body.innerHTML = `<div class="step-label">Kultur &amp; Geschichte</div>
+      <div class="step-title">${esc(c.title)}</div>
+      <div class="culturecard"><div class="cultureicon">🇳🇱</div><p>${c.text}</p></div>`;
+    foot.innerHTML = `<button class="btn" id="n">Weiter</button>`;
+    foot.querySelector('#n').onclick = done;
+  }};
+}
 function stepGrammar(gid, label) {
   const g = GRAMMAR[gid];
   return { render(body, foot, done) {
