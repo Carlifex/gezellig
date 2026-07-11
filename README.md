@@ -1,19 +1,33 @@
-# Gezellig 🇳🇱 — Niederländisch lernen (Phase-0-Prototyp)
+# Gezellig 🇳🇱 — Niederländisch lernen (v2)
 
 Eine persönliche, installierbare Web-App (PWA), die einen **deutschen Muttersprachler**
-vom Nullpunkt Richtung alltagstaugliches Niederländisch bringt. Dieser Prototyp deckt
-**einen kompletten Lern-Tag** am Thema **„Bij de bakker"** (Beim Bäcker) ab.
+vom Nullpunkt Richtung alltagstaugliches Niederländisch bringt. Die **Oberfläche ist Deutsch**;
+nur der zu lernende Stoff ist Niederländisch (immer mit Übersetzung).
 
-## Was drin ist (Phase 0)
+Der Aufbau folgt einem evidenzbasierten Plan (siehe `docs/plan-v2.html`, hergeleitet aus einer
+verifizierten Recherche zu Gamification, Spaced Repetition und Lektionsstruktur).
 
-- **Geführte Tagessession** mit 6 Schritten: Vokabeln aufwärmen → Dialog hören → Aussprache → Hören → Grammatik → freies Gespräch.
-- **Spaced-Repetition-Vokabeltrainer** (SM-2-artig), Fortschritt lokal gespeichert (`localStorage`).
-- **Text-to-Speech** (nl-NL) für alle Sätze; **Spracherkennung** für das Aussprache-Training, mit **Tipp-Fallback**, falls das Gerät (z. B. iPhone/Safari) keine Browser-Spracherkennung kann.
-- **KI-Gesprächspartner**: läuft **sofort ohne Backend** über einen eingebauten Offline-Bäcker (Mock). Für echte, freie Gespräche lässt sich ein Claude-Proxy eintragen (siehe unten).
-- **Streak**, Tagesziel und einfache Statistiken.
+## Was drin ist (v2)
+
+- **Lektionen** = je eine Alltagssituation mit ~7 neuen Wörtern und **einem Grammatik-Fokus**
+  (nach fundamentaler Priorität für Deutschsprachige). Prinzip „erst blocken, dann mischen":
+  neue Wörter geblockt in der Lektion lernen, danach interleaved per SRS wiederholen.
+- **Freie Lektions-Landkarte** — du wählst selbst, was du übst (Autonomie = stärkster Motivations-Hebel).
+- **Progression**: XP, reise-thematische **Level**, **Meilensteine** über mehrere Kategorien,
+  **Tagesaufgaben** und ein **gentle Streak** (zielbasiert, mit Streak-Schutz gegen „Streak-Angst").
+- **FSRS-inspirierter** Spaced-Repetition-Scheduler (Stabilität/Schwierigkeit, Ziel-Retention 88 %).
+- **Text-to-Speech** (nl-NL) überall; **Spracherkennung** fürs Aussprache-Training mit **Tipp-Fallback**
+  (z. B. iPhone/Safari).
+- **KI-Gesprächspartner**: läuft sofort ohne Backend (Offline-Bäcker/Mock); für echte Gespräche einen
+  Claude-Proxy eintragen (siehe unten).
 - **Offline-fähig & installierbar** (Manifest + Service Worker).
 
 Alles ist **Vanilla JavaScript (ES-Module)** — kein Build-Schritt, keine Dependencies.
+
+### Neue Lektion hinzufügen
+
+Erweitern heißt: nur Daten in `data.js` ergänzen. Es gibt dafür eine Claude-Skill `/neue-lektion`
+(`.claude/skills/neue-lektion/`), die durchs Format führt.
 
 ## Lokal starten
 
@@ -68,13 +82,16 @@ export default async function handler(req) {
 
 | Datei | Zweck |
 |------|------|
-| `index.html` | App-Shell, Tab-Leiste, SW-Registrierung |
+| `index.html` | App-Shell, Tab-Leiste (5 Tabs), SW-Registrierung |
 | `styles.css` | Design-System (Delfts Blau / Oranje), Hell & Dunkel |
-| `app.js` | State, vier Tabs, geführte Tagessession |
-| `data.js` | Lerninhalte (Vokabeln, Dialog, Übungen) — hier erweitern |
-| `srs.js` | Spaced-Repetition-Scheduler |
+| `app.js` | Deutsche UI: Start, Lektionen, Wörter, Reden, Profil; Lektions- & Review-Flow |
+| `data.js` | Lerninhalte (Lektionen, Grammatik, Level, Meilensteine) — **hier erweitern** |
+| `srs.js` | FSRS-inspirierter Spaced-Repetition-Scheduler |
+| `progress.js` | XP, Level, Meilensteine, Tagesaufgaben, Streak (local-first) |
 | `speech.js` | TTS + Spracherkennung + Satz-Vergleich |
 | `tutor.js` | KI-Chat (Mock + Proxy-Anbindung) |
+| `docs/plan-v2.html` | Evidenzbasierter Konzept- & Umsetzungsplan |
+| `.claude/skills/neue-lektion/` | Claude-Skill zum Hinzufügen neuer Lektionen |
 | `sw.js` / `manifest.webmanifest` | Offline & Installierbarkeit |
 
 ## Nächste Schritte (Richtung MVP)
