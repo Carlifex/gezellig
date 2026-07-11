@@ -261,16 +261,18 @@ function openLesson(lessonId) {
   });
 }
 
+// Gerahmtes Szenen-Bild für einen Step. Fehlt die Datei, entfernt onerror es sauber.
+// Quelle: neues l.images[slot], sonst (nur für 'story') das alte l.image.
+function sceneImg(l, slot) {
+  const src = (l.images && l.images[slot]) || (slot === 'story' ? l.image : null);
+  return src ? `<img class="story-illus" src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()"/>` : '';
+}
+
 function stepStory(l) {
   return { render(body, foot, done) {
-    // Illustration, sobald vorhanden; sonst Fallback aufs Emoji. Fehlt die Datei,
-    // entfernt onerror das Bild sauber (Story-Text bleibt).
-    // Mit Bild: gerahmte Szenen-Illustration über der Text-Karte.
-    // Ohne Bild: Emoji in der Karte (Fallback).
-    const illus = l.image
-      ? `<img class="story-illus" src="${esc(l.image)}" alt="" loading="lazy" onerror="this.remove()"/>`
-      : '';
-    const iconInCard = l.image ? '' : `<div class="storyicon">${l.icon}</div>`;
+    // Panel 1: Establishing-Illustration über der Text-Karte; ohne Bild Emoji-Fallback.
+    const illus = sceneImg(l, 'story');
+    const iconInCard = illus ? '' : `<div class="storyicon">${l.icon}</div>`;
     body.innerHTML = `<div class="step-label">Kapitel ${l.order}</div>
       <div class="step-title">${esc(l.title)}</div>
       ${illus}
@@ -282,9 +284,11 @@ function stepStory(l) {
 function stepCulture(l) {
   const c = l.culture;
   return { render(body, foot, done) {
+    const illus = sceneImg(l, 'culture');
     body.innerHTML = `<div class="step-label">Kultur &amp; Geschichte</div>
       <div class="step-title">${esc(c.title)}</div>
-      <div class="culturecard"><div class="cultureicon">🇳🇱</div><p>${c.text}</p></div>`;
+      ${illus}
+      <div class="culturecard">${illus ? '' : '<div class="cultureicon">🇳🇱</div>'}<p>${c.text}</p></div>`;
     foot.innerHTML = `<button class="btn" id="n">Weiter</button>`;
     foot.querySelector('#n').onclick = done;
   }};
@@ -350,6 +354,7 @@ function stepQuiz(vocab) {
 function stepDialogue(l) {
   return { render(body, foot, done) {
     body.innerHTML = `<div class="step-label">Im Gespräch</div><div class="step-title">${esc(l.title)}</div>
+      ${sceneImg(l, 'dialogue')}
       <p class="muted" style="font-size:13px">Tipp auf eine Zeile, um sie zu hören.</p>
       ${l.dialogue.map((d, k) => `<div class="line" data-i="${k}"><div class="who">${esc(d.who)}</div>
         <div><div class="nl">${esc(d.nl)}</div><div class="de">${esc(d.de)}</div></div><div class="spk">🔊</div></div>`).join('')}`;
