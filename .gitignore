@@ -1,3 +1,14 @@
 node_modules/
 *.log
 .DS_Store
+
+# Secrets — niemals committen
+.env
+*.env
+tools/.env
+**/*api*key*
+**/*secret*
+
+# Generierte Roh-Bilder (nur finale .webp werden committet)
+tools/anchors/
+illustrations/*.png
