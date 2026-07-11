@@ -258,6 +258,7 @@ button{font-family:inherit}
   border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow);
   display:flex;flex-direction:column;gap:12px}
 .storycard .storyicon{font-size:34px;line-height:1}
+.storycard .storyimg{width:100%;max-height:360px;object-fit:cover;border-radius:12px;display:block}
 .storycard p{font-size:15.5px;line-height:1.6}
 .storycard i{color:var(--orange-ink);font-style:italic}
 .culturecard{background:linear-gradient(150deg,color-mix(in srgb,var(--blue) 12%,var(--card)),var(--card));

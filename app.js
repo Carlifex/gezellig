@@ -258,9 +258,14 @@ function openLesson(lessonId) {
 
 function stepStory(l) {
   return { render(body, foot, done) {
+    // Illustration, sobald vorhanden; sonst Fallback aufs Emoji. Fehlt die Datei,
+    // entfernt onerror das Bild sauber (Story-Text bleibt).
+    const media = l.image
+      ? `<img class="storyimg" src="${esc(l.image)}" alt="" loading="lazy" onerror="this.remove()"/>`
+      : `<div class="storyicon">${l.icon}</div>`;
     body.innerHTML = `<div class="step-label">Kapitel ${l.order}</div>
       <div class="step-title">${esc(l.title)}</div>
-      <div class="storycard"><div class="storyicon">${l.icon}</div><p>${l.story}</p></div>`;
+      <div class="storycard">${media}<p>${l.story}</p></div>`;
     foot.innerHTML = `<button class="btn" id="n">Los geht’s</button>`;
     foot.querySelector('#n').onclick = done;
   }};
