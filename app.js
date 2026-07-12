@@ -137,6 +137,12 @@ const ICON_IDS = new Set([
   'ade_watis','ade_begin','ade_conference','ade_hoofdstad','ade_tiesto','ade_armin','ade_dutchhouse','ade_venues','ade_top100','ade_vandaag',
   // feest
   'feest_gabber','feest_thunderdome','feest_housewelle','feest_mysteryland','feest_sensation','feest_qdance','feest_awakenings','feest_freeparty','feest_koningsdag','feest_borrel',
+  // natuurkunde — Huygens
+  'nat_hu1','nat_hu2','nat_hu3','nat_hu4','nat_hu5','nat_hu6','nat_hu7','nat_hu8','nat_hu9','nat_hu10',
+  // natuurkunde — Lorentz
+  'nat_lo1','nat_lo2','nat_lo3','nat_lo4','nat_lo5','nat_lo6','nat_lo7','nat_lo8','nat_lo9','nat_lo10',
+  // natuurkunde — Zeeman
+  'nat_ze1','nat_ze2','nat_ze3','nat_ze4','nat_ze5','nat_ze6','nat_ze7','nat_ze8','nat_ze9','nat_ze10',
 ]);
 const lemIcon = (l) => ICON_IDS.has(l.id)
   ? `<img class="lem-img" src="illustrations/icons/${l.id}.webp" alt="" loading="lazy">`
