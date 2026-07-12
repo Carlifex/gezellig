@@ -56,7 +56,6 @@ function renderToday() {
 
   app.innerHTML = `
     <div class="stack">
-      <div class="eyebrow" style="margin-bottom:8px">Gezellig · ${greet}${goalMetToday() ? ' · Tagesziel geschafft 🎉' : ''} — wische durch die Kapitel</div>
       <div class="herocar" id="herocar">${TRACKS.map(heroSlide).join('')}</div>
       <div class="cardots" id="cardots">${TRACKS.map((_, i) => `<button class="dot ${i === 0 ? 'on' : ''}" data-i="${i}" aria-label="Cover ${i + 1}"></button>`).join('')}</div>
 
