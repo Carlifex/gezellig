@@ -6,10 +6,11 @@
 //  - "mock": Ohne URL läuft ein eingebauter, regelbasierter Bäcker, damit der
 //            Prototyp SOFORT ohne Backend/Key funktioniert.
 
-import { CHAT } from './data.js';
+import { CHAT_SCENARIOS } from './data.js';
 import { normalize } from './speech.js';
 
 const LS_KEY = 'gezellig.aiEndpoint';
+const BAKKER = CHAT_SCENARIOS[0];
 
 export function getEndpoint() { return localStorage.getItem(LS_KEY) || ''; }
 export function setEndpoint(url) {
@@ -18,14 +19,15 @@ export function setEndpoint(url) {
 export function isMock() { return !getEndpoint(); }
 
 // history: [{role:'user'|'assistant', content}], gibt {text, hint} zurück.
-export async function reply(history) {
+// scenario: das aktive CHAT-Szenario (Default: Bäcker).
+export async function reply(history, scenario = BAKKER) {
   const url = getEndpoint();
-  if (!url) return mockReply(history);
+  if (!url) return mockReply(history, scenario);
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system: CHAT.system, messages: history }),
+      body: JSON.stringify({ system: scenario.system, messages: history }),
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
@@ -38,8 +40,29 @@ export async function reply(history) {
   }
 }
 
+function mockReply(history, scenario) {
+  if (!scenario || scenario.id === 'bakker') return mockBakker(history);
+  return mockGeneric(history, scenario);
+}
+
+// Generischer Offline-Mock für die übrigen Szenarien: nudged bei Deutsch,
+// sonst rotieren die szenario-eigenen mockReplies (hält das Gespräch am Laufen).
+function mockGeneric(history, scenario) {
+  const last = [...history].reverse().find(m => m.role === 'user');
+  const t = normalize(last ? last.content : '');
+  const turns = history.filter(m => m.role === 'user').length;
+  if (!t) return line('Zeg het maar!', 'Sag ruhig!');
+  if (/\b(ich|moechte|mochte|bitte|danke|ist|und|der|die|das|kaufen|wo)\b/.test(t)) {
+    return line(`Probeer het in het Nederlands! Bijvoorbeeld: „${scenario.example}"`,
+                `Versuch es auf Niederländisch! Zum Beispiel: „${scenario.example}"`);
+  }
+  const reps = scenario.mockReplies || [];
+  if (reps.length) return reps[Math.min(turns - 1, reps.length - 1)];
+  return line('Leuk! Vertel eens meer.', 'Schön! Erzähl mal mehr.');
+}
+
 // --- Mock-Bäcker: einfache, aber lebendige Regel-Logik für das Bakker-Szenario ---
-function mockReply(history) {
+function mockBakker(history) {
   const last = [...history].reverse().find(m => m.role === 'user');
   const t = normalize(last ? last.content : '');
   const turns = history.filter(m => m.role === 'user').length;

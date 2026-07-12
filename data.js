@@ -790,18 +790,79 @@ export const LESSONS = [
 // ---------------------------------------------------------------------------
 //  KI-GESPRÄCH — Szenario „Bäcker" (Mock + optionaler Claude-Proxy)
 // ---------------------------------------------------------------------------
-export const CHAT = {
-  scenarioDe: 'Du stehst beim Bäcker. Begrüße ihn und bestell etwas auf Niederländisch.',
-  opener: 'Goedemorgen! Welkom bij de bakker. Wat mag het zijn?',
-  openerHint: 'Guten Morgen! Willkommen beim Bäcker. Was darf es sein?',
-  system: [
-    'Je bent een vriendelijke Nederlandse bakker in een taalapp.',
-    'De gebruiker is een Duitstalige beginner (niveau A1) die Nederlands leert.',
-    'Praat langzaam en in korte, simpele zinnen. Blijf in de rol van de bakker.',
-    'Corrigeer grote fouten vriendelijk en kort. Als de gebruiker vastloopt,',
-    'geef een korte hint in het Duits tussen haakjes. Houd antwoorden kort (1-2 zinnen).',
-  ].join(' '),
-};
+const CHAT_COMMON =
+  'De gebruiker is een Duitstalige beginner (niveau A1-A2) die Nederlands leert. ' +
+  'Praat langzaam en in korte, simpele zinnen. Blijf in je rol. ' +
+  'Corrigeer grote fouten kort en vriendelijk. Als de gebruiker vastloopt, ' +
+  'geef een korte hint in het Duits tussen haakjes. Houd antwoorden kort (1-2 zinnen).';
+
+// Mehrere Gesprächs-Szenarien. „mockReplies" speisen den Offline-Übungsmodus,
+// wenn kein KI-Proxy hinterlegt ist.
+export const CHAT_SCENARIOS = [
+  {
+    id: 'bakker', icon: '🥖', label: 'Beim Bäcker',
+    scenarioDe: 'Du stehst beim Bäcker. Begrüße ihn und bestell etwas auf Niederländisch.',
+    opener: 'Goedemorgen! Welkom bij de bakker. Wat mag het zijn?',
+    openerHint: 'Guten Morgen! Willkommen beim Bäcker. Was darf es sein?',
+    example: 'Ik wil graag een brood.',
+    system: 'Je bent een vriendelijke Nederlandse bakker in een taalapp. ' + CHAT_COMMON,
+  },
+  {
+    id: 'kassa', icon: '🛒', label: 'An der Kasse',
+    scenarioDe: 'Du stehst an der Kasse im Albert Heijn. Bezahle deinen Einkauf.',
+    opener: 'Hallo! Dat is samen twaalf euro. Wilt u pinnen?',
+    openerHint: 'Hallo! Das macht zusammen 12 Euro. Möchten Sie mit Karte zahlen?',
+    example: 'Ja, ik wil pinnen.',
+    system: 'Je bent een vriendelijke kassamedewerker bij de supermarkt Albert Heijn. Je vraagt of de klant wil pinnen en of hij een tasje wil. ' + CHAT_COMMON,
+    mockReplies: [
+      { text: 'Prima. Wilt u een tasje erbij?', hint: 'Prima. Möchten Sie eine Tüte dazu?' },
+      { text: 'Alstublieft, hier is uw bon. Fijne dag!', hint: 'Bitte, hier ist Ihr Kassenbon. Schönen Tag!' },
+      { text: 'Geen probleem. Tot ziens!', hint: 'Kein Problem. Auf Wiedersehen!' },
+    ],
+  },
+  {
+    id: 'weg', icon: '🚲', label: 'Nach dem Weg fragen',
+    scenarioDe: 'Du hast dich verfahren. Frag einen Passanten nach dem Weg (z. B. zum Plattenladen).',
+    opener: 'Hoi! Je ziet er zoekend uit. Kan ik je helpen?',
+    openerHint: 'Hi! Du siehst suchend aus. Kann ich dir helfen?',
+    example: 'Waar is de platenzaak?',
+    system: 'Je bent een vriendelijke voorbijganger in Utrecht die de weg wijst. Gebruik woorden als links, rechts, rechtdoor en de gracht. ' + CHAT_COMMON,
+    mockReplies: [
+      { text: 'Ga hier rechtdoor en dan de tweede straat links.', hint: 'Geh hier geradeaus und dann die zweite Straße links.' },
+      { text: 'Het is vlakbij, langs de gracht.', hint: 'Es ist ganz nah, an der Gracht entlang.' },
+      { text: 'Graag gedaan! Succes en een fijne dag.', hint: 'Gern geschehen! Viel Erfolg und einen schönen Tag.' },
+    ],
+  },
+  {
+    id: 'terras', icon: '🍺', label: 'Auf dem Terras',
+    scenarioDe: 'Du sitzt auf einem Terras an der Gracht. Bestell etwas zu trinken.',
+    opener: 'Hoi, welkom! Wat wil je drinken?',
+    openerHint: 'Hi, willkommen! Was möchtest du trinken?',
+    example: 'Een biertje, graag.',
+    system: 'Je bent een vriendelijke ober op een terras in Utrecht. Je neemt de bestelling op. ' + CHAT_COMMON,
+    mockReplies: [
+      { text: 'Lekker! Wil je er iets bij eten?', hint: 'Lecker! Möchtest du etwas dazu essen?' },
+      { text: 'Komt eraan! Alvast gezellig.', hint: 'Kommt sofort! Schon mal viel Spaß.' },
+      { text: 'Ik breng het zo. Proost!', hint: 'Ich bringe es gleich. Prost!' },
+    ],
+  },
+  {
+    id: 'platenzaak', icon: '🎧', label: 'Im Plattenladen',
+    scenarioDe: 'Du bist bei „Ferry\'s Records". Rede mit Ferry über Musik.',
+    opener: 'Hey! Zoek je iets speciaals vandaag?',
+    openerHint: 'Hey! Suchst du heute etwas Bestimmtes?',
+    example: 'Ik zoek drum-and-bass.',
+    system: 'Je bent Ferry, de eigenaar van een platenzaak in Utrecht. Je houdt van drum-and-bass en praat graag over muziek. ' + CHAT_COMMON,
+    mockReplies: [
+      { text: 'Goede keuze! Hou je van Black Sun Empire?', hint: 'Gute Wahl! Magst du Black Sun Empire?' },
+      { text: 'Deze plaat is echt gaaf, uit Utrecht.', hint: 'Diese Platte ist echt cool, aus Utrecht.' },
+      { text: 'Kom je een keer draaien? Er is een newcomer-slot.', hint: 'Kommst du mal auflegen? Es gibt einen Newcomer-Slot.' },
+    ],
+  },
+];
+
+// Rückwärtskompatibel: CHAT = erstes Szenario (Bäcker).
+export const CHAT = CHAT_SCENARIOS[0];
 
 // ---------------------------------------------------------------------------
 //  PROGRESSION — Level (Story-Etappen), Meilensteine, XP-Werte, Tagesziele

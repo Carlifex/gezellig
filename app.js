@@ -1,14 +1,14 @@
 // ============================================================================
 //  Gezellig v2 — App-Steuerung (deutsche UI, Inhalt Niederländisch)
 // ============================================================================
-import { LESSONS, GRAMMAR, CHAT, DAILY_GOALS } from './data.js';
+import { LESSONS, GRAMMAR, CHAT_SCENARIOS, DAILY_GOALS } from './data.js';
 import { statusLabel } from './srs.js';
-import { speak, ttsSupported, setTtsEnabled, sttSupported, listen, similarity } from './speech.js';
+import { speak, ttsSupported, setTtsEnabled, sttSupported, listen, similarity, normalize } from './speech.js';
 import { reply as tutorReply, isMock, getEndpoint, setEndpoint } from './tutor.js';
 import {
   state, save, levelInfo, dailyTasks, dueVocab, dueCount, reviewCard, completeLesson,
   chatTurn, speakResult, setSetting, resetAll, lessonStatus, milestoneState, takeUnlocks,
-  todayXp, dailyGoalXp, goalMetToday, cardOf, ALL_VOCAB,
+  todayXp, dailyGoalXp, goalMetToday, cardOf, ALL_VOCAB, gainXp, weakVocab, startedVocab,
 } from './progress.js';
 
 setTtsEnabled(state.settings.tts);
@@ -40,7 +40,7 @@ tabbar.querySelectorAll('button').forEach(b =>
 function syncTabs() { tabbar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.tab === activeTab)); }
 function go(tab) { activeTab = tab; syncTabs(); render(); }
 function render() {
-  ({ today: renderToday, lessons: renderLessons, vocab: renderVocab, chat: renderChat, profile: renderProfile }[activeTab] || renderToday)();
+  ({ today: renderToday, lessons: renderLessons, vocab: renderVocab, practice: renderPractice, chat: renderChat, profile: renderProfile }[activeTab] || renderToday)();
   window.scrollTo(0, 0);
 }
 
@@ -88,11 +88,13 @@ function renderToday() {
 
       <button class="btn" id="learn">${nextLesson && lessonStatus(nextLesson.id) === 'neu' ? 'Nächste Lektion starten' : 'Weiterlernen'}</button>
       ${due ? `<button class="btn secondary" id="review">🔁 ${due} Wörter wiederholen</button>` : ''}
-      <button class="btn ghost" id="quickchat">💬 Mit dem Bäcker reden</button>
+      <button class="btn ghost" id="practice">🎯 Üben (Produzieren, Hören, Satzbau)</button>
+      <button class="btn ghost" id="quickchat">💬 Ein Gespräch führen</button>
     </div>`;
 
   app.querySelector('#learn').onclick = () => nextLesson ? openLesson(nextLesson.id) : go('lessons');
   const rv = app.querySelector('#review'); if (rv) rv.onclick = () => openReview();
+  app.querySelector('#practice').onclick = () => go('practice');
   app.querySelector('#quickchat').onclick = () => go('chat');
 }
 function taskRow(t) {
@@ -154,18 +156,26 @@ function renderVocab() {
 }
 
 /* ============================ REDEN (Chat) ============================ */
+let chatScenario = CHAT_SCENARIOS[0];
 function renderChat() {
+  const sc = chatScenario;
   app.innerHTML = `
     <div class="section-title">Reden</div>
-    <div class="section-sub">${isMock() ? 'Übungs-Modus (offline)' : 'Mit KI verbunden'} · beim Bäcker</div>
-    <div class="chat-wrap">
-      <div class="scen">🎭 ${esc(CHAT.scenarioDe)}</div>
+    <div class="section-sub">${isMock() ? 'Übungs-Modus (offline)' : 'Mit KI verbunden'} · wähle eine Situation</div>
+    <div class="seg wrap" id="scenpick">${CHAT_SCENARIOS.map(s =>
+      `<button data-s="${s.id}" class="${s.id === sc.id ? 'on' : ''}">${s.icon} ${esc(s.label)}</button>`).join('')}</div>
+    <div class="chat-wrap" style="margin-top:14px">
+      <div class="scen">🎭 ${esc(sc.scenarioDe)}</div>
       <div class="msgs" id="msgs"></div>
       <form class="composer" id="composer"><input id="cin" placeholder="Auf Niederländisch tippen…" autocomplete="off"/><button class="btn small" type="submit">➤</button></form>
     </div>`;
-  mountChat(app.querySelector('#msgs'), app.querySelector('#composer'), app.querySelector('#cin'));
+  app.querySelectorAll('#scenpick button').forEach(b => b.onclick = () => {
+    chatScenario = CHAT_SCENARIOS.find(s => s.id === b.dataset.s) || CHAT_SCENARIOS[0];
+    renderChat();
+  });
+  mountChat(app.querySelector('#msgs'), app.querySelector('#composer'), app.querySelector('#cin'), sc);
 }
-function mountChat(msgsEl, formEl, inputEl, onTurn) {
+function mountChat(msgsEl, formEl, inputEl, sc) {
   const history = [];
   const add = (role, text, hint) => {
     const d = document.createElement('div');
@@ -173,19 +183,168 @@ function mountChat(msgsEl, formEl, inputEl, onTurn) {
     d.innerHTML = esc(text) + (hint ? `<span class="hint">${esc(hint)}</span>` : '');
     msgsEl.appendChild(d); window.scrollTo(0, document.body.scrollHeight);
   };
-  add('assistant', CHAT.opener, CHAT.openerHint);
-  history.push({ role: 'assistant', content: CHAT.opener });
+  add('assistant', sc.opener, sc.openerHint);
+  history.push({ role: 'assistant', content: sc.opener });
   formEl.addEventListener('submit', async (e) => {
     e.preventDefault();
     const txt = inputEl.value.trim(); if (!txt) return;
     inputEl.value = ''; add('user', txt); history.push({ role: 'user', content: txt });
     const think = document.createElement('div'); think.className = 'msg bot'; think.textContent = '…'; msgsEl.appendChild(think);
-    const res = await tutorReply(history); think.remove();
+    const res = await tutorReply(history, sc); think.remove();
     add('assistant', res.text, res.hint); history.push({ role: 'assistant', content: res.text });
     if (state.settings.tts) speak(res.text);
     chatTurn(); flushUnlocks();
-    if (onTurn) onTurn(history);
   });
+}
+
+/* ============================ ÜBEN (Practice-Hub) ============================ */
+function renderPractice() {
+  const started = startedVocab().length;
+  const weak = weakVocab().length;
+  const sentences = buildSentencePool().length;
+  const modes = [
+    { id: 'produce', icon: '✍️', title: 'Produzieren', ok: started > 0, sub: 'Deutsch → Niederländisch selbst tippen', need: 'Erst ein paar Wörter lernen' },
+    { id: 'build',   icon: '🧩', title: 'Satzbau',     ok: sentences > 0, sub: 'Wörter in die richtige Reihenfolge bringen', need: 'Erst eine Lektion machen' },
+    { id: 'listen',  icon: '👂', title: 'Hören',       ok: started > 0 && ttsSupported(), sub: 'Niederländisch hören, Bedeutung erkennen', need: ttsSupported() ? 'Erst ein paar Wörter lernen' : 'Kein Ton auf diesem Gerät' },
+    { id: 'weak',    icon: '🎯', title: 'Schwachstellen', ok: weak > 0, sub: weak ? `${weak} wacklige Wörter gezielt üben` : 'Deine schwierigsten Wörter', need: 'Noch keine — üb ruhig mehr!' },
+  ];
+  app.innerHTML = `<div class="stack">
+    <div class="section-title">Üben</div>
+    <div class="section-sub">Aktiv produzieren statt nur wiedererkennen — hier sitzt es wirklich.</div>
+    <div class="lgrid">${modes.map(m => `<button class="lesson" data-m="${m.id}" ${m.ok ? '' : 'disabled style="opacity:.5"'}>
+      <span class="lem">${m.icon}</span>
+      <span class="lmain"><b>${esc(m.title)}</b><span>${esc(m.ok ? m.sub : m.need)}</span></span></button>`).join('')}</div>
+  </div>`;
+  app.querySelectorAll('.lesson[data-m]').forEach(b => b.onclick = () =>
+    ({ produce: openProduce, build: openBuild, listen: openListen, weak: openWeak }[b.dataset.m])());
+}
+
+const stripArticle = (s) => s.replace(/^(de |het |een |'n )/, '');
+function answerMatches(input, target) {
+  const a = normalize(input), b = normalize(target);
+  if (a === b) return true;
+  if (stripArticle(a) === stripArticle(b)) return true;
+  return similarity(a, b) >= 0.85 || similarity(stripArticle(a), stripArticle(b)) >= 0.85;
+}
+function buildSentencePool() {
+  const out = [], seen = new Set();
+  for (const l of LESSONS) {
+    const cands = [...(l.speak || []), ...(l.dialogue || []).map(d => ({ nl: d.nl, de: d.de }))];
+    for (const s of cands) {
+      const w = s.nl.replace(/[.!?,„"…]/g, '').split(' ').filter(Boolean);
+      if (w.length < 3 || w.length > 6 || seen.has(s.nl)) continue;
+      seen.add(s.nl); out.push(s);
+    }
+  }
+  return out;
+}
+function finishScreen(fe, emoji, title, sub, returnTab) {
+  fe.innerHTML = `<div class="flow-body"><div class="done"><div class="big">${emoji}</div><h2>${esc(title)}</h2>
+    <p class="muted">${sub}</p><button class="btn" id="fin" style="max-width:240px;margin-top:10px">Zurück</button></div></div>`;
+  fe.querySelector('#fin').onclick = () => { go(returnTab || 'practice'); closeFlow(); };
+}
+
+// #2a — Produktion: Deutsch → Niederländisch selbst tippen (Toleranz-Check).
+function openProduce() {
+  const pool = shuffle(startedVocab().slice()).slice(0, 12);
+  if (!pool.length) { toast('Erst ein paar Wörter lernen!', '📚'); return; }
+  let i = 0;
+  openFlow([{ render(body, foot, done) {
+    const draw = () => {
+      if (i >= pool.length) return done();
+      const v = pool[i];
+      body.innerHTML = `<div class="step-label">Produzieren · ${i + 1}/${pool.length}</div>
+        <div class="step-title">Wie heißt das auf Niederländisch?</div>
+        <div class="flash"><div class="trans" style="font-size:22px">${esc(v.de)}</div></div>
+        <div class="field"><input id="ans" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="Auf Niederländisch tippen…"/></div>
+        <div id="fb"></div>`;
+      const inp = body.querySelector('#ans'); inp.focus();
+      const check = () => {
+        const val = inp.value.trim(); if (!val) return;
+        const ok = answerMatches(val, v.nl);
+        reviewCard(v.id, ok ? 'good' : 'again'); flushUnlocks();
+        body.querySelector('#fb').innerHTML = `<div class="result ${ok ? 'ok' : 'no'}">${ok ? '✓ Richtig!' : 'Fast!'} Korrekt: <b>${esc(v.nl)}</b> — ${esc(v.de)}</div>`;
+        inp.disabled = true; speak(v.nl);
+        foot.innerHTML = `<button class="btn" id="n">${i === pool.length - 1 ? 'Fertig' : 'Weiter'}</button>`;
+        foot.querySelector('#n').onclick = () => { i++; draw(); };
+      };
+      foot.innerHTML = `<button class="btn" id="c">Prüfen</button>`;
+      foot.querySelector('#c').onclick = check;
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); inp.disabled ? foot.querySelector('#n')?.click() : check(); } });
+    };
+    draw();
+  }}], (fe) => finishScreen(fe, '✍️', 'Produziert!', `${pool.length} Wörter aktiv geübt`));
+}
+
+// #2b — Satzbau: Wörter in die richtige Reihenfolge tippen.
+function openBuild() {
+  const pool = shuffle(buildSentencePool()).slice(0, 10);
+  if (!pool.length) { toast('Erst eine Lektion machen!', '📚'); return; }
+  let i = 0;
+  openFlow([{ render(body, foot, done) {
+    const draw = () => {
+      if (i >= pool.length) return done();
+      const s = pool[i];
+      const words = s.nl.replace(/[.!?,„"…]/g, '').split(' ').filter(Boolean);
+      const bank = shuffle(words.map((w, idx) => ({ w, key: idx })));
+      let picked = [];
+      const paint = () => {
+        body.innerHTML = `<div class="step-label">Satzbau · ${i + 1}/${pool.length}</div>
+          <div class="step-title">Bring die Wörter in die richtige Reihenfolge</div>
+          <div class="muted" style="margin-bottom:10px">${esc(s.de)}</div>
+          <div class="buildslot" id="slot">${picked.length ? picked.map((p, pi) => `<button class="chip" data-pi="${pi}">${esc(p.w)}</button>`).join('') : '<span class="muted">Tipp die Wörter unten an…</span>'}</div>
+          <div class="buildbank" id="bank">${bank.map(c => picked.find(p => p.key === c.key) ? '' : `<button class="chip" data-key="${c.key}">${esc(c.w)}</button>`).join('')}</div>
+          <div id="fb"></div>`;
+        body.querySelectorAll('#bank .chip').forEach(b => b.onclick = () => { const k = +b.dataset.key; picked.push(bank.find(c => c.key === k)); paint(); });
+        body.querySelectorAll('#slot .chip').forEach(b => b.onclick = () => { picked.splice(+b.dataset.pi, 1); paint(); });
+        const complete = picked.length === words.length;
+        foot.innerHTML = `<button class="btn" id="c" ${complete ? '' : 'disabled style="opacity:.5"'}>Prüfen</button>`;
+        if (complete) foot.querySelector('#c').onclick = () => {
+          const ok = normalize(picked.map(p => p.w).join(' ')) === normalize(words.join(' '));
+          if (ok) { gainXp(3); flushUnlocks(); }
+          body.querySelector('#fb').innerHTML = `<div class="result ${ok ? 'ok' : 'no'}">${ok ? '✓ Richtig!' : 'Nicht ganz:'} <b>${esc(s.nl)}</b></div>`;
+          speak(s.nl);
+          foot.innerHTML = `<button class="btn ghost" id="r">Nochmal</button><button class="btn" id="n">${i === pool.length - 1 ? 'Fertig' : 'Weiter'}</button>`;
+          foot.querySelector('#r').onclick = () => { picked = []; paint(); };
+          foot.querySelector('#n').onclick = () => { i++; draw(); };
+        };
+      };
+      paint();
+    };
+    draw();
+  }}], (fe) => finishScreen(fe, '🧩', 'Sätze gebaut!', 'Satzbau geübt'));
+}
+
+// #3 — Hören: Niederländisch hören, deutsche Bedeutung wählen.
+function openListen() {
+  const pool = shuffle(startedVocab().slice()).slice(0, 12);
+  if (!pool.length) { toast('Erst ein paar Wörter lernen!', '📚'); return; }
+  let i = 0;
+  openFlow([{ render(body, foot, done) {
+    const draw = () => {
+      if (i >= pool.length) return done();
+      const v = pool[i];
+      const opts = shuffle([v.de, ...shuffle(ALL_VOCAB.filter(x => x.id !== v.id)).slice(0, 2).map(x => x.de)]);
+      body.innerHTML = `<div class="step-label">Hören · ${i + 1}/${pool.length}</div>
+        <div class="step-title">Was hörst du?</div>
+        <div class="card" style="text-align:center"><button class="iconbtn" id="hear" style="width:64px;height:64px;font-size:28px">🔊</button>
+          <div class="muted" style="margin-top:8px">Antippen zum Anhören</div></div>
+        <div class="choices" style="margin-top:14px">${opts.map(o => `<button class="choice" data-de="${esc(o)}">${esc(o)}</button>`).join('')}</div>`;
+      speak(v.nl);
+      body.querySelector('#hear').onclick = () => speak(v.nl);
+      let answered = false;
+      body.querySelectorAll('.choice').forEach(btn => btn.onclick = () => {
+        if (answered) return; answered = true;
+        const ok = btn.dataset.de === v.de;
+        body.querySelectorAll('.choice').forEach(b2 => { if (b2.dataset.de === v.de) b2.classList.add('correct'); else if (b2 === btn) b2.classList.add('wrong'); });
+        reviewCard(v.id, ok ? 'good' : 'again'); flushUnlocks();
+        foot.innerHTML = `<button class="btn" id="n">${i === pool.length - 1 ? 'Fertig' : 'Weiter'}</button>`;
+        foot.querySelector('#n').onclick = () => { i++; draw(); };
+      });
+      foot.innerHTML = '';
+    };
+    draw();
+  }}], (fe) => finishScreen(fe, '👂', 'Gehört!', `${pool.length} Wörter geübt`));
 }
 
 /* ============================ PROFIL ============================ */
@@ -441,17 +600,14 @@ function stepSpeak(sentences) {
   }};
 }
 
-/* ---------- REVIEW (interleaved SRS) ---------- */
-function openReview() {
-  const cards = dueVocab();
-  if (!cards.length) { toast('Nichts fällig — mach eine Lektion!', '✅'); return; }
+/* ---------- REVIEW / SCHWACHSTELLEN (interleaved SRS-Flash) ---------- */
+function flashStep(queue, label) {
   let i = 0, revealed = false;
-  const queue = shuffle(cards.slice());   // gemischt = interleaved
-  openFlow([{ render(body, foot, done) {
+  return { render(body, foot, done) {
     const draw = () => {
       if (i >= queue.length) return done();
       const v = queue[i];
-      body.innerHTML = `<div class="step-label">Wiederholen · ${i + 1}/${queue.length}</div>
+      body.innerHTML = `<div class="step-label">${esc(label)} · ${i + 1}/${queue.length}</div>
         <div class="step-title">Was heißt das?</div>
         <div class="flash"><div class="word">${esc(v.nl)}</div>
           ${revealed ? `<div class="trans">${esc(v.de)}</div><div class="ex">${esc(v.ex)}</div>` : '<div class="muted">Überleg… dann aufdecken.</div>'}</div>`;
@@ -470,12 +626,19 @@ function openReview() {
       }
     };
     draw();
-  }}], (fe) => {
-    fe.innerHTML = `<div class="flow-body"><div class="done"><div class="big">✅</div><h2>Wiederholt!</h2>
-      <p class="muted">${queue.length} Wörter · +${queue.length * 2} XP · 🔥 ${state.streak}</p>
-      <button class="btn" id="fin" style="max-width:240px;margin-top:10px">Zurück</button></div></div>`;
-    fe.querySelector('#fin').onclick = () => { go('today'); closeFlow(); };
-  });
+  }};
+}
+function runFlashReview(cards, opts) {
+  if (!cards.length) { toast(opts.empty, opts.emoji); return; }
+  const queue = shuffle(cards.slice());   // gemischt = interleaved
+  openFlow([flashStep(queue, opts.label)], (fe) =>
+    finishScreen(fe, opts.emoji, opts.title, `${queue.length} Wörter · +${queue.length * 2} XP · 🔥 ${state.streak}`, opts.returnTab));
+}
+function openReview() {
+  runFlashReview(dueVocab(), { label: 'Wiederholen', emoji: '✅', title: 'Wiederholt!', empty: 'Nichts fällig — mach eine Lektion!', returnTab: 'today' });
+}
+function openWeak() {
+  runFlashReview(weakVocab(), { label: 'Schwachstellen', emoji: '🎯', title: 'Stärker geworden!', empty: 'Keine Schwachstellen — stark!', returnTab: 'practice' });
 }
 
 /* ---------- utils ---------- */

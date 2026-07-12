@@ -160,6 +160,16 @@ button{font-family:inherit}
   text-align:left;font-size:15px;font-weight:600;cursor:pointer;color:var(--ink)}
 .choice.correct{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,transparent)}
 .choice.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+/* Satzbau-Übung: Wort-Chips */
+.buildslot{min-height:56px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  background:var(--card);border:1.4px dashed var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.buildbank{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.4px solid var(--line);background:var(--card);border-radius:10px;padding:9px 13px;
+  font-size:15px;font-weight:700;cursor:pointer;color:var(--ink)}
+.buildslot .chip{border-color:var(--cyan);background:color-mix(in srgb,var(--cyan) 12%,transparent)}
+/* Szenario-Auswahl (Reden) darf umbrechen */
+.seg.wrap{flex-wrap:wrap}
+.seg.wrap button{flex:0 1 auto}
 .gcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
 .gcard h3{font-size:17px;margin-bottom:8px}
 .gcard p{font-size:14.5px;color:var(--muted);margin-bottom:8px}

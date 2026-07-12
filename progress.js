@@ -58,7 +58,7 @@ function ensureDay(s) {
   // Streak-Pflege beim Tageswechsel (gentle): Freeze deckt eine Lücke.
   if (s.lastGoalDate && s.lastGoalDate !== t && s.lastGoalDate !== yestStr()) {
     // mehr als 1 Tag her → Lücke
-    const twoDaysAgo = new Date(Date.now() - 2 * DAY).toISOString().slice(0, 10);
+    const twoDaysAgo = new Date(Date.now() - 2 * DAYMS).toISOString().slice(0, 10);
     if (s.freezes > 0 && s.lastGoalDate === twoDaysAgo) {
       s.freezes -= 1;                 // Freeze rettet die Serie
       s.lastGoalDate = yestStr();
@@ -235,6 +235,29 @@ export function setSetting(key, val) {
   save();
 }
 export function resetAll() { localStorage.removeItem(KEY); state = fresh(); ensureDay(state); save(); }
+
+// Freie Übungs-XP (z. B. Satzbau), ohne SRS-Karte.
+export function gainXp(n) { addXp(n); refreshTasks(); save(); }
+
+// „Schwache" Karten: schon gestartet, aber wacklig (Fehler / hohe Schwierigkeit /
+// geringe Stabilität). Nach Schwäche sortiert, für den Schwachstellen-Modus.
+export function weakVocab(limit = 15) {
+  const scored = ALL_VOCAB
+    .map(v => ({ v, c: state.cards[v.id] }))
+    .filter(x => x.c && x.c.reps)
+    .map(x => ({ v: x.v, score: (x.c.lapses || 0) * 3 + Math.max(0, x.c.D - 5) + Math.max(0, 4 - x.c.S) }))
+    .filter(x => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(x => x.v);
+  return scored;
+}
+
+// Pool für Produktion/Hören: bereits gestartete Wörter (gemischt). Fallback:
+// Vokabeln der ersten noch nicht gestarteten Lektion.
+export function startedVocab() {
+  return ALL_VOCAB.filter(v => state.cards[v.id] && state.cards[v.id].reps);
+}
 
 export function lessonStatus(lessonId) {
   const s = state.lessons[lessonId];
