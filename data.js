@@ -101,6 +101,7 @@ export const LESSONS = [
   {
     id: 'aankomst', order: 1, icon: '📦',
     title: 'Ankunft in Utrecht',
+    images: { story: 'illustrations/aankomst.webp' },
     situation: 'Ihr zieht ein — und die Nachbarin klopft.',
     story: 'Kiste an Kiste in der neuen Wohnung in Utrecht. Du bist Carlsson: 36, frisch aus Deutschland, im Kopf schon halb DJ. Deine Frau Eni packt Pflanzen aus, der Kater „der Schmuser" sitzt bereits im leersten Karton. Da klopft es — die Nachbarin. Und dir fällt ein: Du sprichst noch kein Wort Niederländisch.',
     grammar: 'woordvolgorde',
