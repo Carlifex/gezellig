@@ -132,8 +132,8 @@ export const LESSONS = [
   {
     id: 'wonen', order: 2, icon: '🐈',
     title: 'Das neue Zuhause & der Kater',
-    situation: 'Auspacken — während der Schmuser randaliert.',
-    story: 'Die Wohnung wird langsam ein Zuhause — oder ein Dschungel: Eni hängt Makramee auf, überall stehen Pflanzen. Der Schmuser nimmt Anlauf, springt an die Wand und reißt ausgerechnet das schönste Stück herunter. Über den Zaun lacht der Nachbar und ruft etwas auf Niederländisch. Du verstehst: „kat".',
+    situation: 'Auspacken, Schmuser randaliert — und es klingelt: ein Paket.',
+    story: 'Die Wohnung wird langsam ein Zuhause — oder ein Dschungel: Eni hängt Makramee auf, überall stehen Pflanzen. Der Schmuser nimmt Anlauf, springt an die Wand und reißt ausgerechnet das schönste Stück herunter. Genau da klingelt es: ein Paketbote steht mit einem Karton vor der Tür — und erkundigt sich prompt nach den Katzen. Du verstehst nur ein Wort: „kat".',
     grammar: 'hebbenzijn',
     vocab: [
       { id: 'wo_huis', nl: 'het huis', de: 'das Haus', ex: 'Dit is ons huis.', exDe: 'Das ist unser Haus.' },
@@ -145,9 +145,9 @@ export const LESSONS = [
       { id: 'wo_geen', nl: 'geen', de: 'kein', ex: 'Er is geen tuin.', exDe: 'Es gibt keinen Garten.' },
     ],
     dialogue: [
-      { who: 'Nachbar', nl: 'Mooie kat! Is dat een kater?', de: 'Schöne Katze! Ist das ein Kater?' },
+      { who: 'Bote', nl: 'Een pakketje! Mooie kat, is dat een kater?', de: 'Ein Päckchen! Schöne Katze, ist das ein Kater?' },
       { who: 'Du', nl: 'Ja! Hij heet de Schmuser. En we hebben ook een kat, Nalani.', de: 'Ja! Er heißt der Schmuser. Und wir haben auch eine Katze, Nalani.' },
-      { who: 'Nachbar', nl: 'Leuk! Hebben jullie een tuin?', de: 'Schön! Habt ihr einen Garten?' },
+      { who: 'Bote', nl: 'Leuk! Hebben jullie een tuin?', de: 'Schön! Habt ihr einen Garten?' },
       { who: 'Du', nl: 'Nee, er is geen tuin. Maar er zijn veel planten!', de: 'Nein, es gibt keinen Garten. Aber es gibt viele Pflanzen!' },
     ],
     speak: [
