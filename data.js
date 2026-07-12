@@ -469,6 +469,7 @@ export const LESSONS = [
   {
     id: 'beurs', order: 8, icon: '🌷',
     title: 'Enis große Messe',
+    images: { story: 'illustrations/beurs.webp' },
     situation: 'Du hilfst am DIY-Stand — statt am Track zu arbeiten.',
     story: 'Enis großer Tag: die Wohn- & DIY-Messe. Du hast versprochen zu helfen — ausgerechnet heute, wo dein Track fast fertig ist. Zwischen Makramee, Topfpflanzen und Tulpen versuchst du, nicht ständig aufs Handy zu schauen. „Geen stress", sagt Eni und drückt dir eine Gießkanne in die Hand. Leicht gesagt.',
     grammar: 'negatie',
