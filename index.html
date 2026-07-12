@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Gezellig — Nederlands leren</title>
+  <meta name="description" content="Niederländisch lernen für deutsche Muttersprachler — Phase-0-Prototyp." />
+  <meta name="theme-color" content="#1d4e89" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon-192.png" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" aria-live="polite"></div>
+  <nav id="tabbar" hidden>
+    <button data-tab="today" class="on"><span>🏠</span>Start</button>
+    <button data-tab="lessons"><span>📚</span>Lektionen</button>
+    <button data-tab="vocab"><span>🔁</span>Wörter</button>
+    <button data-tab="practice"><span>🎯</span>Üben</button>
+    <button data-tab="chat"><span>💬</span>Reden</button>
+    <button data-tab="profile"><span>📈</span>Profil</button>
+  </nav>
+
+  <script type="module" src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
