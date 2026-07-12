@@ -594,6 +594,7 @@ export const LESSONS = [
   {
     id: 'terras', order: 12, icon: '🍺',
     title: 'Op het terras',
+    images: { story: 'illustrations/terras.webp' },
     situation: 'Ein Bierchen in der Sonne — „op het terras".',
     story: 'Erster richtig warmer Tag, und die halbe Stadt sitzt draußen. Ihr ergattert einen Platz auf einem <i>terras</i> an der Gracht. „Borrel-Zeit", grinst Eni. Du bestellst dein erstes <i>biertje</i> auf Niederländisch — und lernst, dass man hier beim Anstoßen jedem in die Augen schaut.',
     grammar: 'graag',
