@@ -64,6 +64,10 @@ function renderToday() {
         </div>
       </div>
 
+      <div class="section-sub" style="margin:2px 0 8px">Deine Lernpfade — wische durch</div>
+      <div class="carousel" id="trackcar">${TRACKS.map(trackCard).join('')}</div>
+      <div class="cardots" id="cardots">${TRACKS.map((_, i) => `<button class="dot ${i === 0 ? 'on' : ''}" data-i="${i}" aria-label="Karte ${i + 1}"></button>`).join('')}</div>
+
       <div class="card levelcard">
         <div class="levelrow">
           <div class="lvicon">${L.icon}</div>
@@ -96,6 +100,18 @@ function renderToday() {
   const rv = app.querySelector('#review'); if (rv) rv.onclick = () => openReview();
   app.querySelector('#practice').onclick = () => go('practice');
   app.querySelector('#quickchat').onclick = () => go('chat');
+
+  // Track-Carousel: Karte anklicken → Track öffnen; Punkte = durchklicken; Wisch-Sync.
+  app.querySelectorAll('.tcard').forEach(b => b.onclick = () => openTrack(b.dataset.track));
+  const car = app.querySelector('#trackcar'), dots = [...app.querySelectorAll('#cardots .dot')];
+  if (car) {
+    const step = () => { const c = car.querySelector('.tcard'); return c ? c.offsetWidth + 12 : 1; };
+    dots.forEach(d => d.onclick = () => car.scrollTo({ left: (+d.dataset.i) * step(), behavior: 'smooth' }));
+    car.addEventListener('scroll', () => {
+      const idx = Math.round(car.scrollLeft / step());
+      dots.forEach((d, i) => d.classList.toggle('on', i === idx));
+    }, { passive: true });
+  }
 }
 function taskRow(t) {
   const cur = Math.min(state.daily.counters[t.metric], t.target);
@@ -106,32 +122,60 @@ function taskRow(t) {
 /* ============================ LEKTIONEN ============================ */
 // Lektions-Tracks: der Story-Bogen plus thematische Sammlungen.
 const TRACKS = [
-  { key: 'verhaal',  label: 'Carlssons Geschichte',      sub: 'Der durchgehende Handlungsbogen — wähle selbst, wo du weitermachst.', chip: 'KAPITEL' },
-  { key: 'personen', label: 'Berühmte Persönlichkeiten', sub: 'Zehn Niederländer:innen, die die Welt geprägt haben.',               chip: 'PORTRÄT' },
-  { key: 'mythen',   label: 'Mythen & Kuriositäten',     sub: 'Zehn Eigenheiten, die die Niederlande ausmachen.',                    chip: 'FAKT' },
-  { key: 'ade',      label: 'Amsterdam Dance Event',     sub: 'Die Geschichte des größten Dance-Events der Welt.',                   chip: 'ADE' },
-  { key: 'feest',    label: 'Niederländische Feierkultur', sub: 'Von Gabber bis Borrel — wie die Niederlande feiern.',               chip: 'FEEST' },
+  { key: 'verhaal',  icon: '🧡', label: 'Carlssons Geschichte',      sub: 'Der durchgehende Handlungsbogen — wähle selbst, wo du weitermachst.', chip: 'KAPITEL' },
+  { key: 'personen', icon: '🎨', label: 'Berühmte Persönlichkeiten', sub: 'Zehn Niederländer:innen, die die Welt geprägt haben.',               chip: 'PORTRÄT' },
+  { key: 'mythen',   icon: '🌷', label: 'Mythen & Kuriositäten',     sub: 'Zehn Eigenheiten, die die Niederlande ausmachen.',                    chip: 'FAKT' },
+  { key: 'ade',      icon: '🎧', label: 'Amsterdam Dance Event',     sub: 'Die Geschichte des größten Dance-Events der Welt.',                   chip: 'ADE' },
+  { key: 'feest',    icon: '🎉', label: 'Niederländische Feierkultur', sub: 'Von Gabber bis Borrel — wie die Niederlande feiern.',               chip: 'FEEST' },
 ];
+const trackLessons = (key) => LESSONS.filter(l => (l.track || 'verhaal') === key);
+
+// Abgeschlossene Kapitel: ✅ statt Wort; gemeistert: 🏆.
+function statusBadge(st) {
+  if (st === 'gemeistert') return `<span class="lst done" title="gemeistert">🏆</span>`;
+  if (st === 'gelernt')    return `<span class="lst done" title="abgeschlossen">✅</span>`;
+  return `<span class="lst neu">neu</span>`;
+}
 
 function lessonBtn(l, chip, n) {
-  const st = lessonStatus(l.id);
   const label = chip === 'KAPITEL' ? `KAPITEL ${l.order}` : `${chip} ${n}`;
   return `<button class="lesson" data-id="${l.id}">
     <span class="lem">${l.icon}</span>
     <span class="lmain"><span class="lchip">${label}</span><b>${esc(l.title)}</b><span>${esc(l.situation)}</span></span>
-    <span class="lst ${st}">${st}</span></button>`;
+    ${statusBadge(lessonStatus(l.id))}</button>`;
 }
 
 function renderLessons() {
   const sections = TRACKS.map(t => {
-    const ls = LESSONS.filter(l => (l.track || 'verhaal') === t.key);
+    const ls = trackLessons(t.key);
     if (!ls.length) return '';
-    return `<div class="section-title">${esc(t.label)}</div>
+    return `<div class="section-title" id="track-${t.key}">${esc(t.label)}</div>
       <div class="section-sub">${esc(t.sub)}</div>
       <div class="lgrid">${ls.map((l, i) => lessonBtn(l, t.chip, i + 1)).join('')}</div>`;
   }).join('');
   app.innerHTML = `<div class="stack">${sections}</div>`;
   app.querySelectorAll('.lesson').forEach(b => b.onclick = () => openLesson(b.dataset.id));
+}
+
+// Track-Karte fürs Start-Carousel.
+function trackCard(t) {
+  const ls = trackLessons(t.key);
+  const done = ls.filter(l => lessonStatus(l.id) !== 'neu').length;
+  const pct = ls.length ? Math.round(done / ls.length * 100) : 0;
+  return `<button class="tcard" data-track="${t.key}">
+    <div class="tcard-top"><span class="tcard-icon">${t.icon}</span><span class="tcard-count">${done}/${ls.length} ✅</span></div>
+    <div class="tcard-title">${esc(t.label)}</div>
+    <div class="tcard-sub">${esc(t.sub)}</div>
+    <div class="tcard-bar"><i style="width:${pct}%"></i></div></button>`;
+}
+
+// Zu einem Track springen (Lektionen-Tab, zur Sektion scrollen).
+function openTrack(key) {
+  go('lessons');
+  requestAnimationFrame(() => {
+    const el = document.getElementById('track-' + key);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 }
 
 /* ============================ WÖRTER ============================ */
