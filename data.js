@@ -252,7 +252,7 @@ export const GRAMMAR = {
 export const LESSONS = [
   {
     id: 'aankomst', order: 1, icon: '📦',
-    title: 'Ankunft in Utrecht',
+    title: 'Willkommen in Utrecht',
     images: { story: 'illustrations/aankomst.webp' },
     situation: 'Ihr zieht ein — und die Nachbarin klopft.',
     story: 'Kiste an Kiste in der neuen Wohnung in Utrecht. Du bist Carlsson: 36, frisch aus Deutschland, im Kopf schon halb DJ. Deine Frau Eni packt Pflanzen aus, der Kater „der Schmuser" sitzt bereits im leersten Karton. Da klopft es — die Nachbarin. Und dir fällt ein: Du sprichst noch kein Wort Niederländisch.',
@@ -283,7 +283,7 @@ export const LESSONS = [
   },
   {
     id: 'wonen', order: 2, icon: '🐈',
-    title: 'Das neue Zuhause & der Kater',
+    title: 'Vorsicht, Schmuser!',
     images: { story: 'illustrations/wonen.webp' },
     situation: 'Auspacken, Schmuser randaliert — und es klingelt: ein Paket.',
     story: 'Die Wohnung wird langsam ein Zuhause — oder ein Dschungel: Eni hängt Makramee auf, überall stehen Pflanzen. Der Schmuser nimmt Anlauf, springt an die Wand und reißt ausgerechnet das schönste Stück herunter. Genau da klingelt es: ein Paketbote steht mit einem Karton vor der Tür — und erkundigt sich prompt nach den Katzen. Du verstehst nur ein Wort: „kat".',
@@ -314,7 +314,7 @@ export const LESSONS = [
   },
   {
     id: 'bakker', order: 3, icon: '🥖',
-    title: 'Beim Bäcker',
+    title: 'Brötchen holen',
     images: { story: 'illustrations/bakker.webp' },
     situation: 'Dein erster Alleingang auf Niederländisch.',
     story: 'Erster Alleingang auf Niederländisch: Brötchen holen. Simpel, denkst du — bis dir direkt vor der Theke einfällt, dass du keine Ahnung hast, ob es <i>der</i> oder <i>das</i> brood heißt. Der Bäcker wartet freundlich. Hinter dir wird die Schlange länger. Jetzt bloß nichts Deutsches sagen.',
@@ -376,7 +376,7 @@ export const LESSONS = [
   },
   {
     id: 'tijd', order: 5, icon: '🕒',
-    title: 'Der Termin — und der Kater',
+    title: 'Spät dran!',
     images: { story: 'illustrations/tijd.webp' },
     situation: 'Ein Producer hat eine Stunde frei — heute um drei.',
     story: 'Ein lokaler Producer, Sander, hat eine Stunde Studiozeit frei — heute um drei. In den Niederlanden ist ein <i>afspraak</i> ein <i>afspraak</i>: zu spät kommen ist keine Option. Du checkst zum dritten Mal die Uhr, während der Schmuser seelenruhig auf deinem Kopfhörer schläft.',
@@ -407,7 +407,7 @@ export const LESSONS = [
   },
   {
     id: 'weg', order: 6, icon: '🚲',
-    title: 'Auf dem Rad — und verfahren',
+    title: 'Verirrt in Utrecht',
     images: { story: 'illustrations/weg.webp' },
     situation: 'Du suchst den Plattenladen und verirrst dich.',
     story: 'Du willst zum Plattenladen „Ferry\'s Records". Natürlich auf dem Rad — hier fährt einfach jeder. Nach zehn Minuten stehst du an einer Gracht, die du sicher schon dreimal gesehen hast. Ein Rentner auf einem uralten Hollandrad rollt vorbei. Zeit, deinen ersten Satz zu wagen: „Pardon…"',
@@ -438,7 +438,7 @@ export const LESSONS = [
   },
   {
     id: 'platenzaak', order: 7, icon: '🎧',
-    title: 'In der Plattenszene',
+    title: 'Bei Ferry\'s records',
     images: { story: 'illustrations/platenzaak.webp' },
     situation: 'Ferry\'s Records — und ein Angebot.',
     story: 'Ferry\'s Records riecht nach Vinyl und Kaffee. Ihr redet über <b>Blackout</b> im TivoliVredenburg, über <b>Liquicity</b>, über <b>Black Sun Empire</b> — die übrigens aus Utrecht kommen. Dein Herz schlägt schneller. Dann sagt Ferry beiläufig: „Es gibt einen Newcomer-Slot bei der nächsten Nacht. Wenn dein Track fertig ist."',
@@ -780,7 +780,7 @@ export const LESSONS = [
   },
   {
     id: 'void', order: 18, icon: '🔮',
-    title: 'The Void — erste Reihe',
+    title: 'The Void Festival',
     images: { story: 'illustrations/void.webp' },
     situation: 'Frontrow, Bässe und Bänder-Tausch.',
     story: 'The Void Festival, ihr steht ganz vorne an der Rail. Die Bässe treffen dich mitten in die Brust, Eni tanzt neben dir wie entfesselt. Ein Mädchen aus der Menge reicht euch selbstgemachte <i>kandi</i>-Bänder rüber — die Rave-Tradition des Tauschens. Ihr tauscht zurück. Heute Abend seid ihr Teil von etwas.',
