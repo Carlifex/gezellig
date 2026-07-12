@@ -272,6 +272,18 @@ button{font-family:inherit}
 .lst.gemeistert{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
 /* Status abgeschlossen: Emoji ohne Kasten */
 .lst.done{background:none;padding:2px;font-size:16px}
+.lst.lock{background:none;padding:2px;font-size:15px;opacity:.7}
+/* Abschlussprüfung — wie eine Lektion, aber abgesetzt (gestrichelter Rahmen). */
+.examcard{display:flex;align-items:center;gap:13px;width:100%;text-align:left;color:inherit;cursor:pointer;
+  margin-top:10px;padding:14px 15px;border-radius:14px;background:var(--card);
+  border:1.5px dashed color-mix(in srgb,var(--blue-2) 45%,var(--line));box-shadow:var(--shadow)}
+.examcard:active{transform:translateY(1px)}
+.examcard .lem{width:44px;height:44px;flex:0 0 44px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:var(--bg-2)}
+.examcard .lmain b{font-size:15px}
+.examcard .lmain span{font-size:12.5px;color:var(--muted);display:block}
+.examcard .lchip{color:var(--blue-2)}
+.examcard.passed{border-style:solid;border-color:color-mix(in srgb,var(--good) 45%,var(--line))}
+.examcard.locked{opacity:.62}
 
 /* ---- Start: Hero-Carousel (Kapitel-Deckblätter) ---- */
 .herocar{display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;

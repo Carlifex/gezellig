@@ -52,7 +52,7 @@ function fresh() {
   return {
     xp: 0, streak: 0, maxStreak: 0, freezes: 1, lastGoalDate: null,
     settings: { tts: true, rate: 0.92, theme: 'auto', dailyGoal: 'normaal', aiEndpoint: '' },
-    cards: {}, lessons: {}, milestones: {}, history: {},
+    cards: {}, lessons: {}, milestones: {}, exams: {}, history: {},
     daily: null,
     totals: { reviews: 0, wordsLearned: 0, speakOk: 0, chats: 0, lessonsDone: 0, lessonsMastered: 0, sessions: 0, answers: 0, answersOk: 0 },
   };
@@ -69,6 +69,7 @@ function load() {
   if (s.totals.answers == null) { s.totals.answers = 0; s.totals.answersOk = 0; }
   if (s.settings.rate == null) s.settings.rate = 0.92;
   if (s.settings.theme == null) s.settings.theme = 'auto';
+  if (!s.exams) s.exams = {};
   ensureDay(s);
   return s;
 }
@@ -244,6 +245,26 @@ export function completeLesson(lessonId) {
   checkMilestones();
   save();
   return { newWords, first };
+}
+
+// ---- Kapitel-Abschlussprüfung --------------------------------------------
+// Eine Prüfung gilt als bestanden (abgeschlossen), sobald mindestens 80 %
+// der Fragen richtig beantwortet wurden. Ergebnis wird pro Track gespeichert.
+export function examState(key) { return state.exams[key] || null; }
+export function examPassed(key) { const e = state.exams[key]; return !!(e && e.passed); }
+export function recordExam(key, correct, total) {
+  const pct = total ? Math.round((correct / total) * 100) : 0;
+  const pass = pct >= 80;
+  const e = state.exams[key] || { passed: false, bestPct: 0, attempts: 0 };
+  const firstPass = pass && !e.passed;
+  e.attempts += 1;
+  e.bestPct = Math.max(e.bestPct, pct);
+  if (pass) e.passed = true;
+  state.exams[key] = e;
+  let xpGain = 0;
+  if (firstPass) { xpGain = XP.lesson + XP.milestone; addXp(xpGain); checkMilestones(); }
+  save();
+  return { pct, pass, firstPass, bestPct: e.bestPct, xpGain };
 }
 
 export function chatTurn() {

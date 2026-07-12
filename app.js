@@ -10,6 +10,7 @@ import {
   chatTurn, speakResult, setSetting, resetAll, lessonStatus, milestoneState, takeUnlocks,
   todayXp, dailyGoalXp, goalMetToday, cardOf, ALL_VOCAB, gainXp, weakVocab, startedVocab,
   recordAnswer, historyLast, stats, unstartedVocab, unstartedCount, learnWords,
+  recordExam, examState, examPassed,
 } from './progress.js';
 
 setTtsEnabled(state.settings.tts);
@@ -153,10 +154,34 @@ function renderLessons() {
     return `<div class="section-title" id="track-${t.key}">${esc(t.label)}</div>
       <div class="section-sub">${esc(t.sub)}</div>
       <div class="tprog"><div class="tprog-bar"><i style="width:${pct}%"></i></div><span>${done}/${ls.length}</span></div>
-      <div class="lgrid">${ls.map((l, i) => lessonBtn(l, t.chip, i + 1)).join('')}</div>`;
+      <div class="lgrid">${ls.map((l, i) => lessonBtn(l, t.chip, i + 1)).join('')}</div>
+      ${examCard(t, ls)}`;
   }).join('');
   app.innerHTML = `<div class="stack">${sections}</div>`;
   app.querySelectorAll('.lesson').forEach(b => b.onclick = () => openLesson(b.dataset.id));
+  app.querySelectorAll('.examcard').forEach(b => b.onclick = () => openExam(b.dataset.exam));
+}
+
+// Abschlussprüfung eines Kapitels: erscheint am Ende der Lektionsliste.
+// Freigeschaltet, wenn alle Lektionen des Kapitels durchgearbeitet sind;
+// bestanden ab 80 % richtiger Antworten.
+function examUnlocked(ls) { return ls.length > 0 && ls.every(l => lessonStatus(l.id) !== 'neu'); }
+function examCard(t, ls) {
+  const unlocked = examUnlocked(ls);
+  const ex = examState(t.key);
+  const passed = !!(ex && ex.passed);
+  const cls = passed ? 'passed' : unlocked ? 'ready' : 'locked';
+  const icon = passed ? '🏅' : unlocked ? '📝' : '🔒';
+  const sub = passed ? `Bestanden — Bestleistung ${ex.bestPct}%`
+    : unlocked ? '10 Fragen · ab 80 % richtig bestanden'
+    : `Erst alle ${ls.length} Lektionen abschließen`;
+  const badge = passed ? '<span class="lst done">🏅</span>'
+    : unlocked ? '<span class="lst neu">Start</span>'
+    : '<span class="lst lock">🔒</span>';
+  return `<button class="examcard ${cls}" data-exam="${t.key}">
+    <span class="lem">${icon}</span>
+    <span class="lmain"><span class="lchip">ABSCHLUSSPRÜFUNG</span><b>Prüfung: ${esc(t.label)}</b><span>${esc(sub)}</span></span>
+    ${badge}</button>`;
 }
 
 // Hero-Slide fürs Start-Carousel: Kapitel-Deckblatt mit Titel drin.
@@ -620,6 +645,86 @@ function openLesson(lessonId) {
       <button class="btn" id="fin" style="max-width:240px;margin-top:10px">Zurück</button></div></div>`;
     fe.querySelector('#fin').onclick = () => { go('today'); closeFlow(); };
   });
+}
+
+/* ---------- ABSCHLUSSPRÜFUNG (Kapitel-Ende, 80%-Schwelle) ---------- */
+// Baut die Prüfungsfragen: Mix aus Vokabel-Quiz (de→nl) und Grammatik-Checks
+// aus allen Lektionen des Kapitels.
+function buildExamQuestions(key, n = 10) {
+  const ls = trackLessons(key);
+  const seen = new Set(); const vocab = [];
+  ls.forEach(l => (l.vocab || []).forEach(v => { if (v && !seen.has(v.id)) { seen.add(v.id); vocab.push(v); } }));
+  const gkeys = [...new Set(ls.map(l => l.grammar).filter(Boolean))];
+  const gchecks = [];
+  gkeys.forEach(g => (GRAMMAR[g] && GRAMMAR[g].checks || []).forEach(c => gchecks.push(c)));
+
+  const nGram = Math.min(gchecks.length, Math.min(3, Math.max(0, n - 4)));
+  const nVocab = Math.min(vocab.length, n - nGram);
+  const qs = [];
+  shuffle(vocab.slice()).slice(0, nVocab).forEach(v => {
+    const distr = shuffle(vocab.filter(x => x.id !== v.id)).slice(0, 3);
+    const opts = shuffle([v, ...distr]);
+    qs.push({ q: `Was heißt „${esc(v.de)}"?`, options: opts.map(o => esc(o.nl)), answer: opts.indexOf(v) });
+  });
+  shuffle(gchecks.slice()).slice(0, nGram).forEach(c =>
+    qs.push({ q: esc(c.q), options: c.options.map(esc), answer: c.answer }));
+  return shuffle(qs);
+}
+
+function examStep(question, num, total, score) {
+  return { render(body, foot, done) {
+    body.innerHTML = `<div class="step-label">Prüfung · Frage ${num}/${total}</div>
+      <div class="step-title">${question.q}</div>
+      <div class="choices">${question.options.map((o, i) => `<button class="choice" data-i="${i}">${o}</button>`).join('')}</div>`;
+    let answered = false;
+    body.querySelectorAll('.choice').forEach(btn => btn.onclick = () => {
+      if (answered) return; answered = true;
+      const chosen = +btn.dataset.i;
+      const ok = chosen === question.answer;
+      if (ok) score.correct++;
+      recordAnswer(ok);
+      body.querySelectorAll('.choice').forEach((b2, i) => {
+        if (i === question.answer) b2.classList.add('correct');
+        else if (i === chosen) b2.classList.add('wrong');
+      });
+      foot.innerHTML = `<button class="btn" id="n">${num === total ? 'Auswertung' : 'Weiter'}</button>`;
+      foot.querySelector('#n').onclick = done;
+    });
+    foot.innerHTML = '';
+  }};
+}
+
+function openExam(key) {
+  const track = TRACKS.find(t => t.key === key);
+  const ls = trackLessons(key);
+  if (!examUnlocked(ls)) { toast(`Erst alle ${ls.length} Lektionen abschließen.`, '🔒'); return; }
+  const questions = buildExamQuestions(key, 10);
+  const total = questions.length;
+  if (!total) { toast('Keine Fragen verfügbar.', '📝'); return; }
+  const score = { correct: 0 };
+  const steps = questions.map((q, i) => examStep(q, i + 1, total, score));
+  openFlow(steps, (fe) => {
+    const res = recordExam(key, score.correct, total);
+    flushUnlocks();
+    examResult(fe, track, res, score.correct, total);
+  });
+}
+
+function examResult(fe, track, res, correct, total) {
+  const pass = res.pass;
+  fe.innerHTML = `<div class="flow-body"><div class="done">
+    <div class="big">${pass ? '🏅' : '📚'}</div>
+    <h2>${pass ? 'Prüfung bestanden!' : 'Noch nicht bestanden'}</h2>
+    <p class="muted"><b style="color:${pass ? 'var(--good)' : 'var(--orange-ink)'}">${res.pct}%</b> · ${correct}/${total} richtig${pass ? '' : ' · mindestens 80% nötig'}</p>
+    <p class="muted">${pass
+      ? (res.firstPass ? `Kapitel „${esc(track.label)}" abgeschlossen! +${res.xpGain} XP` : `Erneut bestanden — Bestleistung ${res.bestPct}%.`)
+      : 'Wiederhol ein paar Lektionen und versuch es dann noch einmal.'}</p>
+    <div class="row" style="gap:8px;margin-top:12px;width:100%;max-width:300px">
+      ${pass ? '' : `<button class="btn ghost" id="retry" style="flex:1">Nochmal</button>`}
+      <button class="btn" id="fin" style="flex:1">Zurück</button></div></div></div>`;
+  const rt = fe.querySelector('#retry');
+  if (rt) rt.onclick = () => { closeFlow(); openExam(track.key); };
+  fe.querySelector('#fin').onclick = () => { go('lessons'); closeFlow(); };
 }
 
 // Gerahmtes Szenen-Bild für einen Step. Fehlt die Datei, entfernt onerror es sauber.
