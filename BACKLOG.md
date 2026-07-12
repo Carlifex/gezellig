@@ -94,15 +94,17 @@ erhalten, reaktivierbar) und aus Navigation/Flow entkoppeln.
 
 ---
 
-## 🔒 Offene Entscheidung (dein Call)
+## 🔒 P1 — Git-History bereinigt ☑
 
-- ☐ **P1 — Git-History**: Da gezellig **public** ist, bleiben gelöschte Dateien
-      (Welt-Bibel, reference/) in der **History weiter öffentlich abrufbar**.
-      „Fernzugriff wirklich verhindern" braucht eine von zwei Maßnahmen:
-      - **(a)** Repo `gezellig` auf **privat** stellen (einfachste, sicherste
-        Lösung; öffentliche URL entfällt), **oder**
-      - **(b)** History-Scrub (force-push, rewrite) — invasiv, bricht Clones.
-      → Ich mache das **nicht** ohne dein explizites OK.
+- ☑ **P1 — History-Scrub (Option b) ausgeführt**: `git filter-repo` hat alle
+      sensiblen Pfade (Welt-Bibel, reference/ 63 MB, Antworten, Fragenkatalog,
+      Produktions-Docs, tools, app-source) aus der **gesamten History** entfernt
+      (74 Commits neu geschrieben, `.git` 87 MB → 4.2 MB), force-push auf `main`.
+      Repo bleibt public → GitHub Pages läuft weiter.
+      - ⚠️ **Rest-Caveat**: GitHub kann die alten Objekte per direktem Commit-SHA
+        noch bis zur serverseitigen Garbage-Collection vorhalten; etwaige **Forks**
+        behalten alte Kopien. Bei hoher Sensibilität: GitHub-Support um GC bitten
+        und auf Forks prüfen. Lokales Backup-Bundle liegt im Scratchpad.
 
 ---
 
