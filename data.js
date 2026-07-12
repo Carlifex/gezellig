@@ -132,6 +132,7 @@ export const LESSONS = [
   {
     id: 'wonen', order: 2, icon: '🐈',
     title: 'Das neue Zuhause & der Kater',
+    images: { story: 'illustrations/wonen.webp' },
     situation: 'Auspacken, Schmuser randaliert — und es klingelt: ein Paket.',
     story: 'Die Wohnung wird langsam ein Zuhause — oder ein Dschungel: Eni hängt Makramee auf, überall stehen Pflanzen. Der Schmuser nimmt Anlauf, springt an die Wand und reißt ausgerechnet das schönste Stück herunter. Genau da klingelt es: ein Paketbote steht mit einem Karton vor der Tür — und erkundigt sich prompt nach den Katzen. Du verstehst nur ein Wort: „kat".',
     grammar: 'hebbenzijn',
