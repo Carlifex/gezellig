@@ -565,10 +565,11 @@ export const LESSONS = [
     title: 'Bei Takumi Ramen',
     images: { story: 'illustrations/ramen.webp' },
     situation: 'Dampfende Schüsseln bei Takumi Ramen.',
-    story: 'Abendessen bei Takumi Ramen in Utrecht — winzig, immer voll, immer gut. Die Schüsseln dampfen, Eni pustet auf ihre scharfe Miso-Ramen, du versuchst, mit Stäbchen würdevoll auszusehen. „Lekker" ist das erste Wort, das dir mühelos rausrutscht.',
+    story: 'Abendessen bei Takumi Ramen in Utrecht — winzig, immer voll, immer gut. Die Schüsseln dampfen: du versuchst, deine Ramen mit Stäbchen würdevoll zu essen, während Eni genüsslich auf eine dampfende Gyoza pustet. „Lekker" ist das erste Wort, das dir mühelos rausrutscht.',
     grammar: 'bijvoeglijk',
     vocab: [
       { id: 'ra_ramen', nl: 'de ramen', de: 'die Ramen', ex: 'De ramen is heerlijk.', exDe: 'Die Ramen ist köstlich.' },
+      { id: 'ra_gyoza', nl: 'de gyoza', de: 'die Gyoza (Teigtaschen)', ex: 'De gyoza is heerlijk.', exDe: 'Die Gyoza ist köstlich.' },
       { id: 'ra_lekker', nl: 'lekker', de: 'lecker', ex: 'Wat lekker!', exDe: 'Wie lecker!' },
       { id: 'ra_warm', nl: 'warm', de: 'warm', ex: 'De soep is heel warm.', exDe: 'Die Suppe ist sehr warm.' },
       { id: 'ra_pittig', nl: 'pittig', de: 'scharf (würzig)', ex: 'Mijn ramen is pittig.', exDe: 'Meine Ramen ist scharf.' },
@@ -578,8 +579,8 @@ export const LESSONS = [
     ],
     dialogue: [
       { who: 'Kellner', nl: 'Al gekozen? De miso ramen is heel populair.', de: 'Schon gewählt? Die Miso-Ramen ist sehr beliebt.' },
-      { who: 'Eni', nl: 'Ik neem de pittige miso. Lekker warm!', de: 'Ich nehme die scharfe Miso. Schön warm!' },
-      { who: 'Du', nl: 'Voor mij de ramen met kip, alstublieft.', de: 'Für mich die Ramen mit Huhn, bitte.' },
+      { who: 'Du', nl: 'Voor mij de pittige miso ramen, alstublieft.', de: 'Für mich die scharfe Miso-Ramen, bitte.' },
+      { who: 'Eni', nl: 'En voor mij de gyoza. Lekker warm!', de: 'Und für mich die Gyoza. Schön warm!' },
       { who: 'Kellner', nl: 'Goede keuze! Eet smakelijk.', de: 'Gute Wahl! Guten Appetit.' },
     ],
     speak: [
