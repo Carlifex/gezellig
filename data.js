@@ -194,6 +194,7 @@ export const LESSONS = [
   {
     id: 'boodschappen', order: 4, icon: '🛒',
     title: 'Einkaufen im Albert Heijn',
+    images: { story: 'illustrations/boodschappen.webp' },
     situation: 'Material für Enis Messe — und Bargeld an der Kasse.',
     story: 'Eni braucht Material für ihren Stand auf der DIY-Messe, und du brauchst Snacks für die Studio-Nacht. Also: Albert Heijn, der Supermarkt an jeder Ecke. An der Kasse zückst du selbstbewusst Bargeld. Die Kassiererin schaut dich an, als hättest du mit Muscheln bezahlen wollen. „Pinnen?"',
     grammar: 'verkleining',
