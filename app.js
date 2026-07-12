@@ -56,17 +56,9 @@ function renderToday() {
 
   app.innerHTML = `
     <div class="stack">
-      <div class="hero">
-        <img src="illustrations/hero.webp" alt="Carlsson, Eni und die Katzen an einer Utrechter Gracht" loading="eager" onerror="this.closest('.hero').classList.add('noimg')"/>
-        <div class="hero-cap">
-          <div class="eyebrow">Gezellig · Deine Reise</div>
-          <div class="greet">${greet}<small>${goalMetToday() ? 'Tagesziel geschafft — schön! 🎉' : 'Bereit für heute?'}</small></div>
-        </div>
-      </div>
-
-      <div class="section-sub" style="margin:2px 0 8px">Deine Lernpfade — wische durch</div>
-      <div class="carousel" id="trackcar">${TRACKS.map(trackCard).join('')}</div>
-      <div class="cardots" id="cardots">${TRACKS.map((_, i) => `<button class="dot ${i === 0 ? 'on' : ''}" data-i="${i}" aria-label="Karte ${i + 1}"></button>`).join('')}</div>
+      <div class="eyebrow" style="margin-bottom:8px">Gezellig · ${greet}${goalMetToday() ? ' · Tagesziel geschafft 🎉' : ''} — wische durch die Kapitel</div>
+      <div class="herocar" id="herocar">${TRACKS.map(heroSlide).join('')}</div>
+      <div class="cardots" id="cardots">${TRACKS.map((_, i) => `<button class="dot ${i === 0 ? 'on' : ''}" data-i="${i}" aria-label="Cover ${i + 1}"></button>`).join('')}</div>
 
       <div class="card levelcard">
         <div class="levelrow">
@@ -101,11 +93,11 @@ function renderToday() {
   app.querySelector('#practice').onclick = () => go('practice');
   app.querySelector('#quickchat').onclick = () => go('chat');
 
-  // Track-Carousel: Karte anklicken → Track öffnen; Punkte = durchklicken; Wisch-Sync.
-  app.querySelectorAll('.tcard').forEach(b => b.onclick = () => openTrack(b.dataset.track));
-  const car = app.querySelector('#trackcar'), dots = [...app.querySelectorAll('#cardots .dot')];
+  // Hero-Carousel: Cover anklicken → Kapitel öffnen; Punkte = durchklicken; Wisch-Sync.
+  app.querySelectorAll('.heroslide').forEach(b => b.onclick = () => openTrack(b.dataset.track));
+  const car = app.querySelector('#herocar'), dots = [...app.querySelectorAll('#cardots .dot')];
   if (car) {
-    const step = () => { const c = car.querySelector('.tcard'); return c ? c.offsetWidth + 12 : 1; };
+    const step = () => car.clientWidth || 1;
     dots.forEach(d => d.onclick = () => car.scrollTo({ left: (+d.dataset.i) * step(), behavior: 'smooth' }));
     car.addEventListener('scroll', () => {
       const idx = Math.round(car.scrollLeft / step());
@@ -122,11 +114,11 @@ function taskRow(t) {
 /* ============================ LEKTIONEN ============================ */
 // Lektions-Tracks: der Story-Bogen plus thematische Sammlungen.
 const TRACKS = [
-  { key: 'verhaal',  icon: '🧡', label: 'Carlssons Geschichte',      sub: 'Der durchgehende Handlungsbogen — wähle selbst, wo du weitermachst.', chip: 'KAPITEL' },
-  { key: 'personen', icon: '🎨', label: 'Berühmte Persönlichkeiten', sub: 'Zehn Niederländer:innen, die die Welt geprägt haben.',               chip: 'PORTRÄT' },
-  { key: 'mythen',   icon: '🌷', label: 'Mythen & Kuriositäten',     sub: 'Zehn Eigenheiten, die die Niederlande ausmachen.',                    chip: 'FAKT' },
-  { key: 'ade',      icon: '🎧', label: 'Amsterdam Dance Event',     sub: 'Die Geschichte des größten Dance-Events der Welt.',                   chip: 'ADE' },
-  { key: 'feest',    icon: '🎉', label: 'Niederländische Feierkultur', sub: 'Von Gabber bis Borrel — wie die Niederlande feiern.',               chip: 'FEEST' },
+  { key: 'verhaal',  icon: '🧡', label: 'Carlssons Geschichte',      heroTitle: 'Carlsson & Eni in Utrecht', hero: 'illustrations/hero.webp', sub: 'Der durchgehende Handlungsbogen — wähle selbst, wo du weitermachst.', chip: 'KAPITEL' },
+  { key: 'personen', icon: '🎨', label: 'Berühmte Persönlichkeiten', heroTitle: 'Berühmte Persönlichkeiten', hero: '', sub: 'Zehn Niederländer:innen, die die Welt geprägt haben.',               chip: 'PORTRÄT' },
+  { key: 'mythen',   icon: '🌷', label: 'Mythen & Kuriositäten',     heroTitle: 'Mythen & Kuriositäten',     hero: '', sub: 'Zehn Eigenheiten, die die Niederlande ausmachen.',                    chip: 'FAKT' },
+  { key: 'ade',      icon: '🎧', label: 'Amsterdam Dance Event',     heroTitle: 'Amsterdam Dance Event',     hero: '', sub: 'Die Geschichte des größten Dance-Events der Welt.',                   chip: 'ADE' },
+  { key: 'feest',    icon: '🎉', label: 'Niederländische Feierkultur', heroTitle: 'Niederländische Feierkultur', hero: '', sub: 'Von Gabber bis Borrel — wie die Niederlande feiern.',               chip: 'FEEST' },
 ];
 const trackLessons = (key) => LESSONS.filter(l => (l.track || 'verhaal') === key);
 
@@ -157,16 +149,20 @@ function renderLessons() {
   app.querySelectorAll('.lesson').forEach(b => b.onclick = () => openLesson(b.dataset.id));
 }
 
-// Track-Karte fürs Start-Carousel.
-function trackCard(t) {
+// Hero-Slide fürs Start-Carousel: Kapitel-Deckblatt mit Titel drin.
+// Ohne Bild (hero=''): Platzhalter mit Icon + „Cover folgt".
+function heroSlide(t) {
   const ls = trackLessons(t.key);
   const done = ls.filter(l => lessonStatus(l.id) !== 'neu').length;
-  const pct = ls.length ? Math.round(done / ls.length * 100) : 0;
-  return `<button class="tcard" data-track="${t.key}">
-    <div class="tcard-top"><span class="tcard-icon">${t.icon}</span><span class="tcard-count">${done}/${ls.length} ✅</span></div>
-    <div class="tcard-title">${esc(t.label)}</div>
-    <div class="tcard-sub">${esc(t.sub)}</div>
-    <div class="tcard-bar"><i style="width:${pct}%"></i></div></button>`;
+  const img = t.hero
+    ? `<img src="${esc(t.hero)}" alt="" loading="eager" onerror="this.closest('.heroslide').classList.add('noimg')"/>`
+    : '';
+  return `<button class="heroslide ${t.hero ? '' : 'noimg'}" data-track="${t.key}">
+    ${img}<span class="heroslide-ph">${t.icon}</span>
+    <div class="hero-cap">
+      <div class="eyebrow">Lernpfad · ${done}/${ls.length} ✅${t.hero ? '' : ' · Cover folgt'}</div>
+      <div class="greet">${esc(t.heroTitle)}</div>
+    </div></button>`;
 }
 
 // Zu einem Track springen (Lektionen-Tab, zur Sektion scrollen).
