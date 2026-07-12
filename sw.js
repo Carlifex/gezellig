@@ -12,7 +12,7 @@
 // werden automatisch nachgezogen. (CACHE-Version nur bumpen, wenn man alle
 // Caches hart leeren will.)
 
-const CACHE = 'gezellig-v33';
+const CACHE = 'gezellig-v34';
 const ASSETS = [
   './',
   './index.html',
@@ -29,6 +29,7 @@ const ASSETS = [
   './icons/maskable-512.png',
   './icons/apple-touch-icon.png',
   './illustrations/hero.webp',
+  './illustrations/ladescreen.webp',
 ];
 
 self.addEventListener('install', (e) => {
