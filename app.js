@@ -121,7 +121,7 @@ const TRACKS = [
   { key: 'mythen',   icon: '🌷', level: 'A2', label: 'Mythen & Kuriositäten',     heroTitle: 'Mythen & Kuriositäten',     hero: 'illustrations/cover-mythen.webp', sub: 'Zehn Eigenheiten, die die Niederlande ausmachen.',                    chip: 'FAKT' },
   { key: 'ade',      icon: '🎧', level: 'B1', label: 'Amsterdam Dance Event',     heroTitle: 'Amsterdam Dance Event',     hero: 'illustrations/cover-ade.webp', sub: 'Die Geschichte des größten Dance-Events der Welt.',                   chip: 'ADE' },
   { key: 'feest',    icon: '🎉', level: 'B1', label: 'Niederländische Feierkultur', heroTitle: 'Niederländische Feierkultur', hero: 'illustrations/cover-feest.webp', sub: 'Von Gabber bis Borrel — wie die Niederlande feiern.',               chip: 'FEEST' },
-  { key: 'natuurkunde', icon: '⚛️', level: 'C1', label: 'Nederlandse natuurkundigen', heroTitle: 'Licht, Tijd & Ruimte', hero: '', sub: 'Huygens, Lorentz & Zeeman — Physik, Leben und die Politik ihrer Epoche. Höchstes Niveau, viel Fachsprache.', chip: 'PHYSICUS' },
+  { key: 'natuurkunde', icon: '⚛️', level: 'C1', label: 'Nederlandse natuurkundigen', heroTitle: 'Licht, Tijd & Ruimte', hero: 'illustrations/cover-natuurkunde.webp', sub: 'Huygens, Lorentz & Zeeman — Physik, Leben und die Politik ihrer Epoche. Höchstes Niveau, viel Fachsprache.', chip: 'PHYSICUS' },
 ];
 const trackLessons = (key) => LESSONS.filter(l => (l.track || 'verhaal') === key);
 
