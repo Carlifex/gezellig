@@ -126,7 +126,16 @@ const TRACKS = [
 const trackLessons = (key) => LESSONS.filter(l => (l.track || 'verhaal') === key);
 
 // Kapitel mit eigenem Bild-Icon (illustrations/icons/<id>.webp); sonst Emoji-Fallback.
-const ICON_IDS = new Set(['aankomst','wonen','bakker','boodschappen','tijd','weg','platenzaak','beurs','ontbijt','plantenwinkel','ramen','terras','markt','avond','verjaardag','amsterdam','liquicity','void','optreden']);
+const ICON_IDS = new Set([
+  // verhaal
+  'aankomst','wonen','bakker','boodschappen','tijd','weg','platenzaak','beurs','ontbijt','plantenwinkel','ramen','terras','markt','avond','verjaardag','amsterdam','liquicity','void','optreden',
+  // personen
+  'per_vangogh','per_rembrandt','per_annefrank','per_cruyff','per_verstappen','per_willemvanoranje','per_erasmus','per_leeuwenhoek','per_escher','per_arminvanbuuren',
+  // mythen
+  'myth_deich','myth_oranje','myth_polder','myth_tulpen','myth_fietsen','myth_sinterklaas','myth_gedoog','myth_kaas','myth_uitwaaien','myth_koningsdag',
+  // ade
+  'ade_watis','ade_begin','ade_conference','ade_hoofdstad','ade_tiesto','ade_armin','ade_dutchhouse','ade_venues','ade_top100','ade_vandaag',
+]);
 const lemIcon = (l) => ICON_IDS.has(l.id)
   ? `<img class="lem-img" src="illustrations/icons/${l.id}.webp" alt="" loading="lazy">`
   : l.icon;
