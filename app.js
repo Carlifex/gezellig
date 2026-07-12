@@ -135,6 +135,8 @@ const ICON_IDS = new Set([
   'myth_deich','myth_oranje','myth_polder','myth_tulpen','myth_fietsen','myth_sinterklaas','myth_gedoog','myth_kaas','myth_uitwaaien','myth_koningsdag',
   // ade
   'ade_watis','ade_begin','ade_conference','ade_hoofdstad','ade_tiesto','ade_armin','ade_dutchhouse','ade_venues','ade_top100','ade_vandaag',
+  // feest
+  'feest_gabber','feest_thunderdome','feest_housewelle','feest_mysteryland','feest_sensation','feest_qdance','feest_awakenings','feest_freeparty','feest_koningsdag','feest_borrel',
 ]);
 const lemIcon = (l) => ICON_IDS.has(l.id)
   ? `<img class="lem-img" src="illustrations/icons/${l.id}.webp" alt="" loading="lazy">`
