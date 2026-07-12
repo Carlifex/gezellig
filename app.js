@@ -102,17 +102,33 @@ function taskRow(t) {
 }
 
 /* ============================ LEKTIONEN ============================ */
+// Lektions-Tracks: der Story-Bogen plus thematische Sammlungen.
+const TRACKS = [
+  { key: 'verhaal',  label: 'Carlssons Geschichte',      sub: 'Der durchgehende Handlungsbogen — wähle selbst, wo du weitermachst.', chip: 'KAPITEL' },
+  { key: 'personen', label: 'Berühmte Persönlichkeiten', sub: 'Zehn Niederländer:innen, die die Welt geprägt haben.',               chip: 'PORTRÄT' },
+  { key: 'mythen',   label: 'Mythen & Kuriositäten',     sub: 'Zehn Eigenheiten, die die Niederlande ausmachen.',                    chip: 'FAKT' },
+  { key: 'ade',      label: 'Amsterdam Dance Event',     sub: 'Die Geschichte des größten Dance-Events der Welt.',                   chip: 'ADE' },
+  { key: 'feest',    label: 'Niederländische Feierkultur', sub: 'Von Gabber bis Borrel — wie die Niederlande feiern.',               chip: 'FEEST' },
+];
+
+function lessonBtn(l, chip, n) {
+  const st = lessonStatus(l.id);
+  const label = chip === 'KAPITEL' ? `KAPITEL ${l.order}` : `${chip} ${n}`;
+  return `<button class="lesson" data-id="${l.id}">
+    <span class="lem">${l.icon}</span>
+    <span class="lmain"><span class="lchip">${label}</span><b>${esc(l.title)}</b><span>${esc(l.situation)}</span></span>
+    <span class="lst ${st}">${st}</span></button>`;
+}
+
 function renderLessons() {
-  app.innerHTML = `
-    <div class="section-title">Lektionen</div>
-    <div class="section-sub">Carlssons Geschichte in 9 Kapiteln — wähle selbst, wo du weitermachst.</div>
-    <div class="lgrid">${LESSONS.map(l => {
-      const st = lessonStatus(l.id);
-      return `<button class="lesson" data-id="${l.id}">
-        <span class="lem">${l.icon}</span>
-        <span class="lmain"><span class="lchip">KAPITEL ${l.order}</span><b>${esc(l.title)}</b><span>${esc(l.situation)}</span></span>
-        <span class="lst ${st}">${st}</span></button>`;
-    }).join('')}</div>`;
+  const sections = TRACKS.map(t => {
+    const ls = LESSONS.filter(l => (l.track || 'verhaal') === t.key);
+    if (!ls.length) return '';
+    return `<div class="section-title">${esc(t.label)}</div>
+      <div class="section-sub">${esc(t.sub)}</div>
+      <div class="lgrid">${ls.map((l, i) => lessonBtn(l, t.chip, i + 1)).join('')}</div>`;
+  }).join('');
+  app.innerHTML = `<div class="stack">${sections}</div>`;
   app.querySelectorAll('.lesson').forEach(b => b.onclick = () => openLesson(b.dataset.id));
 }
 
