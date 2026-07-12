@@ -75,9 +75,16 @@ strikt orientieren!)**, `welt-bibel.md` (Canon), `prompt-lab.md`, `szenen-rezept
 > Stil in den Prompt eingewoben. Referenz = **ein** kombiniertes `scene-<id>.jpg`.
 
 **Ich (Claude) erzeuge KEINE Pixel** — ich liefere fertige Prompts + je Szene EIN
-kombiniertes Referenz-Blatt (PIL-Montage). **Blatt-Auslieferung:** `reference/` ist
-privat → alter public Raw-Link tot; Blatt **direkt als Datei** senden (`SendUserFile`)
-oder GitHub-Blob-Link ins private Repo.
+kombiniertes Referenz-Blatt (PIL-Montage).
+
+**Auslieferung (Nutzer-Wunsch, minimale Browserarbeit — IMMER so):**
+- **Referenz-Blätter:** temporär ins **öffentliche** Repo unter `_refs/<id>-<sha8>.jpg`
+  (unique Name → sauberer Browser-Download), direkter Link
+  `https://raw.githubusercontent.com/carlifex/gezellig/main/_refs/<name>`. **Löschen,
+  sobald eine brauchbare Grafik erstellt ist** (git rm; ggf. später History-Scrub der
+  `_refs/`, da temp-public sonst in der History bleibt).
+- **Prompts:** je Prompt als **eigener Code-Block** im Chat (Copy-Button) **und**
+  dauerhaft in der **privaten `welt-bibel.md`** (Abschnitt „Bild-Prompts", Code-Blöcke).
 
 **Ablage (App nutzt automatisch):** `illustrations/<lektions-id>.webp` (Cover
 `illustrations/cover-<track>.webp`), Querformat, WebP ~Q80, **< 200 KB**.
