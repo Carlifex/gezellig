@@ -376,7 +376,7 @@ export const LESSONS = [
   },
   {
     id: 'tijd', order: 5, icon: '🕒',
-    title: 'Der Termin im Studio',
+    title: 'Der Termin — und der Kater',
     images: { story: 'illustrations/tijd.webp' },
     situation: 'Ein Producer hat eine Stunde frei — heute um drei.',
     story: 'Ein lokaler Producer, Sander, hat eine Stunde Studiozeit frei — heute um drei. In den Niederlanden ist ein <i>afspraak</i> ein <i>afspraak</i>: zu spät kommen ist keine Option. Du checkst zum dritten Mal die Uhr, während der Schmuser seelenruhig auf deinem Kopfhörer schläft.',
