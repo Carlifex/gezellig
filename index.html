@@ -7,6 +7,7 @@
   <meta name="description" content="Niederländisch lernen für deutsche Muttersprachler — Phase-0-Prototyp." />
   <meta name="theme-color" content="#1d4e89" />
   <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="preload" as="image" href="illustrations/ladescreen.webp" />
   <link rel="icon" href="icons/icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -15,6 +16,7 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div id="splash" aria-hidden="true"><img src="illustrations/ladescreen.webp" alt="Gezellig" /></div>
   <div id="app" aria-live="polite"></div>
   <nav id="tabbar" hidden>
     <button data-tab="today" class="on"><span>🏠</span>Start</button>

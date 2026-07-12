@@ -745,6 +745,13 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 /* ---------- init ---------- */
 syncTabs();
 render();
+// Ladescreen (Splash) sanft ausblenden, sobald die App bereit ist.
+(function dismissSplash() {
+  const s = document.getElementById('splash');
+  if (!s) return;
+  const hide = () => { s.classList.add('hide'); setTimeout(() => s.remove(), 600); };
+  setTimeout(hide, 1400); // kurze Mindestanzeige, damit das Artwork sichtbar ist
+})();
 // Erst-Start-Onboarding: nur für neue Nutzer (kein Fortschritt); sonst still überspringen.
 if (!localStorage.getItem('gezellig.onboarded')) {
   if (state.totals.lessonsDone === 0 && !state.lastGoalDate && state.xp === 0) runOnboarding();
