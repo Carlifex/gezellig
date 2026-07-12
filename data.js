@@ -163,6 +163,7 @@ export const LESSONS = [
   {
     id: 'bakker', order: 3, icon: '🥖',
     title: 'Beim Bäcker',
+    images: { story: 'illustrations/bakker.webp' },
     situation: 'Dein erster Alleingang auf Niederländisch.',
     story: 'Erster Alleingang auf Niederländisch: Brötchen holen. Simpel, denkst du — bis dir direkt vor der Theke einfällt, dass du keine Ahnung hast, ob es <i>der</i> oder <i>das</i> brood heißt. Der Bäcker wartet freundlich. Hinter dir wird die Schlange länger. Jetzt bloß nichts Deutsches sagen.',
     grammar: 'dehet',
