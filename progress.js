@@ -20,11 +20,11 @@ export const ALL_VOCAB = Object.values(vocabById);
 // ---- State ----------------------------------------------------------------
 function fresh() {
   return {
-    xp: 0, streak: 0, freezes: 1, lastGoalDate: null,
+    xp: 0, streak: 0, maxStreak: 0, freezes: 1, lastGoalDate: null,
     settings: { tts: true, dailyGoal: 'normaal', aiEndpoint: '' },
-    cards: {}, lessons: {}, milestones: {},
+    cards: {}, lessons: {}, milestones: {}, history: {},
     daily: null,
-    totals: { reviews: 0, wordsLearned: 0, speakOk: 0, chats: 0, lessonsDone: 0, lessonsMastered: 0, sessions: 0 },
+    totals: { reviews: 0, wordsLearned: 0, speakOk: 0, chats: 0, lessonsDone: 0, lessonsMastered: 0, sessions: 0, answers: 0, answersOk: 0 },
   };
 }
 export let state = load();
@@ -33,6 +33,10 @@ function load() {
   let s;
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch (_) {}
   if (!s || !s.totals) s = fresh();
+  // Nachrüsten für ältere Speicherstände:
+  if (!s.history) s.history = {};
+  if (s.maxStreak == null) s.maxStreak = 0;
+  if (s.totals.answers == null) { s.totals.answers = 0; s.totals.answersOk = 0; }
   ensureDay(s);
   return s;
 }
@@ -55,6 +59,14 @@ function pickTasks(goalKey) {
 function ensureDay(s) {
   const t = todayStr();
   if (s.daily && s.daily.date === t) return;
+  // Vergangenen Tag ins Verlaufs-Archiv sichern (für die Statistik).
+  if (s.daily && s.daily.date && s.daily.date !== t) {
+    if (!s.history) s.history = {};
+    s.history[s.daily.date] = s.daily.counters;
+    // Archiv auf ~120 Tage begrenzen.
+    const keys = Object.keys(s.history).sort();
+    while (keys.length > 120) delete s.history[keys.shift()];
+  }
   // Streak-Pflege beim Tageswechsel (gentle): Freeze deckt eine Lücke.
   if (s.lastGoalDate && s.lastGoalDate !== t && s.lastGoalDate !== yestStr()) {
     // mehr als 1 Tag her → Lücke
@@ -95,6 +107,7 @@ function checkGoal() {
   if (state.daily.counters.xp >= goalXp && state.lastGoalDate !== todayStr()) {
     // Tagesziel erreicht → Streak fortführen
     state.streak = (state.lastGoalDate === yestStr()) ? state.streak + 1 : 1;
+    state.maxStreak = Math.max(state.maxStreak || 0, state.streak);
     state.lastGoalDate = todayStr();
     checkMilestones();
   }
@@ -238,6 +251,36 @@ export function resetAll() { localStorage.removeItem(KEY); state = fresh(); ensu
 
 // Freie Übungs-XP (z. B. Satzbau), ohne SRS-Karte.
 export function gainXp(n) { addXp(n); refreshTasks(); save(); }
+
+// Antwort-Trefferquote (aktive Modi: Produzieren, Hören).
+export function recordAnswer(ok) {
+  state.totals.answers = (state.totals.answers || 0) + 1;
+  if (ok) state.totals.answersOk = (state.totals.answersOk || 0) + 1;
+  save();
+}
+
+// Verlauf der letzten n Tage (heute live aus daily.counters, sonst aus history).
+export function historyLast(n = 7) {
+  const t = todayStr(), out = [];
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(Date.now() - i * DAYMS).toISOString().slice(0, 10);
+    const src = d === t ? state.daily.counters : (state.history[d] || {});
+    out.push({ date: d, xp: src.xp || 0, reviews: src.reviews || 0, newWords: src.newWords || 0 });
+  }
+  return out;
+}
+export function stats() {
+  const words = ALL_VOCAB.filter(v => state.cards[v.id] && state.cards[v.id].reps);
+  const mastered = words.filter(v => state.cards[v.id].S >= 8).length;
+  const ans = state.totals.answers || 0, ansOk = state.totals.answersOk || 0;
+  return {
+    started: words.length, total: ALL_VOCAB.length, mastered,
+    due: dueCount(), streak: state.streak, maxStreak: state.maxStreak || 0,
+    reviews: state.totals.reviews, speakOk: state.totals.speakOk, chats: state.totals.chats,
+    lessonsDone: state.totals.lessonsDone, lessonsMastered: state.totals.lessonsMastered,
+    accuracy: ans ? Math.round(ansOk / ans * 100) : null, answers: ans,
+  };
+}
 
 // „Schwache" Karten: schon gestartet, aber wacklig (Fehler / hohe Schwierigkeit /
 // geringe Stabilität). Nach Schwäche sortiert, für den Schwachstellen-Modus.

@@ -9,6 +9,7 @@ import {
   state, save, levelInfo, dailyTasks, dueVocab, dueCount, reviewCard, completeLesson,
   chatTurn, speakResult, setSetting, resetAll, lessonStatus, milestoneState, takeUnlocks,
   todayXp, dailyGoalXp, goalMetToday, cardOf, ALL_VOCAB, gainXp, weakVocab, startedVocab,
+  recordAnswer, historyLast, stats,
 } from './progress.js';
 
 setTtsEnabled(state.settings.tts);
@@ -301,7 +302,7 @@ function openProduce() {
       const check = () => {
         const val = inp.value.trim(); if (!val) return;
         const ok = answerMatches(val, v.nl);
-        reviewCard(v.id, ok ? 'good' : 'again'); flushUnlocks();
+        reviewCard(v.id, ok ? 'good' : 'again'); recordAnswer(ok); flushUnlocks();
         body.querySelector('#fb').innerHTML = `<div class="result ${ok ? 'ok' : 'no'}">${ok ? '✓ Richtig!' : 'Fast!'} Korrekt: <b>${esc(v.nl)}</b> — ${esc(v.de)}</div>`;
         inp.disabled = true; speak(v.nl);
         foot.innerHTML = `<button class="btn" id="n">${i === pool.length - 1 ? 'Fertig' : 'Weiter'}</button>`;
@@ -376,7 +377,7 @@ function openListen() {
         if (answered) return; answered = true;
         const ok = btn.dataset.de === v.de;
         body.querySelectorAll('.choice').forEach(b2 => { if (b2.dataset.de === v.de) b2.classList.add('correct'); else if (b2 === btn) b2.classList.add('wrong'); });
-        reviewCard(v.id, ok ? 'good' : 'again'); flushUnlocks();
+        reviewCard(v.id, ok ? 'good' : 'again'); recordAnswer(ok); flushUnlocks();
         foot.innerHTML = `<button class="btn" id="n">${i === pool.length - 1 ? 'Fertig' : 'Weiter'}</button>`;
         foot.querySelector('#n').onclick = () => { i++; draw(); };
       });
@@ -387,6 +388,33 @@ function openListen() {
 }
 
 /* ============================ PROFIL ============================ */
+const WD = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+function statsCard() {
+  const s = stats();
+  const hist = historyLast(7);
+  const maxXp = Math.max(10, ...hist.map(h => h.xp));
+  const total = hist.reduce((a, h) => a + h.xp, 0);
+  const bars = hist.map(h => {
+    const lbl = WD[new Date(h.date + 'T00:00:00').getDay()];
+    const pct = Math.round(h.xp / maxXp * 100);
+    return `<div class="bar"><div class="bar-fill" style="height:${Math.max(3, pct)}%" title="${h.xp} XP"></div><span>${lbl}</span></div>`;
+  }).join('');
+  return `
+    <div class="section-sub" style="margin:22px 0 8px">Statistik</div>
+    <div class="card">
+      <div class="stat-head"><b>XP — letzte 7 Tage</b><span class="muted">${total} XP</span></div>
+      <div class="chart">${bars}</div>
+    </div>
+    <div class="statgrid">
+      <div class="sg"><b>🔥 ${s.streak}</b><span>Serie (Tage)</span></div>
+      <div class="sg"><b>${s.maxStreak}</b><span>Längste Serie</span></div>
+      <div class="sg"><b>${s.mastered}</b><span>Wörter gemeistert</span></div>
+      <div class="sg"><b>${s.due}</b><span>Jetzt fällig</span></div>
+      <div class="sg"><b>${s.accuracy == null ? '—' : s.accuracy + '%'}</b><span>Trefferquote (aktiv)</span></div>
+      <div class="sg"><b>${s.started}/${s.total}</b><span>Wörter gestartet</span></div>
+    </div>`;
+}
+
 function renderProfile() {
   const L = levelInfo();
   const words = ALL_VOCAB.filter(v => state.cards[v.id]).length;
@@ -400,6 +428,8 @@ function renderProfile() {
         <div class="lvnum"><b>🔥 ${state.streak}</b><span>STREAK</span></div></div>
       <div class="xpbar"><i style="width:${L.pct}%"></i></div>
     </div>
+
+    ${statsCard()}
 
     <div class="card" style="margin-top:14px">
       <div class="stat"><span>Sitzungen (Serie)</span><b>🔥 ${state.streak} Tage</b></div>
@@ -426,7 +456,10 @@ function renderProfile() {
         <span class="muted" style="font-size:12px">Leer = Offline-Bäcker. Siehe README.</span></div>
     </div>
     ${!sttSupported() ? `<div class="warnbar" style="margin-top:14px">🎤 Spracherkennung wird hier nicht unterstützt (z. B. iPhone). Beim Sprechen kannst du stattdessen tippen.</div>` : ''}
-    <button class="btn ghost" id="reset" style="margin-top:16px">Fortschritt zurücksetzen</button>`;
+    <button class="btn ghost" id="intro" style="margin-top:16px">🚀 Einführung nochmal ansehen</button>
+    <button class="btn ghost" id="reset" style="margin-top:10px">Fortschritt zurücksetzen</button>`;
+
+  app.querySelector('#intro').onclick = () => runOnboarding();
 
   app.querySelectorAll('#goalseg button').forEach(b => b.onclick = () => { setSetting('dailyGoal', b.dataset.g); renderProfile(); });
   app.querySelector('#tts').onclick = () => { const v = !state.settings.tts; setSetting('tts', v); setTtsEnabled(v); renderProfile(); };
@@ -680,9 +713,53 @@ function openWeak() {
   runFlashReview(weakVocab(), { label: 'Schwachstellen', emoji: '🎯', title: 'Stärker geworden!', empty: 'Keine Schwachstellen — stark!', returnTab: 'practice' });
 }
 
+/* ---------- ONBOARDING (Erst-Start) ---------- */
+function runOnboarding() {
+  const goals = Object.entries(DAILY_GOALS);
+  const steps = [
+    { render(body, foot, done) {
+      body.innerHTML = `<div style="text-align:center;padding-top:8px">
+        <img src="icons/icon-192.png" alt="" style="width:104px;height:104px;border-radius:24px;box-shadow:var(--shadow)"/>
+        <h2 style="margin:18px 0 6px">Welkom bij Gezellig!</h2>
+        <p class="muted" style="font-size:15px;line-height:1.5">Deine persönliche Reise, um <b>Niederländisch</b> zu lernen — mit Carlssons Geschichte, Vokabel-Training, Sprechen und echten Gesprächen.</p></div>`;
+      foot.innerHTML = `<button class="btn" id="n">Los geht’s</button>`; foot.querySelector('#n').onclick = done;
+    }},
+    { render(body, foot, done) {
+      body.innerHTML = `<div class="step-title">Wie viel Zeit pro Tag?</div>
+        <p class="muted" style="font-size:13px;margin-bottom:14px">Nur ein Tagesziel — jederzeit im Profil änderbar.</p>
+        <div class="seg" id="g">${goals.map(([k, g]) => `<button data-g="${k}" class="${state.settings.dailyGoal === k ? 'on' : ''}">${g.label}<br><span style="font-size:11px;color:var(--muted)">${g.minutes} Min</span></button>`).join('')}</div>`;
+      body.querySelectorAll('#g button').forEach(b => b.onclick = () => { setSetting('dailyGoal', b.dataset.g); body.querySelectorAll('#g button').forEach(x => x.classList.toggle('on', x === b)); });
+      foot.innerHTML = `<button class="btn" id="n">Weiter</button>`; foot.querySelector('#n').onclick = done;
+    }},
+    { render(body, foot, done) {
+      body.innerHTML = `<div class="step-title">Stimme &amp; Aussprache 🔊</div>
+        <p class="muted" style="font-size:14px;margin-bottom:14px">Gezellig liest dir jedes niederländische Wort vor. Probier’s:</p>
+        <div class="card" style="text-align:center"><div class="prompt-nl">Hallo, ik heet Carlsson.</div>
+          <div class="rec"><button class="iconbtn" id="say" style="width:56px;height:56px;font-size:24px">🔊</button></div></div>
+        ${ttsSupported() ? '' : '<div class="warnbar" style="margin-top:12px">⚠️ Dieses Gerät kann keine Sprachausgabe im Browser — du kannst trotzdem alles lernen.</div>'}
+        <div class="toggle" style="margin-top:16px"><span>🔊 Automatisch vorlesen</span><button class="switch ${state.settings.tts ? 'on' : ''}" id="tts"><i></i></button></div>`;
+      body.querySelector('#say').onclick = () => speak('Hallo, ik heet Carlsson.');
+      body.querySelector('#tts').onclick = () => { const v = !state.settings.tts; setSetting('tts', v); setTtsEnabled(v); body.querySelector('#tts').classList.toggle('on', v); };
+      speak('Hallo, ik heet Carlsson.');
+      foot.innerHTML = `<button class="btn" id="n">Weiter</button>`; foot.querySelector('#n').onclick = done;
+    }},
+    { render(body, foot, done) {
+      body.innerHTML = `<div class="done"><div class="big">🎉</div><h2>Alles bereit!</h2>
+        <p class="muted">Oben auf der Startseite wischst du durch die Kapitel. Beginne mit „Ankunft in Utrecht" — veel plezier!</p></div>`;
+      foot.innerHTML = `<button class="btn" id="n">Jetzt starten</button>`; foot.querySelector('#n').onclick = done;
+    }},
+  ];
+  openFlow(steps, () => { localStorage.setItem('gezellig.onboarded', '1'); closeFlow(); go('today'); });
+}
+
 /* ---------- utils ---------- */
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
 /* ---------- init ---------- */
 syncTabs();
 render();
+// Erst-Start-Onboarding: nur für neue Nutzer (kein Fortschritt); sonst still überspringen.
+if (!localStorage.getItem('gezellig.onboarded')) {
+  if (state.totals.lessonsDone === 0 && !state.lastGoalDate && state.xp === 0) runOnboarding();
+  else localStorage.setItem('gezellig.onboarded', '1');
+}

@@ -293,6 +293,17 @@ button{font-family:inherit}
 .cardots .dot{width:7px;height:7px;border-radius:50%;border:none;background:var(--line);padding:0;cursor:pointer;transition:width .2s}
 .cardots .dot.on{background:var(--magenta);width:18px;border-radius:4px}
 
+/* ---- Statistik (Profil) ---- */
+.stat-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;font-size:14px}
+.chart{display:flex;align-items:flex-end;gap:8px;height:96px}
+.chart .bar{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.chart .bar-fill{width:68%;min-height:3px;border-radius:5px 5px 3px 3px;background:var(--grad)}
+.chart .bar span{font-size:10px;color:var(--muted);font-weight:700}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.sg{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center;box-shadow:var(--shadow)}
+.sg b{display:block;font-size:19px;font-weight:800}
+.sg span{font-size:10.5px;color:var(--muted);font-weight:600;line-height:1.25;display:block;margin-top:2px}
+
 /* ---- v2: milestones ---- */
 .msgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
 .ms{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center;
