@@ -750,7 +750,7 @@ render();
   const s = document.getElementById('splash');
   if (!s) return;
   const hide = () => { s.classList.add('hide'); setTimeout(() => s.remove(), 600); };
-  setTimeout(hide, 1400); // kurze Mindestanzeige, damit das Artwork sichtbar ist
+  setTimeout(hide, 900); // kurze, nahtlose Überblendung (nach nativem Launch-Screen)
 })();
 // Erst-Start-Onboarding: nur für neue Nutzer (kein Fortschritt); sonst still überspringen.
 if (!localStorage.getItem('gezellig.onboarded')) {
