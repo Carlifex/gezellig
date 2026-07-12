@@ -225,6 +225,7 @@ export const LESSONS = [
   {
     id: 'weg', order: 5, icon: '🚲',
     title: 'Auf dem Rad — und verfahren',
+    images: { story: 'illustrations/weg.webp' },
     situation: 'Du suchst den Plattenladen und verirrst dich.',
     story: 'Du willst zum Plattenladen „Ferry\'s Records". Natürlich auf dem Rad — hier fährt einfach jeder. Nach zehn Minuten stehst du an einer Gracht, die du sicher schon dreimal gesehen hast. Ein Rentner auf einem uralten Hollandrad rollt vorbei. Zeit, deinen ersten Satz zu wagen: „Pardon…"',
     grammar: 'modaal',
