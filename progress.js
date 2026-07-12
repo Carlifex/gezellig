@@ -21,7 +21,7 @@ export const ALL_VOCAB = Object.values(vocabById);
 function fresh() {
   return {
     xp: 0, streak: 0, maxStreak: 0, freezes: 1, lastGoalDate: null,
-    settings: { tts: true, dailyGoal: 'normaal', aiEndpoint: '' },
+    settings: { tts: true, rate: 0.92, theme: 'auto', dailyGoal: 'normaal', aiEndpoint: '' },
     cards: {}, lessons: {}, milestones: {}, history: {},
     daily: null,
     totals: { reviews: 0, wordsLearned: 0, speakOk: 0, chats: 0, lessonsDone: 0, lessonsMastered: 0, sessions: 0, answers: 0, answersOk: 0 },
@@ -37,6 +37,8 @@ function load() {
   if (!s.history) s.history = {};
   if (s.maxStreak == null) s.maxStreak = 0;
   if (s.totals.answers == null) { s.totals.answers = 0; s.totals.answersOk = 0; }
+  if (s.settings.rate == null) s.settings.rate = 0.92;
+  if (s.settings.theme == null) s.settings.theme = 'auto';
   ensureDay(s);
   return s;
 }

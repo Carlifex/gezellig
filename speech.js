@@ -14,18 +14,36 @@ export const ttsSupported = () => 'speechSynthesis' in window;
 let ttsEnabled = true;
 export function setTtsEnabled(v) { ttsEnabled = v; }
 
+let ttsRate = 0.92;
+export function setTtsRate(r) { ttsRate = r; }
+
+function nlVoice() {
+  const voices = window.speechSynthesis.getVoices();
+  return voices.find(v => /nl(-|_)?/i.test(v.lang)) || null;
+}
+function utter(text, rate) {
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'nl-NL';
+  u.rate = rate || ttsRate;
+  const nl = nlVoice(); if (nl) u.voice = nl;
+  return u;
+}
+
 // Spricht einen niederländischen Text. Wählt möglichst eine nl-Stimme.
-export function speak(text) {
+export function speak(text, rate) {
   if (!ttsSupported() || !ttsEnabled) return;
   try {
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'nl-NL';
-    u.rate = 0.92;
-    const voices = window.speechSynthesis.getVoices();
-    const nl = voices.find(v => /nl(-|_)?/i.test(v.lang));
-    if (nl) u.voice = nl;
-    window.speechSynthesis.speak(u);
+    window.speechSynthesis.speak(utter(text, rate));
+  } catch (_) { /* ignore */ }
+}
+
+// Spricht mehrere Zeilen nacheinander (z. B. einen ganzen Dialog).
+export function speakSequence(texts, rate) {
+  if (!ttsSupported() || !ttsEnabled) return;
+  try {
+    window.speechSynthesis.cancel();
+    texts.filter(Boolean).forEach(t => window.speechSynthesis.speak(utter(t, rate)));
   } catch (_) { /* ignore */ }
 }
 

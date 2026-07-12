@@ -304,6 +304,12 @@ button{font-family:inherit}
 .sg b{display:block;font-size:19px;font-weight:800}
 .sg span{font-size:10.5px;color:var(--muted);font-weight:600;line-height:1.25;display:block;margin-top:2px}
 
+/* ---- Track-Fortschritt (Lektionen) ---- */
+.tprog{display:flex;align-items:center;gap:10px;margin:0 2px 10px}
+.tprog-bar{flex:1;height:7px;border-radius:4px;background:var(--bg-2);overflow:hidden}
+.tprog-bar i{display:block;height:100%;background:var(--grad);border-radius:4px}
+.tprog span{font-size:11px;font-weight:800;color:var(--muted);white-space:nowrap}
+
 /* ---- v2: milestones ---- */
 .msgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
 .ms{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 8px;text-align:center;

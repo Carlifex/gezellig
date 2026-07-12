@@ -3,7 +3,7 @@
 // ============================================================================
 import { LESSONS, GRAMMAR, CHAT_SCENARIOS, DAILY_GOALS } from './data.js';
 import { statusLabel } from './srs.js';
-import { speak, ttsSupported, setTtsEnabled, sttSupported, listen, similarity, normalize } from './speech.js';
+import { speak, speakSequence, ttsSupported, setTtsEnabled, setTtsRate, sttSupported, listen, similarity, normalize } from './speech.js';
 import { reply as tutorReply, isMock, getEndpoint, setEndpoint } from './tutor.js';
 import {
   state, save, levelInfo, dailyTasks, dueVocab, dueCount, reviewCard, completeLesson,
@@ -13,6 +13,12 @@ import {
 } from './progress.js';
 
 setTtsEnabled(state.settings.tts);
+setTtsRate(state.settings.rate);
+function applyTheme(t) {
+  if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+  else delete document.documentElement.dataset.theme; // auto = System
+}
+applyTheme(state.settings.theme);
 
 const app = document.getElementById('app');
 const tabbar = document.getElementById('tabbar');
@@ -141,8 +147,11 @@ function renderLessons() {
   const sections = TRACKS.map(t => {
     const ls = trackLessons(t.key);
     if (!ls.length) return '';
+    const done = ls.filter(l => lessonStatus(l.id) !== 'neu').length;
+    const pct = Math.round(done / ls.length * 100);
     return `<div class="section-title" id="track-${t.key}">${esc(t.label)}</div>
       <div class="section-sub">${esc(t.sub)}</div>
+      <div class="tprog"><div class="tprog-bar"><i style="width:${pct}%"></i></div><span>${done}/${ls.length}</span></div>
       <div class="lgrid">${ls.map((l, i) => lessonBtn(l, t.chip, i + 1)).join('')}</div>`;
   }).join('');
   app.innerHTML = `<div class="stack">${sections}</div>`;
@@ -175,24 +184,47 @@ function openTrack(key) {
 }
 
 /* ============================ WÖRTER ============================ */
+let vocabFilter = 'alle', vocabQuery = '';
 function renderVocab() {
   const now = Date.now();
-  const due = dueCount();
-  const seen = ALL_VOCAB.filter(v => state.cards[v.id]);
-  const rows = (seen.length ? seen : ALL_VOCAB).map(v => {
+  const q = normalize(vocabQuery);
+  const weakIds = new Set(weakVocab(999).map(v => v.id));
+  const isMast = (c) => c && c.reps >= 2 && c.S >= 8;
+  const match = (v) => {
+    const c = state.cards[v.id];
+    if (q && !(normalize(v.nl).includes(q) || normalize(v.de).includes(q))) return false;
+    switch (vocabFilter) {
+      case 'due':        return !!(c && c.reps && c.due <= now);
+      case 'neu':        return !c || !c.reps;
+      case 'gelernt':    return !!(c && c.reps && !isMast(c));
+      case 'gemeistert': return isMast(c);
+      case 'schwierig':  return weakIds.has(v.id);
+      default:           return true;
+    }
+  };
+  const filters = [['alle', 'Alle'], ['due', 'Fällig'], ['neu', 'Neu'], ['gelernt', 'Gelernt'], ['gemeistert', 'Gemeistert'], ['schwierig', 'Schwierig']];
+  const list = ALL_VOCAB.filter(match);
+  const rows = list.map(v => {
     const st = statusLabel(state.cards[v.id], now);
-    return `<div class="vrow">
-      <div><div class="nl">${esc(v.nl)}</div><div class="de">${esc(v.de)}</div></div>
+    return `<div class="vrow"><div><div class="nl">${esc(v.nl)}</div><div class="de">${esc(v.de)}</div></div>
       <button class="iconbtn play" data-say="${esc(v.nl)}" aria-label="vorlesen">🔊</button>
       <span class="st ${st.cls}">${st.text}</span></div>`;
-  }).join('');
+  }).join('') || '<div class="muted" style="padding:16px;text-align:center">Keine Wörter — anderer Filter oder Suchbegriff?</div>';
+  const started = ALL_VOCAB.filter(v => state.cards[v.id] && state.cards[v.id].reps).length;
+  const due = dueCount();
   app.innerHTML = `
     <div class="section-title">Wörter</div>
-    <div class="section-sub">${seen.length} von ${ALL_VOCAB.length} gestartet · <b style="color:var(--orange-ink)">${due} jetzt fällig</b></div>
-    ${due ? `<button class="btn" id="review" style="margin-bottom:16px">🔁 ${due} Wörter wiederholen</button>` : `<div class="warnbar" style="margin-bottom:16px">✅ Nichts fällig — mach eine Lektion, um neue Wörter zu lernen.</div>`}
+    <div class="section-sub">${started} von ${ALL_VOCAB.length} gestartet · <b style="color:var(--orange-ink)">${due} fällig</b></div>
+    <div class="field" style="margin:2px 0 10px"><input id="vq" placeholder="🔎 Suchen (niederländisch oder deutsch)…" value="${esc(vocabQuery)}" autocomplete="off"/></div>
+    <div class="seg wrap" id="vf">${filters.map(([k, l]) => `<button data-f="${k}" class="${vocabFilter === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    ${due ? `<button class="btn" id="review" style="margin:12px 0 4px">🔁 ${due} Wörter wiederholen</button>` : ''}
+    <div class="section-sub" style="margin:12px 0 6px">${list.length} ${list.length === 1 ? 'Wort' : 'Wörter'}</div>
     <div class="card" style="padding:6px 16px">${rows}</div>`;
   app.querySelectorAll('.play').forEach(b => b.onclick = () => speak(b.dataset.say));
   const rv = app.querySelector('#review'); if (rv) rv.onclick = () => openReview();
+  app.querySelectorAll('#vf button').forEach(b => b.onclick = () => { vocabFilter = b.dataset.f; renderVocab(); });
+  const qi = app.querySelector('#vq');
+  qi.oninput = () => { vocabQuery = qi.value; const p = qi.selectionStart; renderVocab(); const n = app.querySelector('#vq'); n.focus(); n.setSelectionRange(p, p); };
 }
 
 /* ============================ REDEN (Chat) ============================ */
@@ -242,10 +274,12 @@ function renderPractice() {
   const started = startedVocab().length;
   const weak = weakVocab().length;
   const sentences = buildSentencePool().length;
+  const grammarN = grammarPool().length;
   const modes = [
     { id: 'produce', icon: '✍️', title: 'Produzieren', ok: started > 0, sub: 'Deutsch → Niederländisch selbst tippen', need: 'Erst ein paar Wörter lernen' },
     { id: 'build',   icon: '🧩', title: 'Satzbau',     ok: sentences > 0, sub: 'Wörter in die richtige Reihenfolge bringen', need: 'Erst eine Lektion machen' },
     { id: 'listen',  icon: '👂', title: 'Hören',       ok: started > 0 && ttsSupported(), sub: 'Niederländisch hören, Bedeutung erkennen', need: ttsSupported() ? 'Erst ein paar Wörter lernen' : 'Kein Ton auf diesem Gerät' },
+    { id: 'grammar', icon: '📐', title: 'Grammatik',   ok: grammarN > 0, sub: 'Regeln aus deinen Lektionen testen', need: 'Erst eine Lektion machen' },
     { id: 'weak',    icon: '🎯', title: 'Schwachstellen', ok: weak > 0, sub: weak ? `${weak} wacklige Wörter gezielt üben` : 'Deine schwierigsten Wörter', need: 'Noch keine — üb ruhig mehr!' },
   ];
   app.innerHTML = `<div class="stack">
@@ -256,7 +290,46 @@ function renderPractice() {
       <span class="lmain"><b>${esc(m.title)}</b><span>${esc(m.ok ? m.sub : m.need)}</span></span></button>`).join('')}</div>
   </div>`;
   app.querySelectorAll('.lesson[data-m]').forEach(b => b.onclick = () =>
-    ({ produce: openProduce, build: openBuild, listen: openListen, weak: openWeak }[b.dataset.m])());
+    ({ produce: openProduce, build: openBuild, listen: openListen, grammar: openGrammar, weak: openWeak }[b.dataset.m])());
+}
+
+// Grammatik-Fragen aus den Lektionen, die schon begonnen wurden.
+function grammarPool() {
+  const keys = new Set();
+  for (const l of LESSONS) if (lessonStatus(l.id) !== 'neu' && l.grammar) keys.add(l.grammar);
+  const out = [];
+  for (const k of keys) {
+    const g = GRAMMAR[k]; if (!g || !g.checks) continue;
+    g.checks.forEach(c => out.push({ ...c, topic: g.title }));
+  }
+  return out;
+}
+// Grammatik-Trainer: Richtig/Falsch-Fragen aus mehreren Themen, interleaved.
+function openGrammar() {
+  const pool = shuffle(grammarPool()).slice(0, 10);
+  if (!pool.length) { toast('Erst eine Lektion machen!', '📚'); return; }
+  let i = 0;
+  openFlow([{ render(body, foot, done) {
+    const draw = () => {
+      if (i >= pool.length) return done();
+      const c = pool[i];
+      body.innerHTML = `<div class="step-label">Grammatik · ${i + 1}/${pool.length}</div>
+        <div class="step-title">${esc(c.q)}</div>
+        <div class="muted" style="font-size:12px;margin-bottom:12px">Thema: ${esc(c.topic)}</div>
+        <div class="choices">${c.options.map((o, oi) => `<button class="choice" data-o="${oi}">${esc(o)}</button>`).join('')}</div>`;
+      let answered = false;
+      body.querySelectorAll('.choice').forEach(btn => btn.onclick = () => {
+        if (answered) return; answered = true;
+        const ok = +btn.dataset.o === c.answer;
+        body.querySelectorAll('.choice').forEach(b2 => { if (+b2.dataset.o === c.answer) b2.classList.add('correct'); else if (b2 === btn) b2.classList.add('wrong'); });
+        recordAnswer(ok); if (ok) gainXp(2); flushUnlocks();
+        foot.innerHTML = `<button class="btn" id="n">${i === pool.length - 1 ? 'Fertig' : 'Weiter'}</button>`;
+        foot.querySelector('#n').onclick = () => { i++; draw(); };
+      });
+      foot.innerHTML = '';
+    };
+    draw();
+  }}], (fe) => finishScreen(fe, '📐', 'Grammatik geübt!', `${pool.length} Fragen`));
 }
 
 const stripArticle = (s) => s.replace(/^(de |het |een |'n )/, '');
@@ -415,6 +488,19 @@ function statsCard() {
     </div>`;
 }
 
+function trackBadges() {
+  return `<div class="section-sub" style="margin:22px 0 8px">Lernpfad-Abzeichen</div>
+    <div class="msgrid">${TRACKS.map(t => {
+      const ls = trackLessons(t.key);
+      const done = ls.filter(l => lessonStatus(l.id) !== 'neu').length;
+      const mast = ls.filter(l => lessonStatus(l.id) === 'gemeistert').length;
+      const unlocked = done === ls.length, gold = mast === ls.length;
+      const mark = gold ? '🏆' : unlocked ? '✅' : t.icon;
+      const txt = gold ? 'Alle gemeistert!' : unlocked ? 'Alle Kapitel geschafft' : `${done}/${ls.length} Kapitel`;
+      return `<div class="ms ${unlocked ? '' : 'locked'}"><div class="em">${mark}</div><b>${esc(t.label)}</b><span>${txt}</span></div>`;
+    }).join('')}</div>`;
+}
+
 function renderProfile() {
   const L = levelInfo();
   const words = ALL_VOCAB.filter(v => state.cards[v.id]).length;
@@ -430,6 +516,8 @@ function renderProfile() {
     </div>
 
     ${statsCard()}
+
+    ${trackBadges()}
 
     <div class="card" style="margin-top:14px">
       <div class="stat"><span>Sitzungen (Serie)</span><b>🔥 ${state.streak} Tage</b></div>
@@ -451,6 +539,10 @@ function renderProfile() {
     <div class="card" style="margin-top:16px">
       <div class="toggle"><span>🔊 Stimme vorlesen</span><button class="switch ${state.settings.tts ? 'on' : ''}" id="tts"><i></i></button></div>
       ${!ttsSupported() ? `<div class="warnbar" style="margin-top:10px">⚠️ Dieses Gerät kann keine Sprachausgabe im Browser.</div>` : ''}
+      <div class="field" style="margin-top:8px"><label>🐢 Sprechtempo</label>
+        <div class="seg" id="rateseg">${[['0.8', 'Langsam'], ['0.92', 'Normal'], ['1.05', 'Zügig']].map(([v, l]) => `<button data-r="${v}" class="${String(state.settings.rate) === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+      <div class="field"><label>🎨 Erscheinungsbild</label>
+        <div class="seg" id="themeseg">${[['auto', 'Auto'], ['light', 'Hell'], ['dark', 'Dunkel']].map(([v, l]) => `<button data-t="${v}" class="${state.settings.theme === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>
       <div class="field"><label>KI-Proxy URL (optional — echter Gesprächspartner)</label>
         <input id="ep" placeholder="https://…/chat" value="${esc(getEndpoint())}"/>
         <span class="muted" style="font-size:12px">Leer = Offline-Bäcker. Siehe README.</span></div>
@@ -463,6 +555,15 @@ function renderProfile() {
 
   app.querySelectorAll('#goalseg button').forEach(b => b.onclick = () => { setSetting('dailyGoal', b.dataset.g); renderProfile(); });
   app.querySelector('#tts').onclick = () => { const v = !state.settings.tts; setSetting('tts', v); setTtsEnabled(v); renderProfile(); };
+  app.querySelectorAll('#rateseg button').forEach(b => b.onclick = () => {
+    setSetting('rate', +b.dataset.r); setTtsRate(+b.dataset.r);
+    app.querySelectorAll('#rateseg button').forEach(x => x.classList.toggle('on', x === b));
+    speak('Hallo, ik heet Carlsson.');
+  });
+  app.querySelectorAll('#themeseg button').forEach(b => b.onclick = () => {
+    setSetting('theme', b.dataset.t); applyTheme(b.dataset.t);
+    app.querySelectorAll('#themeseg button').forEach(x => x.classList.toggle('on', x === b));
+  });
   const ep = app.querySelector('#ep'); ep.onchange = () => setEndpoint(ep.value.trim());
   app.querySelector('#reset').onclick = () => { if (confirm('Wirklich allen Fortschritt löschen?')) { resetAll(); go('today'); } };
 }
@@ -602,10 +703,13 @@ function stepDialogue(l) {
   return { render(body, foot, done) {
     body.innerHTML = `<div class="step-label">Im Gespräch</div><div class="step-title">${esc(l.title)}</div>
       ${sceneImg(l, 'dialogue')}
-      <p class="muted" style="font-size:13px">Tipp auf eine Zeile, um sie zu hören.</p>
+      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:4px">
+        <p class="muted" style="font-size:13px;margin:0">Tipp auf eine Zeile, um sie zu hören.</p>
+        ${ttsSupported() ? '<button class="btn small ghost" id="playall">▶ Ganzer Dialog</button>' : ''}</div>
       ${l.dialogue.map((d, k) => `<div class="line" data-i="${k}"><div class="who">${esc(d.who)}</div>
         <div><div class="nl">${esc(d.nl)}</div><div class="de">${esc(d.de)}</div></div><div class="spk">🔊</div></div>`).join('')}`;
     body.querySelectorAll('.line').forEach(el => el.onclick = () => speak(l.dialogue[+el.dataset.i].nl));
+    const pa = body.querySelector('#playall'); if (pa) pa.onclick = () => speakSequence(l.dialogue.map(d => d.nl));
     foot.innerHTML = `<button class="btn" id="n">Weiter</button>`;
     foot.querySelector('#n').onclick = done;
   }};
