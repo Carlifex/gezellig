@@ -592,16 +592,16 @@ export const LESSONS = [
     },
   },
   {
-    id: 'terras', order: 12, icon: '🍺',
+    id: 'terras', order: 12, icon: '🍹',
     title: 'Op het terras',
     images: { story: 'illustrations/terras.webp' },
-    situation: 'Ein Bierchen in der Sonne — „op het terras".',
-    story: 'Erster richtig warmer Tag, und die halbe Stadt sitzt draußen. Ihr ergattert einen Platz auf einem <i>terras</i> an der Gracht. „Borrel-Zeit", grinst Eni. Du bestellst dein erstes <i>biertje</i> auf Niederländisch — und lernst, dass man hier beim Anstoßen jedem in die Augen schaut.',
+    situation: 'Ein kühles 0.0 in der Sonne — „op het terras".',
+    story: 'Erster richtig warmer Tag, und die halbe Stadt sitzt draußen. Ihr ergattert einen Platz auf einem <i>terras</i> an der Gracht. „Borrel-Zeit", grinst Eni. Du bestellst dein erstes <i>0.0 biertje</i> (alkoholfrei) auf Niederländisch — und lernst, dass man hier beim Anstoßen jedem in die Augen schaut.',
     grammar: 'graag',
     vocab: [
       { id: 'te_terras', nl: 'het terras', de: 'die (Außen-)Terrasse', ex: 'We zitten op het terras.', exDe: 'Wir sitzen auf der Terrasse.' },
-      { id: 'te_biertje', nl: 'het biertje', de: 'das Bierchen', ex: 'Een biertje, graag.', exDe: 'Ein Bierchen, bitte.' },
-      { id: 'te_wijn', nl: 'de wijn', de: 'der Wein', ex: 'Ik wil liever wijn.', exDe: 'Ich möchte lieber Wein.' },
+      { id: 'te_biertje', nl: 'een 0.0 biertje', de: 'ein alkoholfreies Bier', ex: 'Een 0.0 biertje, graag.', exDe: 'Ein alkoholfreies Bier, bitte.' },
+      { id: 'te_wijn', nl: 'de mocktail', de: 'der alkoholfreie Cocktail', ex: 'Ik wil liever een mocktail.', exDe: 'Ich möchte lieber einen Mocktail.' },
       { id: 'te_graag', nl: 'graag', de: 'gern', ex: 'Heel graag!', exDe: 'Sehr gern!' },
       { id: 'te_liever', nl: 'liever', de: 'lieber', ex: 'Ik drink liever thee.', exDe: 'Ich trinke lieber Tee.' },
       { id: 'te_proost', nl: 'proost!', de: 'prost!', ex: 'Proost, op Utrecht!', exDe: 'Prost, auf Utrecht!' },
@@ -609,13 +609,13 @@ export const LESSONS = [
     ],
     dialogue: [
       { who: 'Kellner', nl: 'Willen jullie iets drinken?', de: 'Möchtet ihr etwas trinken?' },
-      { who: 'Du', nl: 'Ja, graag. Een biertje voor mij.', de: 'Ja, gern. Ein Bierchen für mich.' },
-      { who: 'Eni', nl: 'Ik wil liever een wit wijntje.', de: 'Ich möchte lieber einen Weißwein.' },
+      { who: 'Du', nl: 'Ja, graag. Een 0.0 biertje voor mij.', de: 'Ja, gern. Ein alkoholfreies Bier für mich.' },
+      { who: 'Eni', nl: 'Ik wil liever een mocktail.', de: 'Ich möchte lieber einen Mocktail.' },
       { who: 'Kellner', nl: 'Komt eraan. Gezellig!', de: 'Kommt sofort. Schön!' },
     ],
     speak: [
-      { nl: 'Een biertje, graag.', de: 'Ein Bierchen, bitte.' },
-      { nl: 'Ik drink liever wijn.', de: 'Ich trinke lieber Wein.' },
+      { nl: 'Een 0.0 biertje, graag.', de: 'Ein alkoholfreies Bier, bitte.' },
+      { nl: 'Ik drink liever een mocktail.', de: 'Ich trinke lieber einen Mocktail.' },
     ],
     culture: {
       title: 'De borrel & „proost"',
@@ -958,11 +958,11 @@ export const CHAT_SCENARIOS = [
     ],
   },
   {
-    id: 'terras', icon: '🍺', label: 'Auf dem Terras',
+    id: 'terras', icon: '🍹', label: 'Auf dem Terras',
     scenarioDe: 'Du sitzt auf einem Terras an der Gracht. Bestell etwas zu trinken.',
     opener: 'Hoi, welkom! Wat wil je drinken?',
     openerHint: 'Hi, willkommen! Was möchtest du trinken?',
-    example: 'Een biertje, graag.',
+    example: 'Een 0.0 biertje, graag.',
     system: 'Je bent een vriendelijke ober op een terras in Utrecht. Je neemt de bestelling op. ' + CHAT_COMMON,
     mockReplies: [
       { text: 'Lekker! Wil je er iets bij eten?', hint: 'Lecker! Möchtest du etwas dazu essen?' },
