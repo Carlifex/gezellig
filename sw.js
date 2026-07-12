@@ -12,7 +12,7 @@
 // werden automatisch nachgezogen. (CACHE-Version nur bumpen, wenn man alle
 // Caches hart leeren will.)
 
-const CACHE = 'gezellig-v24';
+const CACHE = 'gezellig-v25';
 const ASSETS = [
   './',
   './index.html',
@@ -23,6 +23,7 @@ const ASSETS = [
   './speech.js',
   './tutor.js',
   './progress.js',
+  './vocab-bank.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',

@@ -9,7 +9,7 @@ import {
   state, save, levelInfo, dailyTasks, dueVocab, dueCount, reviewCard, completeLesson,
   chatTurn, speakResult, setSetting, resetAll, lessonStatus, milestoneState, takeUnlocks,
   todayXp, dailyGoalXp, goalMetToday, cardOf, ALL_VOCAB, gainXp, weakVocab, startedVocab,
-  recordAnswer, historyLast, stats,
+  recordAnswer, historyLast, stats, unstartedVocab, unstartedCount, learnWords,
 } from './progress.js';
 
 setTtsEnabled(state.settings.tts);
@@ -218,6 +218,7 @@ function renderVocab() {
     <div class="field" style="margin:2px 0 10px"><input id="vq" placeholder="🔎 Suchen (niederländisch oder deutsch)…" value="${esc(vocabQuery)}" autocomplete="off"/></div>
     <div class="seg wrap" id="vf">${filters.map(([k, l]) => `<button data-f="${k}" class="${vocabFilter === k ? 'on' : ''}">${l}</button>`).join('')}</div>
     ${due ? `<button class="btn" id="review" style="margin:12px 0 4px">🔁 ${due} Wörter wiederholen</button>` : ''}
+    <button class="btn ghost" id="learnnew" style="margin:8px 0 4px">➕ Neue Wörter lernen (${unstartedCount()} verfügbar)</button>
     <div class="section-sub" style="margin:12px 0 6px">${list.length} ${list.length === 1 ? 'Wort' : 'Wörter'}</div>
     <div class="card" style="padding:6px 16px">${rows}</div>`;
   app.querySelectorAll('.play').forEach(b => b.onclick = () => speak(b.dataset.say));
@@ -225,6 +226,17 @@ function renderVocab() {
   app.querySelectorAll('#vf button').forEach(b => b.onclick = () => { vocabFilter = b.dataset.f; renderVocab(); });
   const qi = app.querySelector('#vq');
   qi.oninput = () => { vocabQuery = qi.value; const p = qi.selectionStart; renderVocab(); const n = app.querySelector('#vq'); n.focus(); n.setSelectionRange(p, p); };
+  const ln = app.querySelector('#learnnew'); if (ln) ln.onclick = () => openLearnNew();
+}
+
+// Neue Wörter aus der großen Vokabelbank ins Training holen (Reihenfolge: A1→A2→B1).
+function openLearnNew(n = 8) {
+  const pool = unstartedVocab(n);
+  if (!pool.length) { toast('Alle Wörter sind schon im Training! 🎉', '➕'); return; }
+  openFlow([stepLearn(pool)], (fe) => {
+    const added = learnWords(pool); flushUnlocks();
+    finishScreen(fe, '➕', `${added} neue ${added === 1 ? 'Wort' : 'Wörter'}!`, 'Sie sind jetzt in deinem Training.', 'vocab');
+  });
 }
 
 /* ============================ REDEN (Chat) ============================ */

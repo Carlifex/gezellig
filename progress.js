@@ -5,6 +5,7 @@
 // ============================================================================
 
 import { LEVELS, MILESTONES, DAILY_GOALS, XP, LESSONS } from './data.js';
+import { VOCAB_BANK } from './vocab-bank.js';
 import { newCard, schedule, isDue, isMastered } from './srs.js';
 
 const KEY = 'gezellig.v2';
@@ -15,7 +16,36 @@ const dayIndex = () => Math.floor(Date.now() / DAYMS);
 
 const vocabById = {};
 LESSONS.forEach(l => l.vocab.forEach(v => { vocabById[v.id] = { ...v, lesson: l.id }; }));
+// Vokabelbank ergänzen — nur Wörter, deren nl noch nicht aus einer Lektion stammt.
+const lessonNl = new Set(Object.values(vocabById).map(v => v.nl.toLowerCase()));
+const bankVocab = [];
+for (const v of VOCAB_BANK) {
+  if (!v || !v.id || vocabById[v.id] || lessonNl.has(v.nl.toLowerCase())) continue;
+  vocabById[v.id] = v; bankVocab.push(vocabById[v.id]);
+}
 export const ALL_VOCAB = Object.values(vocabById);
+
+// Lern-Reihenfolge für „neue Wörter": Bank (nach Niveau vorsortiert) zuerst, dann Lektions-Wörter.
+const lessonVocab = [];
+LESSONS.forEach(l => l.vocab.forEach(v => lessonVocab.push(vocabById[v.id])));
+const LEARN_SEQ = [...bankVocab, ...lessonVocab];
+const notStarted = (v) => { const c = state.cards[v.id]; return !c || !c.reps; };
+export function unstartedVocab(n = 8) {
+  const out = [];
+  for (const v of LEARN_SEQ) { if (out.length >= n) break; if (notStarted(v)) out.push(v); }
+  return out;
+}
+export function unstartedCount() { return LEARN_SEQ.filter(notStarted).length; }
+// Nimmt Wörter aktiv ins SRS-Training auf (aus dem „Neue Wörter"-Trainer).
+export function learnWords(list) {
+  let added = 0;
+  for (const v of list) if (notStarted(v)) { state.cards[v.id] = schedule(newCard(), 'good', Date.now()); added++; }
+  state.totals.wordsLearned += added;
+  state.daily.counters.newWords += added;
+  addXp(XP.newWord * added);
+  refreshTasks(); checkMilestones(); save();
+  return added;
+}
 
 // ---- State ----------------------------------------------------------------
 function fresh() {
