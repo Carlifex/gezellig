@@ -125,6 +125,12 @@ const TRACKS = [
 ];
 const trackLessons = (key) => LESSONS.filter(l => (l.track || 'verhaal') === key);
 
+// Kapitel mit eigenem Bild-Icon (illustrations/icons/<id>.webp); sonst Emoji-Fallback.
+const ICON_IDS = new Set(['aankomst','wonen','bakker','boodschappen','tijd','weg','platenzaak','beurs','ontbijt','plantenwinkel','ramen','terras','markt','avond','verjaardag','amsterdam','liquicity','void','optreden']);
+const lemIcon = (l) => ICON_IDS.has(l.id)
+  ? `<img class="lem-img" src="illustrations/icons/${l.id}.webp" alt="" loading="lazy">`
+  : l.icon;
+
 // Abgeschlossene Kapitel: ✅ statt Wort; gemeistert: 🏆.
 function statusBadge(st) {
   if (st === 'gemeistert') return `<span class="lst done" title="gemeistert">🏆</span>`;
@@ -135,7 +141,7 @@ function statusBadge(st) {
 function lessonBtn(l, chip, n) {
   const label = chip === 'KAPITEL' ? `KAPITEL ${l.order}` : `${chip} ${n}`;
   return `<button class="lesson" data-id="${l.id}">
-    <span class="lem">${l.icon}</span>
+    <span class="lem">${lemIcon(l)}</span>
     <span class="lmain"><span class="lchip">${label}</span><b>${esc(l.title)}</b><span>${esc(l.situation)}</span></span>
     ${statusBadge(lessonStatus(l.id))}</button>`;
 }

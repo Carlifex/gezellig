@@ -263,7 +263,8 @@ button{font-family:inherit}
   border-radius:14px;padding:14px 15px;box-shadow:var(--shadow);cursor:pointer;text-align:left;width:100%;color:inherit}
 .lesson:active{transform:translateY(1px)}
 .lesson .lem{width:44px;height:44px;flex:0 0 44px;border-radius:12px;display:grid;place-items:center;font-size:22px;
-  background:var(--bg-2)}
+  background:var(--bg-2);overflow:hidden}
+.lesson .lem .lem-img{width:100%;height:100%;object-fit:cover;display:block}
 .lesson .lmain b{font-size:15px}
 .lesson .lmain span{font-size:12.5px;color:var(--muted);display:block}
 .lesson .lst{margin-left:auto;font-size:11px;font-weight:800;padding:4px 9px;border-radius:7px;white-space:nowrap}
