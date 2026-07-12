@@ -501,6 +501,7 @@ export const LESSONS = [
   {
     id: 'ontbijt', order: 9, icon: '🥐',
     title: 'Fancy Frühstück im Café',
+    images: { story: 'illustrations/ontbijt.webp' },
     situation: 'Chic frühstücken — und die Rechnung verstehen.',
     story: 'Sonntagmorgen, ihr gönnt euch ein schickes Frühstück in einem Café am Wasser. Avocado-Toast, frisch gepresster Saft, richtig guter Kaffee. Eni bestellt souverän, du willst mithalten — bis die Kellnerin die Preise nennt und du zum ersten Mal niederländische Zahlen im Kopf zusammenrechnen musst.',
     grammar: 'getallen',
@@ -531,6 +532,7 @@ export const LESSONS = [
   {
     id: 'plantenwinkel', order: 10, icon: '🪴',
     title: 'Im Pflanzenladen',
+    images: { story: 'illustrations/plantenwinkel.webp' },
     situation: 'Eni im Pflanzenhimmel — du trägst.',
     story: 'Eni hat einen neuen Pflanzenladen entdeckt, und für dich heißt das: Trägerdienst. Zwischen Dutzenden Monsteras, Farnen und Kakteen strahlt sie wie ein Kind. „Nur eine", hattest du gesagt. Ihr geht mit drei Töpfen und einer Rechnung raus, über die du lieber nicht sprichst.',
     grammar: 'meervoud',
@@ -561,6 +563,7 @@ export const LESSONS = [
   {
     id: 'ramen', order: 11, icon: '🍜',
     title: 'Bei Takumi Ramen',
+    images: { story: 'illustrations/ramen.webp' },
     situation: 'Dampfende Schüsseln bei Takumi Ramen.',
     story: 'Abendessen bei Takumi Ramen in Utrecht — winzig, immer voll, immer gut. Die Schüsseln dampfen, Eni pustet auf ihre scharfe Miso-Ramen, du versuchst, mit Stäbchen würdevoll auszusehen. „Lekker" ist das erste Wort, das dir mühelos rausrutscht.',
     grammar: 'bijvoeglijk',
@@ -621,6 +624,7 @@ export const LESSONS = [
   {
     id: 'markt', order: 13, icon: '🧀',
     title: 'Auf dem Samstagsmarkt',
+    images: { story: 'illustrations/markt.webp' },
     situation: 'Käse, Blumen, Stroopwafels.',
     story: 'Samstag ist Markttag. Zwischen Käseständen, Blumeneimern und dem Duft frischer <i>stroopwafels</i> übst du, nach Mengen und Preisen zu fragen. Der Käsehändler schneidet dir ein Stück <i>oude kaas</i> ab und zwinkert: „Voor de buurman-tarief." Nachbarschafts-Preis.',
     grammar: 'getallen',
@@ -651,6 +655,7 @@ export const LESSONS = [
   {
     id: 'avond', order: 14, icon: '🛋️',
     title: 'Abends chillen mit den Schmusis',
+    images: { story: 'illustrations/avond.webp' },
     situation: 'Couch, YouTube, zwei Katzen — Feierabend.',
     story: 'Ein ruhiger Abend zu Hause. Ihr liegt auf eurer riesigen Couch, auf dem Laptop läuft ein Liquicity-Mix auf YouTube, und beide Katzen haben beschlossen, dass eure Beine ihnen gehören. Der Schmuser schnurrt auf deinem Bauch, Nalani putzt sich auf Enis Schoß. „Dit is ons huis", sagt Eni leise. Zuhause.',
     grammar: 'bezit',
@@ -681,6 +686,7 @@ export const LESSONS = [
   {
     id: 'verjaardag', order: 15, icon: '🎂',
     title: 'Eine niederländische Geburtstagsfeier',
+    images: { story: 'illustrations/verjaardag.webp' },
     situation: 'Der berüchtigte Geburtstags-Kreis.',
     story: 'Enis Freundin hat Geburtstag, und du erlebst dein erstes echtes niederländisches <i>verjaardag</i>: Alle sitzen im Kreis, und du gratulierst nicht nur dem Geburtstagskind, sondern <b>allen</b> — „gefeliciteerd met je vriendin!" Es gibt Kaffee und genau ein Stück Kuchen. Willkommen in einer sehr niederländischen Tradition.',
     grammar: 'voegwoorden',
@@ -711,6 +717,7 @@ export const LESSONS = [
   {
     id: 'amsterdam', order: 16, icon: '🚆',
     title: 'Ausflug nach Amsterdam',
+    images: { story: 'illustrations/amsterdam.webp' },
     situation: 'Mit dem Zug nach Amsterdam — Fragen über Fragen.',
     story: 'Ein Tagesausflug nach Amsterdam. Ihr nehmt den <i>trein</i> ab Utrecht Centraal — 25 Minuten. Grachten, Museen, viel zu viele Fahrräder und noch mehr Touristen. Du übst, nach dem Weg, der Uhrzeit und dem richtigen Gleis zu fragen. „Waar", „hoe laat", „welk spoor" — heute bist du der mit den Fragen.',
     grammar: 'vraagwoorden',
@@ -741,6 +748,7 @@ export const LESSONS = [
   {
     id: 'liquicity', order: 17, icon: '🎆',
     title: 'Liquicity & die alte Crew',
+    images: { story: 'illustrations/liquicity.webp' },
     situation: 'Bässe am See — und plötzlich Berlin.',
     story: 'Liquicity Festival. Bässe, Sonnenuntergang über dem See, und mitten in der Menge — deine alte Crew aus Berlin, die du seit Jahren nicht gesehen hast. Umarmungen, Grinsen, alte Geschichten. Zum ersten Mal erzählst du auf Niederländisch, was du früher gemacht hast.',
     grammar: 'perfectum',
@@ -771,6 +779,7 @@ export const LESSONS = [
   {
     id: 'void', order: 18, icon: '🔮',
     title: 'The Void — erste Reihe',
+    images: { story: 'illustrations/void.webp' },
     situation: 'Frontrow, Bässe und Bänder-Tausch.',
     story: 'The Void Festival, ihr steht ganz vorne an der Rail. Die Bässe treffen dich mitten in die Brust, Eni tanzt neben dir wie entfesselt. Ein Mädchen aus der Menge reicht euch selbstgemachte <i>kandi</i>-Bänder rüber — die Rave-Tradition des Tauschens. Ihr tauscht zurück. Heute Abend seid ihr Teil von etwas.',
     grammar: 'toekomst',
