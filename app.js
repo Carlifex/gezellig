@@ -117,7 +117,7 @@ function taskRow(t) {
 // Lektions-Tracks: der Story-Bogen plus thematische Sammlungen.
 const TRACKS = [
   { key: 'verhaal',  icon: '🧡', level: 'A1', label: 'Familie Kirsch zieht nach Utrecht', heroTitle: 'Familie Kirsch zieht nach Utrecht', hero: 'illustrations/hero.webp', sub: 'Der durchgehende Handlungsbogen — wähle selbst, wo du weitermachst.', chip: 'KAPITEL' },
-  { key: 'personen', icon: '🎨', level: 'A2', label: 'Berühmte Persönlichkeiten', heroTitle: 'Berühmte Persönlichkeiten', hero: 'illustrations/cover-personen.webp', sub: 'Zehn Niederländer:innen, die die Welt geprägt haben.',               chip: 'PORTRÄT' },
+  { key: 'personen', icon: '🎨', level: 'A2', label: 'Ikonen der Niederlande', heroTitle: 'Ikonen der Niederlande', hero: 'illustrations/cover-personen.webp', sub: 'Zehn Niederländer:innen, die die Welt geprägt haben.',               chip: 'PORTRÄT' },
   { key: 'mythen',   icon: '🌷', level: 'A2', label: 'Mythen & Kuriositäten',     heroTitle: 'Mythen & Kuriositäten',     hero: 'illustrations/cover-mythen.webp', sub: 'Zehn Eigenheiten, die die Niederlande ausmachen.',                    chip: 'FAKT' },
   { key: 'ade',      icon: '🎧', level: 'B1', label: 'Amsterdam Dance Event',     heroTitle: 'Amsterdam Dance Event',     hero: 'illustrations/cover-ade.webp', sub: 'Die Geschichte des größten Dance-Events der Welt.',                   chip: 'ADE' },
   { key: 'feest',    icon: '🎉', level: 'B1', label: 'Niederländische Feierkultur', heroTitle: 'Niederländische Feierkultur', hero: 'illustrations/cover-feest.webp', sub: 'Von Gabber bis Borrel — wie die Niederlande feiern.',               chip: 'FEEST' },
