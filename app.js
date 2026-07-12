@@ -120,11 +120,11 @@ function taskRow(t) {
 /* ============================ LEKTIONEN ============================ */
 // Lektions-Tracks: der Story-Bogen plus thematische Sammlungen.
 const TRACKS = [
-  { key: 'verhaal',  icon: '🧡', label: 'Carlssons Geschichte',      heroTitle: 'Carlsson & Eni in Utrecht', hero: 'illustrations/hero.webp', sub: 'Der durchgehende Handlungsbogen — wähle selbst, wo du weitermachst.', chip: 'KAPITEL' },
-  { key: 'personen', icon: '🎨', label: 'Berühmte Persönlichkeiten', heroTitle: 'Berühmte Persönlichkeiten', hero: 'illustrations/cover-personen.webp', sub: 'Zehn Niederländer:innen, die die Welt geprägt haben.',               chip: 'PORTRÄT' },
-  { key: 'mythen',   icon: '🌷', label: 'Mythen & Kuriositäten',     heroTitle: 'Mythen & Kuriositäten',     hero: 'illustrations/cover-mythen.webp', sub: 'Zehn Eigenheiten, die die Niederlande ausmachen.',                    chip: 'FAKT' },
-  { key: 'ade',      icon: '🎧', label: 'Amsterdam Dance Event',     heroTitle: 'Amsterdam Dance Event',     hero: 'illustrations/cover-ade.webp', sub: 'Die Geschichte des größten Dance-Events der Welt.',                   chip: 'ADE' },
-  { key: 'feest',    icon: '🎉', label: 'Niederländische Feierkultur', heroTitle: 'Niederländische Feierkultur', hero: 'illustrations/cover-feest.webp', sub: 'Von Gabber bis Borrel — wie die Niederlande feiern.',               chip: 'FEEST' },
+  { key: 'verhaal',  icon: '🧡', level: 'A1', label: 'Carlssons Geschichte',      heroTitle: 'Carlsson & Eni in Utrecht', hero: 'illustrations/hero.webp', sub: 'Der durchgehende Handlungsbogen — wähle selbst, wo du weitermachst.', chip: 'KAPITEL' },
+  { key: 'personen', icon: '🎨', level: 'A2', label: 'Berühmte Persönlichkeiten', heroTitle: 'Berühmte Persönlichkeiten', hero: 'illustrations/cover-personen.webp', sub: 'Zehn Niederländer:innen, die die Welt geprägt haben.',               chip: 'PORTRÄT' },
+  { key: 'mythen',   icon: '🌷', level: 'A2', label: 'Mythen & Kuriositäten',     heroTitle: 'Mythen & Kuriositäten',     hero: 'illustrations/cover-mythen.webp', sub: 'Zehn Eigenheiten, die die Niederlande ausmachen.',                    chip: 'FAKT' },
+  { key: 'ade',      icon: '🎧', level: 'B1', label: 'Amsterdam Dance Event',     heroTitle: 'Amsterdam Dance Event',     hero: 'illustrations/cover-ade.webp', sub: 'Die Geschichte des größten Dance-Events der Welt.',                   chip: 'ADE' },
+  { key: 'feest',    icon: '🎉', level: 'B1', label: 'Niederländische Feierkultur', heroTitle: 'Niederländische Feierkultur', hero: 'illustrations/cover-feest.webp', sub: 'Von Gabber bis Borrel — wie die Niederlande feiern.',               chip: 'FEEST' },
 ];
 const trackLessons = (key) => LESSONS.filter(l => (l.track || 'verhaal') === key);
 
@@ -169,8 +169,8 @@ function heroSlide(t) {
   return `<button class="heroslide ${t.hero ? '' : 'noimg'}" data-track="${t.key}">
     ${img}<span class="heroslide-ph">${t.icon}</span>
     <div class="hero-cap">
-      <div class="eyebrow">Lernpfad · ${done}/${ls.length} ✅${t.hero ? '' : ' · Cover folgt'}</div>
-      <div class="greet">${esc(t.heroTitle)}</div>
+      <div class="hero-top"><span class="hero-lvl">${esc(t.level)}</span><span class="hero-prog">${done}/${ls.length} ✅</span></div>
+      <div class="greet hero-title">${esc(t.heroTitle)}</div>
     </div></button>`;
 }
 
