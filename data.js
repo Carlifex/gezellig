@@ -800,6 +800,7 @@ export const LESSONS = [
   {
     id: 'optreden', order: 19, icon: '🔊',
     title: 'Hinter den Decks',
+    images: { story: 'illustrations/optreden.webp' },
     situation: 'Blackout-Nacht im TivoliVredenburg — dein Slot.',
     story: 'TivoliVredenburg, Blackout-Nacht. Deine Hände zittern, zu Hause hat der Schmuser zur Feier des Tages ein Kabel durchgekaut, und Eni steht vorne und strahlt. Der Vorgänger dreht ab, Ferry nickt dir zu: „Ga maar." Du gehst hinter die Decks — und zum ersten Mal fragst du dich nicht mehr, ob du hierhergehörst.',
     grammar: 'toekomst',
