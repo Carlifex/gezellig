@@ -117,14 +117,38 @@ function taskRow(t) {
 /* ============================ LEKTIONEN ============================ */
 // Lektions-Tracks: der Story-Bogen plus thematische Sammlungen.
 const TRACKS = [
-  { key: 'verhaal',  icon: '🧡', level: 'A1', label: 'Familie Kirsch zieht nach Utrecht', heroTitle: 'Familie Kirsch zieht nach Utrecht', hero: 'illustrations/hero.webp', sub: 'Der durchgehende Handlungsbogen: Familie Kirsch zieht nach Utrecht und meistert den ganz normalen Alltag — Wohnung, Bäckerei, Einkaufen, Termine, Markt und erste Ausgehabende. Sprachlich ist das dein A1-Fundament: Präsens und Perfekt, Satzbau mit dem Verb an Position 2, die Artikel de/het, Mehrzahl, Modalverben und Zahlen, dazu der praktische Grundwortschatz für jede Alltagssituation. Du wählst selbst, wo du weitermachst.', chip: 'KAPITEL' },
-  { key: 'personen', icon: '🎨', level: 'A2', label: 'Ikonen der Niederlande', heroTitle: 'Ikonen der Niederlande', hero: 'illustrations/cover-personen.webp', sub: 'Zehn Niederländer:innen, die die Welt geprägt haben — von Van Gogh und Rembrandt über Cruyff und Verstappen bis Anne Frank und Escher. Eingebettet in ihre Lebensgeschichten festigst du auf A2-Niveau Präsens, Perfekt und Zukunft, die Satzstellung, Artikel und Mehrzahl, und lernst Wortschatz aus Kunst, Sport, Wissenschaft und Geschichte.', chip: 'PORTRÄT' },
-  { key: 'mythen',   icon: '🌷', level: 'A2', label: 'Mythen & Kuriositäten',     heroTitle: 'Mythen & Kuriositäten',     hero: 'illustrations/cover-mythen.webp', sub: 'Zehn Eigenheiten, die die Niederlande ausmachen — vom Jungen am Deich über Tulpenmanie und Fahrradland bis Sinterklaas, Käse und „uitwaaien". An diesen Alltagsmythen übst du auf A2-Niveau Perfekt, die Artikel de/het, hebben & zijn, Adjektive und Zahlen und sammelst landestypischen Wortschatz rund um Kultur, Wetter und Traditionen.', chip: 'FAKT' },
-  { key: 'ade',      icon: '🎧', level: 'B1', label: 'Amsterdam Dance Event',     heroTitle: 'Amsterdam Dance Event',     hero: 'illustrations/cover-ade.webp', sub: 'Die Geschichte des Amsterdam Dance Event, des größten Dance-Events der Welt — von den Anfängen 1996 über Tiësto und Armin van Buuren bis zu legendären Venues und der DJ-Mag-Top-100. Auf B1-Niveau baust du Erzähl- und Meinungsstrukturen aus (Perfekt, Zukunft, Satzbau, Besitz, Adjektive) und lernst Wortschatz rund um Musik, Events und Kulturindustrie.', chip: 'ADE' },
-  { key: 'feest',    icon: '🎉', level: 'B1', label: 'Niederländische Feierkultur', heroTitle: 'Niederländische Feierkultur', hero: 'illustrations/cover-feest.webp', sub: 'Von Gabber und Thunderdome über Techno und Hardstyle bis zum gemütlichen Borrel in der Kroeg — wie die Niederlande feiern. In diesem kulturellen Kontext festigst du auf B1-Niveau Präsens, Perfekt und Zukunft, Modalverben, Verneinung und Adjektive und erweiterst deinen Wortschatz rund um Musik, Nachtleben und Geselligkeit.', chip: 'FEEST' },
-  { key: 'natuurkunde', icon: '⚛️', level: 'C1', label: 'Nederlandse natuurkundigen', heroTitle: 'Licht, Tijd & Ruimte', hero: 'illustrations/cover-natuurkunde.webp', sub: 'Huygens, Lorentz und Zeeman — drei niederländische Physiker, ihr Leben und die Politik ihrer Epoche, von der Gouden Eeuw bis in die Besatzungszeit. Höchstes Niveau (C1) mit viel Fachsprache: Imperfekt und Passiv, Relativ- und Nebensätze, Konditional, Partizipien und Nominalisierung, dazu wissenschaftlicher Wortschatz und ein akademisches Register.', chip: 'PHYSICUS' },
+  { key: 'verhaal',  icon: '🧡', level: 'A1', label: 'Familie Kirsch zieht nach Utrecht', heroTitle: 'Familie Kirsch zieht nach Utrecht', hero: 'illustrations/hero.webp', sub: 'Der durchgehende Handlungsbogen: Familie Kirsch zieht nach Utrecht und meistert den ganz normalen Alltag — Wohnung, Bäckerei, Einkaufen, Termine, Markt und erste Ausgehabende. Du wählst selbst, wo du weitermachst.', chip: 'KAPITEL' },
+  { key: 'personen', icon: '🎨', level: 'A2', label: 'Ikonen der Niederlande', heroTitle: 'Ikonen der Niederlande', hero: 'illustrations/cover-personen.webp', sub: 'Zehn Niederländer:innen, die die Welt geprägt haben — von Van Gogh und Rembrandt über Cruyff und Verstappen bis Anne Frank und Escher. Eingebettet in ihre Lebensgeschichten tauchst du in Kunst, Sport, Wissenschaft und Geschichte ein.', chip: 'PORTRÄT' },
+  { key: 'mythen',   icon: '🌷', level: 'A2', label: 'Mythen & Kuriositäten',     heroTitle: 'Mythen & Kuriositäten',     hero: 'illustrations/cover-mythen.webp', sub: 'Zehn Eigenheiten, die die Niederlande ausmachen — vom Jungen am Deich über Tulpenmanie und Fahrradland bis Sinterklaas, Käse und „uitwaaien". Alltagsmythen rund um Kultur, Wetter und Traditionen.', chip: 'FAKT' },
+  { key: 'ade',      icon: '🎧', level: 'B1', label: 'Amsterdam Dance Event',     heroTitle: 'Amsterdam Dance Event',     hero: 'illustrations/cover-ade.webp', sub: 'Die Geschichte des Amsterdam Dance Event, des größten Dance-Events der Welt — von den Anfängen 1996 über Tiësto und Armin van Buuren bis zu legendären Venues und der DJ-Mag-Top-100.', chip: 'ADE' },
+  { key: 'feest',    icon: '🎉', level: 'B1', label: 'Niederländische Feierkultur', heroTitle: 'Niederländische Feierkultur', hero: 'illustrations/cover-feest.webp', sub: 'Von Gabber und Thunderdome über Techno und Hardstyle bis zum gemütlichen Borrel in der Kroeg — wie die Niederlande feiern, quer durch Musik, Nachtleben und Geselligkeit.', chip: 'FEEST' },
+  { key: 'natuurkunde', icon: '⚛️', level: 'C1', label: 'Nederlandse natuurkundigen', heroTitle: 'Licht, Tijd & Ruimte', hero: 'illustrations/cover-natuurkunde.webp', sub: 'Huygens, Lorentz und Zeeman — drei niederländische Physiker, ihr Leben und die Politik ihrer Epoche, von der Gouden Eeuw bis in die Besatzungszeit.', chip: 'PHYSICUS' },
 ];
 const trackLessons = (key) => LESSONS.filter(l => (l.track || 'verhaal') === key);
+
+// Kurz-Label eines Grammatik-Themas: der Teil vor ":" bzw. "—" (z. B. „Präsens").
+function gramShort(key) {
+  const t = GRAMMAR[key] && GRAMMAR[key].title;
+  return t ? t.split(/[:—]/)[0].trim() : '';
+}
+// „Das lernst du" je Kapitel: Grammatik-Themen (unique, in Reihenfolge) + Vokabel-Anzahl.
+function chapterLearn(key) {
+  const ls = trackLessons(key);
+  const grammar = [...new Set(ls.map(l => l.grammar).filter(Boolean))].map(gramShort).filter(Boolean);
+  const vocab = ls.reduce((s, l) => s + ((l.vocab && l.vocab.length) || 0), 0);
+  return { grammar, vocab };
+}
+// Aufklappbarer „Das lernst du in diesem Kapitel"-Block: Grammatik-Liste + Vokabel-Anzahl.
+function chapterLearnCard(key) {
+  const { grammar, vocab } = chapterLearn(key);
+  if (!grammar.length && !vocab) return '';
+  const tags = grammar.map(g => `<li>${esc(g)}</li>`).join('');
+  return `<div class="learncard chaplearn">
+    <div class="learncard-h">Das lernst du in diesem Kapitel</div>
+    ${grammar.length ? `<p class="learncard-row">🧩 Grammatik <b>(${grammar.length})</b></p><ul class="gramtags">${tags}</ul>` : ''}
+    ${vocab ? `<p class="learncard-row">🗣️ Vokabeln: <b>${vocab}</b></p>` : ''}
+  </div>`;
+}
 
 // Kapitel mit eigenem Bild-Icon (illustrations/icons/<id>.webp); sonst Emoji-Fallback.
 const ICON_IDS = new Set([
@@ -177,12 +201,13 @@ function chapterCard(t) {
     <button class="chaphero ${t.hero ? '' : 'noimg'}" data-track="${t.key}">
       ${img}<span class="heroslide-ph">${t.icon}</span>
       <span class="hero-cap">
-        <span class="hero-top"><span class="hero-lvl">${esc(t.level)} · KAPITEL</span><span class="hero-prog">${done}/${ls.length}${mark}</span></span>
+        <span class="hero-top"><span class="hero-lvl">${esc(t.level)}</span><span class="hero-prog">${done}/${ls.length}${mark}</span></span>
         <span class="hero-title">${esc(t.label)}</span>
       </span>
     </button>
     <div class="chapbody">
       <p class="chaptext">${esc(t.sub)}</p>
+      ${chapterLearnCard(t.key)}
       <button class="chaptext-toggle" type="button" aria-expanded="false">Mehr&nbsp;▾</button>
     </div>
   </div>`;
@@ -194,7 +219,6 @@ function renderLessons() {
   if (!t) {
     app.innerHTML = `<div class="stack">
       <div class="section-title">Kapitel</div>
-      <div class="section-sub">Wähle ein Kapitel — dann siehst du nur dessen Lektionen.</div>
       <div class="chapgrid">${TRACKS.filter(x => trackLessons(x.key).length).map(chapterCard).join('')}</div>
     </div>`;
     app.querySelectorAll('.chaphero').forEach(b => b.onclick = () => openTrack(b.dataset.track));
@@ -219,13 +243,14 @@ function renderLessons() {
           <span class="hero-prog">${done}/${ls.length}${mark}</span>
         </span>
         <span class="chaphead-titles">
-          <span class="hero-eyebrow">${esc(t.level)} · KAPITEL</span>
+          <span class="hero-eyebrow">${esc(t.level)}</span>
           <span class="hero-title">${esc(t.label)}</span>
         </span>
       </span>
     </div>
     <div class="chapintro open">
       <p class="chaptext">${esc(t.sub)}</p>
+      ${chapterLearnCard(t.key)}
       <button class="chaptext-toggle" type="button" aria-expanded="true">Weniger&nbsp;▲</button>
       <div class="tprog"><div class="tprog-bar"><i style="width:${pct}%"></i></div><span>${done}/${ls.length}</span></div>
     </div>
