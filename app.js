@@ -817,14 +817,52 @@ function finishScreen(fe, emoji, title, sub, returnTab) {
 }
 
 /* ---------- LEKTION (erst blocken) ---------- */
+// ---- Lektions-Baukasten: Phasen + Anspruchsstufe (Recall-Leiter) ----------
+// Statt einer für ALLE Lektionen identischen Schrittfolge wird die Lektion aus
+// Phasen zusammengesetzt. Die Anspruchsstufe (1–6) und Content-Trigger (Grammatik/
+// Vokabelthema) steuern, welche Übungs-Module gezogen werden. Neue Module (Matching,
+// Cloze, Drag&Drop, Hör-Diktat, Interleaved, Branching) docken hier an einer Phase an.
+const STUFE_BY_TRACK = { personen: 5, mythen: 5, ade: 6, feest: 6, natuurkunde: 6 };
+// Konjugations-/Zeitform-Grammatiken → später Interleaved-Drill; Wortstellung → Satzbau.
+const CONJ_GRAMMAR = new Set(['presens', 'imperfectum', 'perfectum', 'toekomst', 'conditionalis', 'modaal', 'hebbenzijn', 'deelwoord']);
+const ORDER_GRAMMAR = new Set(['woordvolgorde', 'bijzin', 'voegwoorden', 'vraagwoorden', 'negatie']);
+function lessonStufe(l) {
+  if (l.stufe) return l.stufe;
+  const key = l.track || 'verhaal';
+  if (key === 'verhaal') {
+    const i = trackLessons('verhaal').findIndex(x => x.id === l.id);
+    return i < 4 ? 1 : i < 9 ? 2 : i < 14 ? 3 : 4;
+  }
+  return STUFE_BY_TRACK[key] || 3;
+}
+// Mehrere generative Übungsfragen als aufeinanderfolgende Flow-Schritte (Label „Übung").
+function drillSteps(questions, label = 'Übung') {
+  const score = { correct: 0 }, total = questions.length;
+  return questions.map((q, i) => examStep(q, i + 1, total, score, label));
+}
+// Baut die Schrittfolge einer Lektion aus Phasen (Kontext→Input→Übung→Integration→Abschluss).
+function buildLessonSteps(l) {
+  if (Array.isArray(l.modules)) return l.modules.map(m => m(l)).filter(Boolean); // Pro-Lektion-Override
+  const steps = [];
+  const g = l.grammar;
+  // 1) Kontext
+  if (l.story) steps.push(stepStory(l));
+  // 2) Input (Grammatik-Erklärung + Vokabel-Einführung)
+  steps.push(stepGrammar(g, 'Grammatik'), stepIntro(l.vocab));
+  // 3) Übung — Content-getriggerte generative Drills (Leiter-Stufe 5/7)
+  if (g === 'getallen') steps.push(...drillSteps(numberQuestions(3), 'Zahlen'));
+  if (g === 'meervoud') steps.push(...drillSteps(pluralQuestions(3), 'Mehrzahl'));
+  // 4) Integration (in Kontext anwenden)
+  steps.push(stepDialogue(l), stepGrammarCheck(g));
+  if (l.speak && l.speak.length) steps.push(stepSpeak(l.speak));
+  // 6) Abschluss
+  if (l.culture) steps.push(stepCulture(l));
+  return steps;
+}
 function openLesson(lessonId) {
   const l = LESSONS.find(x => x.id === lessonId);
   if (!lessonUnlocked(l)) { toast('Erst die vorherige Lektion abschließen.', '🔒'); return; }
-  const steps = [];
-  if (l.story) steps.push(stepStory(l));
-  steps.push(stepGrammar(l.grammar, 'Grammatik'), stepIntro(l.vocab), stepDialogue(l), stepGrammarCheck(l.grammar));
-  if (l.speak && l.speak.length) steps.push(stepSpeak(l.speak));
-  if (l.culture) steps.push(stepCulture(l));
+  const steps = buildLessonSteps(l);
   openFlow(steps, (fe) => {
     const res = completeLesson(lessonId);
     flushUnlocks();
@@ -883,9 +921,9 @@ function buildExamQuestions(key) {
   return shuffle(qs);
 }
 
-function examStep(question, num, total, score) {
+function examStep(question, num, total, score, label = 'Prüfung') {
   return { render(body, foot, done) {
-    const head = `<div class="step-label">Prüfung · Frage ${num}/${total}</div><div class="step-title">${esc(question.q)}</div>`;
+    const head = `<div class="step-label">${esc(label)} · Frage ${num}/${total}</div><div class="step-title">${esc(question.q)}</div>`;
     if (question.type === 'type') {
       body.innerHTML = `${head}<div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="auf Niederländisch…"></div><div id="fb" class="afb"></div>`;
       const inp = body.querySelector('#ans'); inp.focus();
