@@ -1359,15 +1359,19 @@ function drillSteps(questions, label = 'Übung') {
   return questions.map((q, i) => examStep(q, i + 1, total, score, label));
 }
 // Baut die Schrittfolge einer Lektion aus Phasen (Kontext→Input→Übung→Integration→Abschluss).
+const lessonIndex = (l) => trackLessons(l.track || 'verhaal').findIndex(x => x.id === l.id);
 // Wählt EIN story-/grammatik-passendes Übungs-Modul (nicht alle) — bounded, damit
-// die Lektion nicht überladen wird und das Modul zur Szene passt.
+// die Lektion nicht überladen wird und das Modul zur Szene passt. Ohne speziellen
+// Grammatik-Trigger wird je Lektion abgewechselt (Parität), damit keine zwei
+// aufeinanderfolgenden Lektionen dasselbe Modul ziehen (Interleaving + Abwechslung).
 function pickUebung(l, g, stufe) {
+  const alt = lessonIndex(l) % 2 === 0;
   if (g === 'getallen') return drillSteps(numberQuestions(3), 'Zahlen');
   if (g === 'meervoud') return drillSteps(pluralQuestions(3), 'Mehrzahl');
-  if (CONJ_GRAMMAR.has(g) && stufe >= 3) return [stepConjDrill(l)];      // Interleaved nur bei Zeitform-Grammatik ab A2
-  if (ORDER_GRAMMAR.has(g) && stufe >= 2) return [stepSentenceBuild(l)]; // Satzbau bei Wortstellungs-Grammatik
-  if (stufe <= 2) return [stepMatch(l)];                                 // frühe Stufen: rezeptives Matching
-  return [stepCloze(l)];                                                 // sonst: gestützte Produktion
+  if (ORDER_GRAMMAR.has(g) && stufe >= 2) return [stepSentenceBuild(l)];              // Satzbau bei Wortstellung
+  if (CONJ_GRAMMAR.has(g) && stufe >= 3) return alt ? [stepConjDrill(l)] : [stepCloze(l)]; // Konjugation abwechselnd
+  if (stufe <= 2) return alt ? [stepMatch(l)] : [stepCloze(l)];                       // früh: rezeptiv/produktiv im Wechsel
+  return alt ? [stepCloze(l)] : [stepSentenceBuild(l)];                               // sonst: Cloze/Satzbau im Wechsel
 }
 function buildLessonSteps(l) {
   if (Array.isArray(l.modules)) return l.modules.map(m => m(l)).filter(Boolean); // Pro-Lektion-Override
