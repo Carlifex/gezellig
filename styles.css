@@ -176,6 +176,15 @@ button{font-family:inherit}
 .practicehub .ph-stats span{font-size:11px;color:var(--muted);font-weight:600}
 .practicehub .ph-sub{display:flex;gap:8px}
 .practicehub .ph-sub .btn{flex:1;margin:0}
+/* Hinweis: Üben schaltet eine Prüfung frei */
+.practicehub .ph-unlock{background:color-mix(in srgb,var(--orange-ink,#e8720c) 12%,transparent);
+  border:1px solid color-mix(in srgb,var(--orange-ink,#e8720c) 32%,var(--line));border-radius:12px;padding:10px 12px}
+.practicehub .ph-unlock-hd{font-weight:800;font-size:13px;color:var(--orange-ink,#e8720c);display:block;margin-bottom:4px}
+.practicehub .ph-unlock ul{margin:0;padding-left:18px}
+.practicehub .ph-unlock li{font-size:12.5px;color:var(--ink);margin:2px 0}
+.btn .btn-up{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;
+  background:rgba(255,255,255,.28);font-weight:900;margin-left:2px;vertical-align:middle}
+.btn.unlocks{box-shadow:0 0 0 2px color-mix(in srgb,var(--orange-ink,#e8720c) 55%,transparent),var(--shadow)}
 /* Satzbau-Übung: Wort-Chips */
 .buildslot{min-height:56px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
   background:var(--card);border:1.4px dashed var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
@@ -249,6 +258,13 @@ button{font-family:inherit}
 #tabbar button span{font-size:20px;filter:grayscale(.4);opacity:.6}
 #tabbar button.on{color:var(--blue-2)}
 #tabbar button.on span{filter:none;opacity:1}
+/* Nav-Hinweis: „mehr üben, um Prüfung freizuschalten" */
+#tabbar .tabic{position:relative;display:inline-flex}
+#tabbar .tab-up{position:absolute;top:-4px;right:-11px;width:15px;height:15px;border-radius:50%;
+  background:var(--orange-ink,#e8720c);color:#fff;font-size:10px;font-weight:900;font-style:normal;
+  display:grid;place-items:center;filter:none;opacity:1;line-height:1;
+  box-shadow:0 1px 4px rgba(0,0,0,.35);animation:tabUpPulse 1.8s ease-in-out infinite}
+@keyframes tabUpPulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
 
 .section-title{font-size:22px;font-weight:800;margin-bottom:4px}
 .section-title::after{content:"";display:block;width:52px;height:5px;margin-top:9px;border-radius:3px;

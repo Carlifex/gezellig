@@ -53,7 +53,11 @@ function flushUnlocks() {
 tabbar.hidden = false;
 tabbar.querySelectorAll('button').forEach(b =>
   b.addEventListener('click', () => go(b.dataset.tab)));
-function syncTabs() { tabbar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.tab === activeTab)); }
+function syncTabs() {
+  tabbar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.tab === activeTab));
+  const up = document.getElementById('trainUp');
+  if (up) up.hidden = examsNeedingVocab().length === 0;
+}
 function go(tab, track) { activeTab = tab; if (tab === 'lessons') activeTrack = track ?? null; syncTabs(); render(); }
 function render() {
   ({ today: renderToday, lessons: renderLessons, vocab: renderVocab, profile: renderProfile }[activeTab] || renderToday)();
@@ -382,6 +386,17 @@ function examUnlocked(key) {
   const ls = trackLessons(key);
   return lessonsAllDone(ls) && trackVocabReady(key).pct >= EXAM_VOCAB_PCT;
 }
+// Kapitel, deren Lektionen durch sind, aber die Prüfung noch am Vokabeltraining hängt.
+// → Training schaltet hier eine Prüfung frei (Pfeil-Hinweis in der Navi + auf der Trainingsseite).
+function examsNeedingVocab() {
+  return TRACKS.filter(t => {
+    const ls = trackLessons(t.key);
+    if (!lessonsAllDone(ls)) return false;
+    const ex = examState(t.key);
+    if (ex && ex.passed) return false;
+    return trackVocabReady(t.key).pct < EXAM_VOCAB_PCT;
+  });
+}
 function examCard(t, ls) {
   const unlocked = examUnlocked(t.key);
   const ex = examState(t.key);
@@ -466,12 +481,21 @@ function renderVocab() {
     <div class="section-sub">Übe mit echtem Abruf — Tippen & Wiedererkennen, automatisch bewertet.</div>
 
     <div class="card practicehub">
+      ${(() => {
+        const need = examsNeedingVocab();
+        if (!need.length) return '';
+        const items = need.map(t => {
+          const vr = trackVocabReady(t.key);
+          return `<li><b>${esc(t.label)}</b> — noch ${Math.max(1, EXAM_VOCAB_PCT - vr.pct)} % (${vr.ready}/${vr.total} bereit)</li>`;
+        }).join('');
+        return `<div class="ph-unlock"><span class="ph-unlock-hd">↑ Üben schaltet ${need.length === 1 ? 'diese Prüfung' : 'diese Prüfungen'} frei:</span><ul>${items}</ul></div>`;
+      })()}
       <div class="ph-stats">
         <div><b style="color:var(--orange-ink)">${due}</b><span>fällig</span></div>
         <div><b>${newAvail}</b><span>neu verfügbar</span></div>
         <div><b>${mastered}</b><span>gemeistert</span></div>
       </div>
-      <button class="btn" id="practice">💪 Üben${due || newAvail ? ` · ${due} + ${Math.min(newAvail, dailyNewLimit())} neu` : ''}</button>
+      <button class="btn ${examsNeedingVocab().length ? 'unlocks' : ''}" id="practice">💪 Üben${due || newAvail ? ` · ${due} + ${Math.min(newAvail, dailyNewLimit())} neu` : ''}${examsNeedingVocab().length ? ' <span class="btn-up" title="schaltet die Prüfung frei">↑</span>' : ''}</button>
       ${due || weak ? `<div class="ph-sub">
         ${due ? `<button class="btn ghost" id="review">🔁 Nur wiederholen</button>` : ''}
         ${weak ? `<button class="btn ghost" id="weak">🎯 Wiederholung (Schwachstellen)</button>` : ''}
