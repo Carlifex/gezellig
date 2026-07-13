@@ -574,3 +574,59 @@ body::before{content:"";position:fixed;left:0;right:0;
   opacity:.17;background:var(--violet);
   -webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20234%2070%27%20preserveAspectRatio%3D%27xMidYMax%20meet%27%3E%0A%3Cg%20fill%3D%27%23fff%27%3E%0A%3Crect%20x%3D%272%27%20y%3D%2730%27%20width%3D%2744%27%20height%3D%2740%27%2F%3E%0A%3Cpolygon%20points%3D%272%2C30%202%2C24%2012%2C24%2012%2C18%2020%2C18%2020%2C12%2028%2C12%2028%2C18%2036%2C18%2036%2C24%2046%2C24%2046%2C30%27%2F%3E%0A%3Crect%20x%3D%2750%27%20y%3D%2726%27%20width%3D%2742%27%20height%3D%2744%27%2F%3E%0A%3Cpath%20d%3D%27M50%2026%20C50%208%2092%208%2092%2026%20Z%27%2F%3E%0A%3Crect%20x%3D%2796%27%20y%3D%2734%27%20width%3D%2738%27%20height%3D%2736%27%2F%3E%0A%3Cpolygon%20points%3D%2796%2C34%20115%2C14%20134%2C34%27%2F%3E%0A%3Crect%20x%3D%27138%27%20y%3D%2728%27%20width%3D%2744%27%20height%3D%2742%27%2F%3E%0A%3Cpolygon%20points%3D%27138%2C28%20138%2C22%20150%2C22%20150%2C10%20170%2C10%20170%2C22%20182%2C22%20182%2C28%27%2F%3E%0A%3Crect%20x%3D%27186%27%20y%3D%2732%27%20width%3D%2744%27%20height%3D%2738%27%2F%3E%0A%3Cpolygon%20points%3D%27186%2C32%20208%2C15%20230%2C32%27%2F%3E%0A%3C%2Fg%3E%3C%2Fsvg%3E") repeat-x bottom / auto 100%;
           mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20234%2070%27%20preserveAspectRatio%3D%27xMidYMax%20meet%27%3E%0A%3Cg%20fill%3D%27%23fff%27%3E%0A%3Crect%20x%3D%272%27%20y%3D%2730%27%20width%3D%2744%27%20height%3D%2740%27%2F%3E%0A%3Cpolygon%20points%3D%272%2C30%202%2C24%2012%2C24%2012%2C18%2020%2C18%2020%2C12%2028%2C12%2028%2C18%2036%2C18%2036%2C24%2046%2C24%2046%2C30%27%2F%3E%0A%3Crect%20x%3D%2750%27%20y%3D%2726%27%20width%3D%2742%27%20height%3D%2744%27%2F%3E%0A%3Cpath%20d%3D%27M50%2026%20C50%208%2092%208%2092%2026%20Z%27%2F%3E%0A%3Crect%20x%3D%2796%27%20y%3D%2734%27%20width%3D%2738%27%20height%3D%2736%27%2F%3E%0A%3Cpolygon%20points%3D%2796%2C34%20115%2C14%20134%2C34%27%2F%3E%0A%3Crect%20x%3D%27138%27%20y%3D%2728%27%20width%3D%2744%27%20height%3D%2742%27%2F%3E%0A%3Cpolygon%20points%3D%27138%2C28%20138%2C22%20150%2C22%20150%2C10%20170%2C10%20170%2C22%20182%2C22%20182%2C28%27%2F%3E%0A%3Crect%20x%3D%27186%27%20y%3D%2732%27%20width%3D%2744%27%20height%3D%2738%27%2F%3E%0A%3Cpolygon%20points%3D%27186%2C32%20208%2C15%20230%2C32%27%2F%3E%0A%3C%2Fg%3E%3C%2Fsvg%3E") repeat-x bottom / auto 100%}
+
+/* ===== Neue Lektions-Module (Recall-Leiter) ===== */
+/* Wort-Paare-Matching (stepMatch) */
+.mtch-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.mtch-col{display:flex;flex-direction:column;gap:8px}
+.mtch-cell{border:1.4px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:12px;padding:13px 12px;font-size:16px;font-weight:600;text-align:center;
+  cursor:pointer;transition:border-color .12s,background .12s,transform .06s;-webkit-tap-highlight-color:transparent}
+.mtch-cell:active{transform:scale(.98)}
+.mtch-cell.mtch-sel{border-color:var(--blue-2);background:color-mix(in srgb,var(--blue-2) 12%,transparent)}
+.mtch-cell.correct{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,transparent)}
+.mtch-cell.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+.mtch-cell.mtch-done{cursor:default;opacity:.85}
+.mtch-cell.mtch-shake{animation:mtchShake .35s}
+@keyframes mtchShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.mtch-prog{text-align:center;margin-top:14px;font-size:14px;font-weight:800;color:var(--muted)}
+/* Lückentext / Cloze */
+.clz-sent{font-size:19px;font-weight:700;line-height:1.5;text-align:center;margin:14px 4px 6px}
+.clz-gap{display:inline-block;min-width:64px;padding:0 8px;border-bottom:3px solid var(--blue-2);
+  color:var(--blue-2);font-weight:800;letter-spacing:1px;vertical-align:baseline;border-radius:2px}
+.clz-gap.clz-ok{color:var(--good);border-bottom-color:var(--good)}
+.clz-gap.clz-bad{color:var(--bad);border-bottom-color:var(--bad)}
+.clz-hint{font-size:15px;color:var(--muted);font-style:italic;text-align:center;margin:2px 4px 4px}
+/* Satzbau (Tap-to-Order) — Präfix .sbld- */
+.sbld-de{margin:12px 0;font-size:15px;font-weight:600;color:var(--muted)}
+.sbld-ans{min-height:56px;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;
+  padding:12px;border:2px dashed var(--line);border-radius:14px;background:var(--bg-2);margin-bottom:14px}
+.sbld-pool{display:flex;flex-wrap:wrap;gap:8px;min-height:40px}
+.sbld-empty{color:var(--muted);font-size:14px;font-style:italic;align-self:center}
+.sbld-chip{border:1.6px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:11px;padding:10px 14px;font-size:16px;font-weight:700;cursor:pointer;line-height:1.1;
+  -webkit-tap-highlight-color:transparent;transition:transform .05s}
+.sbld-chip:active{transform:translateY(1px)}
+.sbld-chip.sbld-in{border-color:var(--blue-2)}
+.sbld-chip.sbld-ok{border-color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good);cursor:default}
+.sbld-chip.sbld-bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,transparent);color:var(--bad);cursor:default}
+/* Hör-Diktat */
+.dict-play{display:flex;flex-direction:column;align-items:center;gap:8px;margin:14px 0}
+.dict-hint{font-size:13px}
+.dict-show{min-height:0;text-align:center;font-size:20px;font-weight:800;color:var(--ink);
+  opacity:0;transition:opacity .18s;margin:0;pointer-events:none}
+.dict-show.on{opacity:1;margin:6px 0}
+/* Interleaved-Konjugation (stepConjDrill) */
+.cjd-cue{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;margin:2px 0 14px}
+.cjd-hint{color:var(--muted);font-size:13px;font-style:italic}
+.cjd-blank{color:var(--muted);letter-spacing:1px}
+.cjd-inf{color:var(--blue-2);font-weight:700}
+/* Dialog-Branching (stepBranchDialogue) */
+.bdlg-hint{font-size:13px;margin:0 2px 10px}
+.bdlg-log{display:flex;flex-direction:column;gap:8px}
+.bdlg-log:empty{display:none}
+.bdlg-line{cursor:pointer}
+.bdlg-pick{margin-top:12px}
+.bdlg-pick:empty{display:none}
+.bdlg-cue{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);margin:2px 2px 8px}

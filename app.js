@@ -817,6 +817,524 @@ function finishScreen(fe, emoji, title, sub, returnTab) {
 }
 
 /* ---------- LEKTION (erst blocken) ---------- */
+
+/* ============================================================
+ * NEUE LEKTIONS-MODULE (Recall-Leiter) — via Sub-Agenten gebaut,
+ * adversarial verifiziert, story-gekoppelt (nutzen l.vocab/speak/dialogue).
+ * ============================================================ */
+// Rezeptives Tap-to-Pair-Matching: NL links, DE (gemischt) rechts.
+// Erst NL antippen, dann DE. Richtiges Paar wird gruen fixiert, falsches kurz rot.
+// Alle Paare gefunden -> done(). Nutzt nur vorhandene Helfer (esc, shuffle, recordAnswer, speak, ttsSupported).
+function stepMatch(l) {
+  // Kurze, gut matchbare Vokabeln waehlen (max. 2 Woerter, nicht zu lang).
+  const short = (v) => {
+    const s = String(v.nl || '').trim();
+    return s && s.split(/\s+/).length <= 2 && s.length <= 16 && String(v.de || '').trim();
+  };
+  // Dedupe nach deutscher Uebersetzung: verhindert zwei optisch identische DE-Zellen.
+  const seenDe = new Set();
+  const uniq = (l.vocab || []).filter(v => {
+    if (!short(v)) return false;
+    const key = normalize(String(v.de || ''));
+    if (seenDe.has(key)) return false;
+    seenDe.add(key); return true;
+  });
+  // Bis zu 5 Paare; jedes Paar bekommt einen stabilen, garantiert eindeutigen lokalen Key (_k).
+  const pairs = shuffle(uniq.slice()).slice(0, 5).map((v, i) => ({ k: String(i), nl: v.nl, de: v.de }));
+  if (pairs.length < 2) return { render(body, foot, done) { done(); } }; // NO-OP: zu wenig Material
+
+  return { render(body, foot, done) {
+    const left = shuffle(pairs.slice());   // NL-Reihenfolge
+    const right = shuffle(pairs.slice());  // DE-Reihenfolge (unabhaengig gemischt)
+    const total = pairs.length;
+    let matched = 0, selNl = null, locked = false;
+
+    const head = `<div class="step-label">Paare · Wörter verbinden</div>
+      <div class="step-title">Tippe ein niederländisches Wort, dann seine Übersetzung</div>`;
+    body.innerHTML = head +
+      `<div class="mtch-grid">
+        <div class="mtch-col" id="mtchL">${left.map(v =>
+          `<button class="mtch-cell" data-k="${esc(v.k)}" data-side="nl">${esc(v.nl)}</button>`).join('')}</div>
+        <div class="mtch-col" id="mtchR">${right.map(v =>
+          `<button class="mtch-cell" data-k="${esc(v.k)}" data-side="de">${esc(v.de)}</button>`).join('')}</div>
+      </div>
+      <div class="mtch-prog" id="mtchProg">0/${total}</div>`;
+    foot.innerHTML = '';
+
+    // Keys sind reine Zahlen-Strings -> sicher im Attribut-Selektor (kein CSS.escape noetig).
+    const cellByK = (side, k) =>
+      body.querySelector('.mtch-cell[data-side="' + side + '"][data-k="' + k + '"]');
+    const clearSel = () => body.querySelectorAll('.mtch-cell.mtch-sel').forEach(b => b.classList.remove('mtch-sel'));
+
+    const finish = () => {
+      body.querySelector('#mtchProg').textContent = 'Alle Paare gefunden ✓';
+      foot.innerHTML = '<button class="btn" id="mtchNext">Weiter</button>';
+      foot.querySelector('#mtchNext').onclick = done;
+    };
+
+    const onNl = (btn) => {
+      if (btn.classList.contains('mtch-done') || locked) return;
+      clearSel(); btn.classList.add('mtch-sel'); selNl = btn.dataset.k;
+      const v = pairs.find(p => p.k === selNl);
+      if (v && ttsSupported()) speak(v.nl);
+    };
+
+    const onDe = (btn) => {
+      if (btn.classList.contains('mtch-done') || locked) return;
+      if (selNl == null) { btn.classList.add('mtch-shake'); setTimeout(() => btn.classList.remove('mtch-shake'), 350); return; }
+      const ok = btn.dataset.k === selNl;
+      recordAnswer(ok);
+      if (ok) {
+        const nlBtn = cellByK('nl', selNl);
+        [nlBtn, btn].forEach(b => { if (b) { b.classList.remove('mtch-sel'); b.classList.add('mtch-done', 'correct'); b.disabled = true; } });
+        selNl = null; matched++;
+        body.querySelector('#mtchProg').textContent = matched + '/' + total;
+        if (matched >= total) finish();
+      } else {
+        locked = true;
+        const nlBtn = cellByK('nl', selNl);
+        btn.classList.add('wrong', 'mtch-shake');
+        if (nlBtn) nlBtn.classList.add('wrong');
+        setTimeout(() => {
+          btn.classList.remove('wrong', 'mtch-shake');
+          if (nlBtn) nlBtn.classList.remove('wrong');
+          clearSel(); selNl = null; locked = false;
+        }, 650);
+      }
+    };
+
+    body.querySelectorAll('.mtch-cell').forEach(btn => {
+      btn.onclick = () => { if (btn.dataset.side === 'nl') onNl(btn); else onDe(btn); };
+    });
+  }};
+}
+
+// Lückentext (Cloze) — produktiver gestützter Abruf.
+// Nimmt Vokabel-Beispielsätze (v.ex/v.exDe), blankt das Zielwort im NL-Satz aus,
+// zeigt den (farbcodierten) DE-Satz als Hilfe. 3 Items nacheinander.
+// Robust: Items ohne auffindbares Zielwort werden übersprungen; keine → NO-OP.
+function clozeSpan(ex, nl) {
+  if (!ex || !nl) return null;
+  const rx = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\// ---- Lektions-Baukasten: Phasen + Anspruchsstufe (Recall-Leiter) ----------');
+  const full = String(nl).trim(), bare = stripArt(full).trim();
+  const cands = [];
+  if (full) cands.push(full);
+  if (bare && bare !== full) cands.push(bare);
+  const words = bare.split(/\s+/).filter(w => w.length >= 3);
+  if (words.length) cands.push(words[words.length - 1]);
+  cands.sort((a, b) => b.length - a.length);
+  const run = (re) => { const m = re.exec(ex); return m ? { start: m.index, end: m.index + m[0].length, matched: m[0] } : null; };
+  for (const c of cands) { const r = run(new RegExp('\\b' + rx(c) + '\\b', 'i')); if (r) return r; }   // exakt
+  for (const c of cands) { const r = run(new RegExp('\\b' + rx(c) + '\\w*\\b', 'i')); if (r) return r; } // flektiert
+  return null;
+}
+function stepCloze(l) {
+  const vocab = (l && l.vocab) || [];
+  const items = [];
+  shuffle(vocab.slice()).forEach(v => {
+    if (items.length >= 3 || !v || !v.ex || !v.nl) return;
+    const span = clozeSpan(v.ex, v.nl);
+    if (span) items.push({ v, span });
+  });
+  if (!items.length) return { render(body, foot, done) { done(); } }; // NO-OP-Fallback
+  let i = 0;
+  return { render(body, foot, done) {
+    const draw = () => {
+      if (i >= items.length) return done();
+      const { v, span } = items[i];
+      const ex = v.ex;
+      const before = esc(ex.slice(0, span.start)), after = esc(ex.slice(span.end));
+      const cc = ccApply(v.ex, v.exDe || '', [v]);
+      const hint = (stripArt(normalize(v.nl))[0] || '');
+      const head = `<div class="step-label">Lückentext · ${i + 1}/${items.length}</div>`;
+      body.innerHTML = `${head}<div class="step-title">Fülle die Lücke:</div>
+        <div class="clz-sent">${before}<span class="clz-gap" id="gap">____</span>${after}</div>
+        <div class="clz-hint">🇩🇪 ${cc.de || esc(v.exDe || '')}</div>
+        <div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="beginnt mit „${esc(hint)}…“"></div>
+        <div id="fb" class="afb"></div>`;
+      const inp = body.querySelector('#ans'); inp.focus();
+      foot.innerHTML = `<button class="btn" id="chk">Prüfen</button>`;
+      const check = () => {
+        let r = gradeAnswer(inp.value, span.matched);
+        if (!r.ok) { const r2 = gradeAnswer(inp.value, v.nl); if (r2.ok) r = r2; } // Grundform auch ok
+        inp.disabled = true; recordAnswer(r.ok);
+        const gap = body.querySelector('#gap');
+        if (gap) { gap.textContent = span.matched; gap.classList.add(r.ok ? 'clz-ok' : 'clz-bad'); }
+        body.querySelector('#fb').innerHTML = `<div class="${r.ok ? 'ok' : 'bad'}">${r.ok ? (r.typo ? '✓ Fast! ' : '✓ Richtig! ') : '✗ '}<b>${esc(span.matched)}</b></div><div class="ex">${esc(v.de)}</div>`;
+        if (r.ok) speak(v.nl); else speak(span.matched);
+        const sayBtn = ttsSupported() ? `<button class="btn ghost" id="say">🔊 Satz</button>` : '';
+        foot.innerHTML = `${sayBtn}<button class="btn" id="n">${i === items.length - 1 ? 'Fertig' : 'Weiter'}</button>`;
+        const sb = foot.querySelector('#say'); if (sb) sb.onclick = () => speak(v.ex);
+        foot.querySelector('#n').onclick = () => { i++; draw(); };
+      };
+      foot.querySelector('#chk').onclick = check;
+      inp.onkeydown = (e) => { if (e.key === 'Enter') check(); };
+    };
+    draw();
+  }};
+}
+
+// Produktiver Satzbau: Wort-Chunks gemischt als antippbare Chips ordnen.
+// Tap-to-Order (touch-fest, KEIN HTML5-Drag). Quelle: l.speak[].nl, sonst kurze l.dialogue-Zeile.
+function stepSentenceBuild(l) {
+  // Kandidaten-Satz wählen: 2–9 Wörter, mit DE-Bedeutung.
+  const pick = () => {
+    const cands = [];
+    (l.speak || []).forEach(s => { if (s && s.nl && s.de) { const w = s.nl.trim().split(/\s+/); if (w.length >= 2 && w.length <= 9) cands.push({ nl: s.nl.trim(), de: s.de }); } });
+    if (!cands.length) (l.dialogue || []).forEach(d => { if (d && d.nl && d.de) { const w = d.nl.trim().split(/\s+/); if (w.length >= 2 && w.length <= 9) cands.push({ nl: d.nl.trim(), de: d.de }); } });
+    return cands.length ? cands[Math.floor(Math.random() * cands.length)] : null;
+  };
+  const sent = pick();
+  if (!sent) return { render(body, foot, done) { done(); } }; // NO-OP: kein passender Satz
+
+  const chunks = sent.nl.split(/\s+/);
+  return { render(body, foot, done) {
+    // Startreihenfolge mischen (nicht identisch mit Original, falls möglich).
+    const idx = chunks.map((_, i) => i);
+    let pool = shuffle(idx.slice());
+    let guard = 0;
+    while (chunks.length > 1 && pool.join() === idx.join() && guard++ < 20) pool = shuffle(idx.slice());
+    let placed = [];
+    let solved = false;
+
+    body.innerHTML =
+      '<div class="step-label">Satzbau · Ordne die Wörter</div>' +
+      '<div class="step-title">Bau den niederländischen Satz</div>' +
+      '<div class="sbld-de">🇩🇪 ' + esc(sent.de) + '</div>' +
+      '<div class="sbld-ans" id="sbld-ans"></div>' +
+      '<div class="sbld-pool" id="sbld-pool"></div>' +
+      '<div id="fb" class="afb"></div>';
+    const ansEl = body.querySelector('#sbld-ans');
+    const poolEl = body.querySelector('#sbld-pool');
+    const fb = body.querySelector('#fb');
+
+    const setFoot = () => {
+      foot.innerHTML = '<button class="btn ghost small" id="rst" style="flex:0 0 auto;width:auto">↺ Zurücksetzen</button>' +
+        '<button class="btn" id="chk"' + (placed.length === chunks.length ? '' : ' disabled') + '>Prüfen</button>';
+      foot.querySelector('#rst').onclick = () => { if (solved) return; pool = pool.concat(placed); placed = []; draw(); };
+      foot.querySelector('#chk').onclick = check;
+    };
+
+    const draw = () => {
+      // Antwortzeile
+      if (!placed.length) {
+        ansEl.innerHTML = '<span class="sbld-empty">Tippe die Wörter der Reihe nach an…</span>';
+      } else {
+        ansEl.innerHTML = placed.map((ci, pos) =>
+          '<button class="sbld-chip sbld-in" data-pos="' + pos + '">' + esc(chunks[ci]) + '</button>').join('');
+        ansEl.querySelectorAll('.sbld-chip').forEach(b => b.onclick = () => {
+          if (solved) return;
+          const pos = +b.dataset.pos; pool.push(placed[pos]); placed.splice(pos, 1); draw();
+        });
+      }
+      // Wort-Vorrat
+      poolEl.innerHTML = pool.length
+        ? pool.map((ci, k) => '<button class="sbld-chip" data-k="' + k + '">' + esc(chunks[ci]) + '</button>').join('')
+        : '<span class="sbld-empty">— alle Wörter gesetzt —</span>';
+      poolEl.querySelectorAll('.sbld-chip').forEach(b => b.onclick = () => {
+        if (solved) return;
+        const k = +b.dataset.k; placed.push(pool[k]); pool.splice(k, 1); draw();
+      });
+      setFoot();
+    };
+
+    const check = () => {
+      if (solved || placed.length !== chunks.length) return;
+      solved = true;
+      const guess = placed.map(ci => chunks[ci]).join(' ');
+      const ok = normalize(guess) === normalize(sent.nl); // interpunktions-/groß-klein-tolerant
+      recordAnswer(ok);
+      // Chips wortweise einfärben (dupletten-fest: Wort an Position pos vs. Zielwort an pos)
+      ansEl.querySelectorAll('.sbld-chip').forEach((b, pos) => {
+        const good = normalize(chunks[placed[pos]]) === normalize(chunks[pos]);
+        b.classList.add(good ? 'sbld-ok' : 'sbld-bad');
+      });
+      fb.innerHTML = ok
+        ? '<div class="ok">✓ Perfect! <b>' + esc(sent.nl) + '</b></div>'
+        : '<div class="bad">✗ Richtig wäre:</div><div class="ex">' + esc(sent.nl) + '</div>';
+      if (ok && ttsSupported()) speak(sent.nl);
+      foot.innerHTML = '<button class="btn" id="n">Weiter</button>';
+      foot.querySelector('#n').onclick = done;
+    };
+
+    draw();
+  } };
+}
+
+// Hör-Diktat: TTS liest einen kurzen NL-Satz vor, Nutzer tippt ihn nach.
+// 🔊 wiederholt. Ohne TTS: Satz 2s sichtbar zeigen, dann ausblenden. bis zu 2 Items.
+function stepDictation(l) {
+  // Quelle: bevorzugt l.speak (nl+de), sonst kurze Dialogzeilen (<= 8 Wörter).
+  const pool = [];
+  (l.speak || []).forEach(s => { if (s && s.nl && s.de) pool.push({ nl: s.nl, de: s.de }); });
+  if (pool.length < 2 && Array.isArray(l.dialogue)) {
+    l.dialogue.forEach(d => {
+      if (d && d.nl && d.de && d.nl.trim().split(/\s+/).length <= 8) pool.push({ nl: d.nl, de: d.de });
+    });
+  }
+  // Nach NL dedupen.
+  const seen = new Set(), src = [];
+  pool.forEach(p => { const k = p.nl.trim().toLowerCase(); if (!seen.has(k)) { seen.add(k); src.push(p); } });
+  if (!src.length) return { render(body, foot, done) { done(); } }; // NO-OP: keine Daten
+  const items = shuffle(src.slice()).slice(0, 2);
+  const supported = ttsSupported();
+
+  let i = 0;
+  return { render(body, foot, done) {
+    const draw = () => {
+      if (i >= items.length) return done();
+      const it = items[i];
+      const head = `<div class="step-label">Hör-Diktat · ${i + 1}/${items.length}</div>`;
+      body.innerHTML = `${head}
+        <div class="step-title">Hör zu und tippe, was du hörst</div>
+        <div class="dict-play">
+          <button class="iconbtn dict-rep" id="rep" style="width:64px;height:64px;font-size:28px">${supported ? '🔊' : '👁'}</button>
+          <span class="muted dict-hint" id="hint">${supported ? 'Tippen zum Wiederholen' : 'Tippen: Satz kurz zeigen'}</span>
+        </div>
+        <div class="dict-show" id="show" aria-hidden="true"></div>
+        <div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="auf Niederländisch…"></div>
+        <div id="fb" class="afb"></div>`;
+      const inp = body.querySelector('#ans');
+      const show = body.querySelector('#show');
+      let timer = null;
+      const present = () => {
+        if (supported) { speak(it.nl); }
+        else {
+          show.textContent = it.nl; show.classList.add('on');
+          clearTimeout(timer);
+          timer = setTimeout(() => { show.classList.remove('on'); }, 2000);
+        }
+      };
+      body.querySelector('#rep').onclick = present;
+      present();
+      inp.focus();
+      foot.innerHTML = `<button class="btn" id="chk">Prüfen</button>`;
+      const check = () => {
+        clearTimeout(timer); show.classList.remove('on');
+        const r = gradeAnswer(inp.value, it.nl); inp.disabled = true; recordAnswer(r.ok);
+        body.querySelector('#fb').innerHTML =
+          `<div class="${r.ok ? 'ok' : 'bad'}">${r.ok ? (r.typo ? '✓ Fast — ' : '✓ Richtig! ') : '✗ '}<b>${esc(it.nl)}</b></div>
+           <div class="ex">${esc(it.de)}</div>`;
+        if (supported) speak(it.nl);
+        foot.innerHTML = `<button class="btn" id="n">${i === items.length - 1 ? 'Fertig' : 'Weiter'}</button>`;
+        foot.querySelector('#n').onclick = () => { i++; draw(); };
+      };
+      foot.querySelector('#chk').onclick = check;
+      inp.onkeydown = (e) => { if (e.key === 'Enter') check(); };
+    };
+    draw();
+  }};
+}
+
+/* ============ Interleaved-Konjugation (Grammatik-Härtetest) ============ */
+// Kuratierte Konjugationstabelle (App hat keine Verbdaten). Fachlich geprüft,
+// inkl. unregelmäßiger Formen. Präsens: ik/jij/hij/wij. Perfectum: Hilfsverb
+// (hebben/zijn) + voltooid deelwoord — Hilfsverb wird je Person flektiert.
+const CJD_AUX = {
+  hebben: { ik: 'heb', jij: 'hebt', hij: 'heeft', wij: 'hebben' },
+  zijn:   { ik: 'ben', jij: 'bent', hij: 'is',    wij: 'zijn' }
+};
+const CJD_VERBS = [
+  { inf: 'zijn',   pres: { ik: 'ben',  jij: 'bent',  hij: 'is',    wij: 'zijn'   }, perf: { aux: 'zijn',   part: 'geweest' } },
+  { inf: 'hebben', pres: { ik: 'heb',  jij: 'hebt',  hij: 'heeft', wij: 'hebben' }, perf: { aux: 'hebben', part: 'gehad'   } },
+  { inf: 'gaan',   pres: { ik: 'ga',   jij: 'gaat',  hij: 'gaat',  wij: 'gaan'   }, perf: { aux: 'zijn',   part: 'gegaan'  } },
+  { inf: 'komen',  pres: { ik: 'kom',  jij: 'komt',  hij: 'komt',  wij: 'komen'  }, perf: { aux: 'zijn',   part: 'gekomen' } },
+  { inf: 'doen',   pres: { ik: 'doe',  jij: 'doet',  hij: 'doet',  wij: 'doen'   }, perf: { aux: 'hebben', part: 'gedaan'  } },
+  { inf: 'maken',  pres: { ik: 'maak', jij: 'maakt', hij: 'maakt', wij: 'maken'  }, perf: { aux: 'hebben', part: 'gemaakt' } },
+  { inf: 'wonen',  pres: { ik: 'woon', jij: 'woont', hij: 'woont', wij: 'wonen'  }, perf: { aux: 'hebben', part: 'gewoond' } },
+  { inf: 'werken', pres: { ik: 'werk', jij: 'werkt', hij: 'werkt', wij: 'werken' }, perf: { aux: 'hebben', part: 'gewerkt' } },
+  { inf: 'willen', pres: { ik: 'wil',  jij: 'wilt',  hij: 'wil',   wij: 'willen' }, perf: { aux: 'hebben', part: 'gewild'  } },
+  { inf: 'kunnen', pres: { ik: 'kan',  jij: 'kunt',  hij: 'kan',   wij: 'kunnen' }, perf: { aux: 'hebben', part: 'gekund'  } }
+];
+// Zulässige Nebenformen (werden zusätzlich als richtig akzeptiert).
+const CJD_ALT = { 'willen|jij': ['wil'], 'kunnen|jij': ['kan'] };
+const CJD_PERSONS = ['ik', 'jij', 'hij', 'wij'];
+const CJD_TLABEL = { pres: 'Präsens', perf: 'Perfekt' };
+
+// Alle akzeptierten Zielformen für ein Item (targets[0] = kanonische Form).
+function cjdTargets(it) {
+  if (it.t === 'pres') {
+    const alt = CJD_ALT[it.v.inf + '|' + it.p] || [];
+    return [it.v.pres[it.p]].concat(alt);
+  }
+  return [CJD_AUX[it.v.perf.aux][it.p] + ' ' + it.v.perf.part];
+}
+// Tolerantes Grading gegen mehrere Zielformen (bevorzugt exakten Treffer).
+function cjdGrade(val, targets) {
+  let best = { ok: false, typo: false };
+  for (let i = 0; i < targets.length; i++) {
+    const r = gradeAnswer(val, targets[i]);
+    if (r.ok && !r.typo) return { ok: true, typo: false };
+    if (r.ok) best = { ok: true, typo: true };
+  }
+  return best;
+}
+// Interleaved: 3 Präsens + 3 Perfekt, über verschiedene Verben, dann gemischt.
+function cjdItems() {
+  const pres = [], perf = [];
+  for (let i = 0; i < CJD_VERBS.length; i++) {
+    for (let j = 0; j < CJD_PERSONS.length; j++) {
+      pres.push({ v: CJD_VERBS[i], p: CJD_PERSONS[j], t: 'pres' });
+      perf.push({ v: CJD_VERBS[i], p: CJD_PERSONS[j], t: 'perf' });
+    }
+  }
+  const pick = (arr, n) => {
+    shuffle(arr); const out = [], seen = {};
+    for (let k = 0; k < arr.length && out.length < n; k++) {
+      if (seen[arr[k].v.inf]) continue; // pro Zeitform verschiedene Verben
+      seen[arr[k].v.inf] = 1; out.push(arr[k]);
+    }
+    return out;
+  };
+  return shuffle(pick(pres, 3).concat(pick(perf, 3)));
+}
+
+// EIN Step, der intern 6 interleaved Konjugations-Items abfragt.
+function stepConjDrill(l) {
+  const items = cjdItems();
+  if (!items.length) return { render(body, foot, done) { done(); } };
+  return { render(body, foot, done) {
+    let i = 0;
+    const show = () => {
+      const it = items[i];
+      const targets = cjdTargets(it);
+      const canon = targets[0];
+      let answered = false;
+      const head = `<div class="step-label">Konjugation · ${i + 1}/${items.length}</div>`;
+      const cue = `<div class="cjd-cue"><span class="pill ${it.t === 'perf' ? 'blue' : 'good'}">${CJD_TLABEL[it.t]}</span>`
+        + `<span class="cjd-hint">${it.t === 'perf' ? 'Hilfsverb + voltooid deelwoord' : 'juiste vorm'}</span></div>`;
+      body.innerHTML = `${head}<div class="step-title">${esc(it.p)} <span class="cjd-blank">…</span> <span class="cjd-inf">(${esc(it.v.inf)})</span></div>`
+        + cue
+        + `<div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="op zijn Nederlands…"></div>`
+        + `<div id="fb" class="afb"></div>`;
+      const inp = body.querySelector('#ans'); inp.focus();
+      foot.innerHTML = `<button class="btn" id="chk">Prüfen</button>`;
+      const check = () => {
+        if (answered) return; answered = true;
+        const r = cjdGrade(inp.value, targets); inp.disabled = true; recordAnswer(r.ok);
+        const full = `${esc(it.p)} ${esc(canon)}`;
+        body.querySelector('#fb').innerHTML =
+          `<div class="${r.ok ? 'ok' : 'bad'}">${r.ok ? (r.typo ? '✓ Fast — ' : '✓ Richtig! ') : '✗ '}<b>${full}</b></div>`
+          + (it.t === 'perf' ? `<div class="ex">${CJD_TLABEL.perf} von „${esc(it.v.inf)}"</div>` : '');
+        if (r.ok && ttsSupported()) speak(it.p + ' ' + canon);
+        const last = i === items.length - 1;
+        foot.innerHTML = `<button class="btn" id="n">${last ? 'Fertig' : 'Weiter'}</button>`;
+        foot.querySelector('#n').onclick = () => { if (last) { done(); } else { i++; show(); } };
+      };
+      foot.querySelector('#chk').onclick = check;
+      inp.onkeydown = (e) => { if (e.key === 'Enter') check(); };
+    };
+    show();
+  }};
+}
+
+// Integration (Stufe 5-6): "Vervollständige das Gespräch".
+// Spielt l.dialogue Zeile für Zeile ab; an 1-2 Stellen wird die echte Antwort
+// durch eine MC-Auswahl ersetzt (echte Zeile + plausible Distraktoren aus
+// anderen Dialogzeilen/Sprech-Sätzen). Richtige Wahl setzt das Gespräch fort,
+// falsche zeigt kurz die richtige Zeile. Nur vorhandene Helfer.
+function stepBranchDialogue(l) {
+  const NOOP = { render(body, foot, done) { done(); } };
+  const dlg = (l && Array.isArray(l.dialogue)) ? l.dialogue.filter(d => d && d.nl && d.de) : [];
+  if (dlg.length < 3) return NOOP;
+
+  const norm = s => (s == null ? '' : String(s)).trim();
+  const low = s => norm(s).toLowerCase();
+
+  // Distraktor-Pool: alle NL-Zeilen des Dialogs + Sprech-Sätze der Lektion.
+  const poolNl = [];
+  dlg.forEach(d => poolNl.push(d.nl));
+  if (Array.isArray(l.speak)) l.speak.forEach(s => { if (s && s.nl) poolNl.push(s.nl); });
+
+  function distractorsFor(correct, exclude) {
+    const c = low(correct), seen = {}, out = [];
+    shuffle(poolNl.slice()).forEach(s => {
+      const k = low(s);
+      if (!k || k === c || seen[k]) return;
+      if (exclude && exclude.has(k)) return;
+      seen[k] = 1; out.push(s);
+    });
+    return out;
+  }
+
+  // Lücken wählen: bevorzugt "Du"-Zeilen (die Antworten des Lernenden),
+  // sonst alle Antwortzeilen ab Index 1. Nur Zeilen mit >=1 Distraktor.
+  const all = [];
+  for (let i = 1; i < dlg.length; i++) all.push(i);
+  const du = all.filter(i => /^du$/i.test(norm(dlg[i].who)));
+  let base = (du.length ? du : all).filter(i => distractorsFor(dlg[i].nl, null).length >= 1);
+  if (!base.length) return NOOP;
+  const gapsArr = base.length <= 2 ? base.slice() : [base[0], base[base.length - 1]];
+  const gaps = new Set(gapsArr);
+  const gapAns = new Set(gapsArr.map(i => low(dlg[i].nl)));
+
+  return { render(body, foot, done) {
+    body.innerHTML = `<div class="step-label">Im Gespräch · Vervollständige das Gespräch</div>
+      <div class="step-title">${esc(l.title || 'Gesprek')}</div>
+      <p class="muted bdlg-hint">Wähle die passende niederländische Antwort, um das Gespräch fortzusetzen.</p>
+      <div class="bdlg-log" id="bdlgLog"></div>
+      <div class="bdlg-pick" id="bdlgPick"></div>`;
+    const log = body.querySelector('#bdlgLog');
+    const pick = body.querySelector('#bdlgPick');
+    let pos = 0;
+
+    const appendLine = (d) => {
+      const cc = ccApply(d.nl, d.de, l.vocab || []);
+      const el = document.createElement('div');
+      el.className = 'line bdlg-line';
+      el.innerHTML = `<div class="who">${esc(d.who || '')}</div>
+        <div><div class="nl">${cc.nl}</div><div class="de">${cc.de}</div></div>
+        <div class="spk">🔊</div>`;
+      el.onclick = () => speak(d.nl);
+      log.appendChild(el);
+      if (el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+    };
+
+    const finish = () => {
+      pick.innerHTML = '';
+      foot.innerHTML = `<button class="btn" id="n">Weiter</button>`;
+      foot.querySelector('#n').onclick = done;
+    };
+
+    const presentGap = (idx) => {
+      const d = dlg[idx];
+      let distr = distractorsFor(d.nl, gapAns).slice(0, 3);
+      if (!distr.length) distr = distractorsFor(d.nl, null).slice(0, 3);
+      const opts = shuffle([d.nl].concat(distr));
+      pick.innerHTML = `<div class="bdlg-cue">${esc(d.who || 'Du')} …</div>
+        <div class="choices">${opts.map((o, i) => `<button class="choice bdlg-choice" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
+      foot.innerHTML = '';
+      let answered = false;
+      pick.querySelectorAll('.choice').forEach(btn => btn.onclick = () => {
+        if (answered) return; answered = true;
+        const chosen = opts[+btn.dataset.i];
+        const ok = low(chosen) === low(d.nl);
+        recordAnswer(ok);
+        pick.querySelectorAll('.choice').forEach((b2, i) => {
+          if (low(opts[i]) === low(d.nl)) b2.classList.add('correct');
+          else if (i === +btn.dataset.i) b2.classList.add('wrong');
+          b2.disabled = true;
+        });
+        if (ok) speak(d.nl);
+        foot.innerHTML = `<button class="btn" id="n">Weiter</button>`;
+        foot.querySelector('#n').onclick = () => {
+          appendLine(d);          // echte Zeile ins Protokoll übernehmen
+          pick.innerHTML = '';
+          pos = idx + 1;
+          run();
+        };
+      });
+    };
+
+    const run = () => {
+      while (pos < dlg.length && !gaps.has(pos)) { appendLine(dlg[pos]); pos++; }
+      if (pos >= dlg.length) { finish(); return; }
+      presentGap(pos);
+    };
+    run();
+  }};
+}
+
 // ---- Lektions-Baukasten: Phasen + Anspruchsstufe (Recall-Leiter) ----------
 // Statt einer für ALLE Lektionen identischen Schrittfolge wird die Lektion aus
 // Phasen zusammengesetzt. Die Anspruchsstufe (1–6) und Content-Trigger (Grammatik/
@@ -841,19 +1359,33 @@ function drillSteps(questions, label = 'Übung') {
   return questions.map((q, i) => examStep(q, i + 1, total, score, label));
 }
 // Baut die Schrittfolge einer Lektion aus Phasen (Kontext→Input→Übung→Integration→Abschluss).
+// Wählt EIN story-/grammatik-passendes Übungs-Modul (nicht alle) — bounded, damit
+// die Lektion nicht überladen wird und das Modul zur Szene passt.
+function pickUebung(l, g, stufe) {
+  if (g === 'getallen') return drillSteps(numberQuestions(3), 'Zahlen');
+  if (g === 'meervoud') return drillSteps(pluralQuestions(3), 'Mehrzahl');
+  if (CONJ_GRAMMAR.has(g) && stufe >= 3) return [stepConjDrill(l)];      // Interleaved nur bei Zeitform-Grammatik ab A2
+  if (ORDER_GRAMMAR.has(g) && stufe >= 2) return [stepSentenceBuild(l)]; // Satzbau bei Wortstellungs-Grammatik
+  if (stufe <= 2) return [stepMatch(l)];                                 // frühe Stufen: rezeptives Matching
+  return [stepCloze(l)];                                                 // sonst: gestützte Produktion
+}
 function buildLessonSteps(l) {
   if (Array.isArray(l.modules)) return l.modules.map(m => m(l)).filter(Boolean); // Pro-Lektion-Override
-  const steps = [];
-  const g = l.grammar;
+  const steps = [], g = l.grammar, stufe = lessonStufe(l);
   // 1) Kontext
   if (l.story) steps.push(stepStory(l));
-  // 2) Input (Grammatik-Erklärung + Vokabel-Einführung)
+  // 2) Input
   steps.push(stepGrammar(g, 'Grammatik'), stepIntro(l.vocab));
-  // 3) Übung — Content-getriggerte generative Drills (Leiter-Stufe 5/7)
-  if (g === 'getallen') steps.push(...drillSteps(numberQuestions(3), 'Zahlen'));
-  if (g === 'meervoud') steps.push(...drillSteps(pluralQuestions(3), 'Mehrzahl'));
-  // 4) Integration (in Kontext anwenden)
-  steps.push(stepDialogue(l), stepGrammarCheck(g));
+  // 3) Übung — genau ein passendes Modul (Grammatik/Stufe)
+  steps.push(...pickUebung(l, g, stufe));
+  // 4) Integration
+  if (stufe >= 5 && Array.isArray(l.dialogue) && l.dialogue.length >= 3) {
+    steps.push(stepBranchDialogue(l));            // aktives Gespräch statt passivem Lesen (A2+)
+  } else {
+    steps.push(stepDialogue(l));
+    if (stufe >= 3) steps.push(stepDictation(l)); // Hör-Diktat ab Stufe 3
+  }
+  steps.push(stepGrammarCheck(g));
   if (l.speak && l.speak.length) steps.push(stepSpeak(l.speak));
   // 6) Abschluss
   if (l.culture) steps.push(stepCulture(l));
