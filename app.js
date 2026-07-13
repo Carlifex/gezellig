@@ -72,7 +72,9 @@ function renderToday() {
   const gpct = Math.min(100, Math.round(tXp / goalXp * 100));
   const hour = new Date().getHours();
   const greet = hour < 11 ? 'Guten Morgen!' : hour < 18 ? 'Guten Tag!' : 'Guten Abend!';
-  const nextLesson = LESSONS.find(l => lessonStatus(l.id) === 'neu') || LESSONS.find(l => lessonStatus(l.id) !== 'gemeistert') || LESSONS[0];
+  const nextLesson = LESSONS.find(l => lessonStatus(l.id) === 'neu' && lessonUnlocked(l))
+    || LESSONS.find(l => lessonStatus(l.id) !== 'gemeistert' && lessonUnlocked(l))
+    || LESSONS[0];
   const curKey = (nextLesson && nextLesson.track) || 'verhaal';
   const curIdx = Math.max(0, TRACKS.filter(x => trackLessons(x.key).length).findIndex(t => t.key === curKey));
   const heroTracks = TRACKS.filter(x => trackLessons(x.key).length);
@@ -213,9 +215,22 @@ function statusBadge(st) {
 
 // Kapitel-Mitte (ab dieser Lektion braucht es den Zwischen-Check). Kleine Kapitel: kein Check.
 function chapterMid(ls) { return ls.length >= 4 ? Math.ceil(ls.length / 2) : ls.length; }
-// Freischalten: vorige Lektion durch (sequenziell) UND ggf. Zwischen-Check bestanden.
+// Kapitel-Freischaltung: das erste Kapitel ist offen; jedes weitere erst,
+// wenn die Prüfung des vorherigen Kapitels bestanden wurde.
+function trackUnlocked(key) {
+  const idx = TRACKS.findIndex(t => t.key === key);
+  if (idx <= 0) return true;
+  return examPassed(TRACKS[idx - 1].key);
+}
+// Vorheriges Kapitel (für Hinweistexte).
+function prevTrack(key) {
+  const idx = TRACKS.findIndex(t => t.key === key);
+  return idx > 0 ? TRACKS[idx - 1] : null;
+}
+// Freischalten: Kapitel offen UND vorige Lektion durch (sequenziell) UND ggf. Zwischen-Check bestanden.
 function lessonUnlocked(l) {
   const key = l.track || 'verhaal';
+  if (!trackUnlocked(key)) return false;
   const ls = trackLessons(key);
   const i = ls.findIndex(x => x.id === l.id);
   if (i <= 0) return true;
@@ -286,15 +301,18 @@ function chapterCard(t) {
   const done = ls.filter(l => lessonStatus(l.id) !== 'neu').length;
   const ex = examState(t.key);
   const mark = ex && ex.passed ? ' 🏅' : (ls.length && done === ls.length ? ' ✅' : '');
+  const unlocked = trackUnlocked(t.key);
+  const pv = prevTrack(t.key);
   const img = t.hero
     ? `<img src="${esc(t.hero)}" alt="" loading="lazy" onerror="this.closest('.chaphero').classList.add('noimg')"/>`
     : '';
   return `<div class="chapcard">
-    <button class="chaphero ${t.hero ? '' : 'noimg'}" data-track="${t.key}">
+    <button class="chaphero ${t.hero ? '' : 'noimg'} ${unlocked ? '' : 'locked'}" data-track="${t.key}">
       ${img}<span class="heroslide-ph">${t.icon}</span>
       <span class="hero-cap">
-        <span class="hero-top"><span class="hero-lvl">${esc(t.level)}</span><span class="hero-prog">${done}/${ls.length}${mark}</span></span>
+        <span class="hero-top"><span class="hero-lvl">${esc(t.level)}</span><span class="hero-prog">${unlocked ? `${done}/${ls.length}${mark}` : '🔒'}</span></span>
         <span class="hero-title">${esc(t.label)}</span>
+        ${unlocked ? '' : `<span class="hero-lock">🔒 Erst Prüfung „${esc(pv ? pv.label : '')}" bestehen</span>`}
       </span>
     </button>
     <div class="chapbody">
@@ -421,23 +439,33 @@ function heroSlide(t) {
   const ls = trackLessons(t.key);
   const done = ls.filter(l => lessonStatus(l.id) !== 'neu').length;
   const complete = ls.length && done === ls.length;
+  const unlocked = trackUnlocked(t.key);
+  const pv = prevTrack(t.key);
   const img = t.hero
     ? `<img src="${esc(t.hero)}" alt="" loading="eager" onerror="this.closest('.heroslide').classList.add('noimg')"/>`
     : '';
-  // Abgeschlossenes Kapitel → verdientes Badge oben rechts, sonst Fortschritt.
-  const corner = complete && BADGE_ART.has(t.key)
-    ? `<img class="hero-badge" src="illustrations/badges/${t.key}.webp" alt="Abzeichen">`
-    : `<span class="hero-prog">${done}/${ls.length}</span>`;
-  return `<button class="heroslide ${t.hero ? '' : 'noimg'}" data-track="${t.key}">
+  // Abgeschlossenes Kapitel → verdientes Badge oben rechts, sonst Fortschritt (bzw. Schloss).
+  const corner = !unlocked
+    ? `<span class="hero-prog">🔒</span>`
+    : complete && BADGE_ART.has(t.key)
+      ? `<img class="hero-badge" src="illustrations/badges/${t.key}.webp" alt="Abzeichen">`
+      : `<span class="hero-prog">${done}/${ls.length}</span>`;
+  return `<button class="heroslide ${t.hero ? '' : 'noimg'} ${unlocked ? '' : 'locked'}" data-track="${t.key}">
     ${img}<span class="heroslide-ph">${t.icon}</span>
     <div class="hero-cap">
       <div class="hero-top">${corner}</div>
       <div class="greet hero-title">${esc(t.heroTitle)}</div>
+      ${unlocked ? '' : `<div class="hero-lock">🔒 Erst Prüfung „${esc(pv ? pv.label : '')}" bestehen</div>`}
     </div></button>`;
 }
 
 // Ein Kapitel öffnen: Lektionen-Tab, nur dessen Lektionen zeigen.
 function openTrack(key) {
+  if (!trackUnlocked(key)) {
+    const pv = prevTrack(key);
+    toast(pv ? `Erst die Prüfung „${pv.label}" bestehen.` : 'Noch gesperrt.', '🔒');
+    return;
+  }
   go('lessons', key);
   app.scrollTo ? app.scrollTo(0, 0) : window.scrollTo(0, 0);
 }
