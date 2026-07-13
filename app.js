@@ -180,7 +180,7 @@ const RANK_ART = new Set([]);   // z. B. 1,2,3 … sobald lvl-1.webp usw. existi
 const MEDAL_ART = new Set([]);  // z. B. 'first_lesson' … sobald medals/first_lesson.webp existiert
 // Lernpfad-Abzeichen mit eigener Badge-Grafik (illustrations/badges/<track>.webp);
 // solange leer, zeigt die App das Kapitel-Cover als Fallback.
-const BADGE_ART = new Set([]);  // z. B. 'verhaal' … sobald badges/verhaal.webp existiert
+const BADGE_ART = new Set(['verhaal','personen','mythen','ade','feest','natuurkunde']);  // illustrations/badges/<track>.webp
 const rankIcon = (L) => RANK_ART.has(L.level)
   ? `<img class="lvicon-img" src="illustrations/ranks/lvl-${L.level}.webp" alt="">`
   : L.icon;
