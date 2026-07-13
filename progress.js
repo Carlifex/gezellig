@@ -25,18 +25,45 @@ for (const v of VOCAB_BANK) {
 }
 export const ALL_VOCAB = Object.values(vocabById);
 
+// Dasselbe Wort taucht in mehreren Lektionen unter verschiedenen IDs auf
+// (z. B. „de kaas" als bo_kaas / ma_kaas / my8_kaas). Für „neue Wörter" und
+// Reife zählt der NL-Text, nicht die ID — sonst wird ein Wort mehrfach als
+// „neu" angeboten (Dopplungen) und die Reife-Quote verrechnet sich.
+const nlKey = (v) => (v && v.nl ? v.nl.toLowerCase().trim() : '');
+const nlIndex = {};
+ALL_VOCAB.forEach(v => { (nlIndex[nlKey(v)] || (nlIndex[nlKey(v)] = [])).push(v.id); });
+// Ist irgendeine Variante desselben Wortes bereits mit ≥ min Wiederholungen im Training?
+function nlHasReps(v, min) {
+  const ids = nlIndex[nlKey(v)] || [v.id];
+  return ids.some(id => { const c = state.cards[id]; return c && c.reps >= min; });
+}
+
 // Lern-Reihenfolge für „neue Wörter": Lektions-Wörter in Story-Reihenfolge zuerst
 // (Kontext-Kopplung hilft Kodierung), dann der Rest der Bank.
 const lessonVocab = [];
 LESSONS.forEach(l => l.vocab.forEach(v => lessonVocab.push(vocabById[v.id])));
 const LEARN_SEQ = [...lessonVocab, ...bankVocab];
-const notStarted = (v) => { const c = state.cards[v.id]; return !c || !c.reps; };
+// „Noch nicht gestartet": keine Variante desselben NL-Wortes ist im Training.
+const notStarted = (v) => !nlHasReps(v, 1);
 export function unstartedVocab(n = 8) {
-  const out = [];
-  for (const v of LEARN_SEQ) { if (out.length >= n) break; if (notStarted(v)) out.push(v); }
+  const out = [], seen = new Set();
+  for (const v of LEARN_SEQ) {
+    if (out.length >= n) break;
+    const k = nlKey(v);
+    if (seen.has(k) || !notStarted(v)) continue;   // pro NL-Wort nur EIN Kandidat
+    seen.add(k); out.push(v);
+  }
   return out;
 }
-export function unstartedCount() { return LEARN_SEQ.filter(notStarted).length; }
+export function unstartedCount() {
+  const seen = new Set(); let c = 0;
+  for (const v of LEARN_SEQ) {
+    const k = nlKey(v);
+    if (seen.has(k) || !notStarted(v)) continue;
+    seen.add(k); c++;
+  }
+  return c;
+}
 // Nimmt Wörter aktiv ins SRS-Training auf (aus dem „Neue Wörter"-Trainer).
 export function learnWords(list) {
   let added = 0;
@@ -231,12 +258,13 @@ export function introWord(id, grade = 'good') {
 export function trackVocab(key) {
   const seen = new Set(); const out = [];
   for (const l of LESSONS) if ((l.track || 'verhaal') === key)
-    for (const v of (l.vocab || [])) if (v && !seen.has(v.id)) { seen.add(v.id); out.push(v); }
+    for (const v of (l.vocab || [])) { const k = nlKey(v); if (v && !seen.has(k)) { seen.add(k); out.push(v); } }
   return out;
 }
 export function trackVocabReady(key) {
   const vs = trackVocab(key);
-  const ready = vs.filter(v => { const c = state.cards[v.id]; return c && c.reps >= 2; }).length;
+  // Reif, wenn irgendeine Variante desselben Wortes ≥ 2 Wiederholungen hat.
+  const ready = vs.filter(v => nlHasReps(v, 2)).length;
   return { ready, total: vs.length, pct: vs.length ? Math.round(ready / vs.length * 100) : 0 };
 }
 export function dailyNewLimit() { return state.settings.dailyNew || 8; }
