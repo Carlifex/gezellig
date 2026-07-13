@@ -1,0 +1,174 @@
+LERNPFAD-ABZEICHEN — BILD-PROMPTS (6 Kapitel)
+Referenz-Blatt: lernpfad-referenz-bf6422ec.jpg (alle 6 Kapitel-Artworks, beschriftet).
+Nutze je Kapitel-Feld als Stil-, Farb- UND Motivreferenz. Ausgabe: quadratisches,
+freigestelltes PNG (rundes Medaillon) -> illustrations/badges/<key>.webp
+============================================================================
+
+
+────────────────────────────────────────────────────────────────────────────
+① illustrations/badges/verhaal.webp — Familie Kirsch zieht nach Utrecht
+────────────────────────────────────────────────────────────────────────────
+Im angehängten Referenz-Blatt siehst du alle sechs Kapitel-Artworks. Nutze das Feld
+„Familie Kirsch zieht nach Utrecht" strikt als Stil-, Farb- UND Figurenreferenz.
+
+Erzeuge ein rundes Medaillon-Abzeichen im Stil eines modernen, malerischen Anime-
+Artbooks — genau der Malstil der Referenz: ausdrucksstarke digitale Malerei mit
+sichtbaren, weichen Pinselstrukturen und großen, vereinfachten Farbflächen. Keine
+Comic-Lineart, kein Cel-Shading, kein Fotorealismus.
+
+Format: rundes Abzeichen, zentriert auf komplett transparentem, quadratischem
+Hintergrund (freigestellt, 1:1), mit schmalem, sanft leuchtendem Rahmen im Farbverlauf
+warmes Orange→Cyan und dünner dunkler Innenkante. Motiv stark vereinfacht und ikonisch,
+großzügiger Rand, gut lesbar bei ~56 px.
+
+Motiv: die zwei Katzen aus der Referenz — links die schwarze Katze (Schmuser), rechts
+der grau-weiß getigerte Kater (Nalani) — sitzen nebeneinander auf einer Grachtenmauer.
+Dahinter die beleuchtete Silhouette des Utrechter Domturms und ein schmales
+Grachtenhaus mit warm leuchtenden Fenstern, dazwischen ein kleiner zugeklebter
+Umzugskarton aus Wellpappe. Likeness der Katzen exakt aus der Referenz übernehmen.
+KEIN lesbarer Text, keine Buchstaben, kein Logo.
+
+Farben: Palette aus Cyan, Türkis, Magenta, Violett und warmem Orange; kühle Blau-/
+Violett-Schatten, leuchtende Lichtflächen, warmes Grachten-Glühen, kräftige Rimlights,
+weiches Bloom.
+
+Vermeiden: fotorealistische Haut/Fell, glänzender 3D-/Kino-Poster-Look, Teal-und-
+Orange-Colorgrading, Lens-Flare, erfundene Logos/lesbarer Text, Comic-Lineart,
+Cel-Shading, überladener Hintergrund.
+
+
+────────────────────────────────────────────────────────────────────────────
+② illustrations/badges/personen.webp — Ikonen der Niederlande
+────────────────────────────────────────────────────────────────────────────
+Im angehängten Referenz-Blatt siehst du alle sechs Kapitel-Artworks. Nutze das Feld
+„Ikonen der Niederlande" strikt als Stil- und Farbreferenz.
+
+Erzeuge ein rundes Medaillon-Abzeichen im Stil eines modernen, malerischen Anime-
+Artbooks — genau der Malstil der Referenz: weiche, sichtbare Pinselstrukturen, große
+vereinfachte Farbflächen. Keine Comic-Lineart, kein Cel-Shading, kein Fotorealismus.
+
+Format: rundes Abzeichen, zentriert auf transparentem, quadratischem Hintergrund
+(freigestellt, 1:1), schmaler leuchtender Rahmen im Farbverlauf Violett→Gold, dünne
+dunkle Innenkante. Motiv ikonisch vereinfacht, großzügiger Rand, lesbar bei ~56 px.
+
+Motiv: ein einzelner, reich verzierter goldener Bilderrahmen, darin ein malerischer
+Strudel aus leuchtenden Sonnenblumen und einem wirbelnden Sternenhimmel (van-Gogh-haft,
+OHNE erkennbares Gesicht), in der unteren Ecke angeschnitten eine Malerpalette mit
+Farbklecksen. Museal-galeristische Stimmung. KEIN lesbarer Text, keine Buchstaben,
+kein Logo.
+
+Farben: kräftige Palette aus Violett, Magenta, Gold und warmem Orange mit Cyan-
+Akzenten; kühle Schatten, leuchtende Lichtflächen, Rimlight, weiches Bloom.
+
+Vermeiden: fotorealistische Oberflächen, 3D-/Kino-Poster-Look, Teal-und-Orange-Grading,
+Lens-Flare, erfundene Logos/lesbarer Text, Comic-Lineart, Cel-Shading, überladener
+Hintergrund.
+
+
+────────────────────────────────────────────────────────────────────────────
+③ illustrations/badges/mythen.webp — Mythen & Kuriositäten
+────────────────────────────────────────────────────────────────────────────
+Im angehängten Referenz-Blatt siehst du alle sechs Kapitel-Artworks. Nutze das Feld
+„Mythen & Kuriositäten" strikt als Stil- und Farbreferenz.
+
+Erzeuge ein rundes Medaillon-Abzeichen im Stil eines modernen, malerischen Anime-
+Artbooks — genau der Malstil der Referenz: weiche, sichtbare Pinselstrukturen, große
+vereinfachte Farbflächen. Keine Comic-Lineart, kein Cel-Shading, kein Fotorealismus.
+
+Format: rundes Abzeichen, zentriert auf transparentem, quadratischem Hintergrund
+(freigestellt, 1:1), schmaler leuchtender Rahmen im Farbverlauf Magenta→warmes Orange,
+dünne dunkle Innenkante. Motiv ikonisch vereinfacht, großzügiger Rand, lesbar bei ~56 px.
+
+Motiv: eine einzelne klassische niederländische Windmühle auf einem kleinen Deich, im
+Vordergrund ein dichtes Büschel rot-oranger Tulpen, seitlich angedeutet die Silhouette
+eines Fahrrads. Dramatischer magenta-orangefarbener Sonnenuntergangshimmel mit sanften
+Lichtstrahlen, gespiegelt in einem stillen Kanal. KEIN lesbarer Text, keine Buchstaben,
+kein Logo.
+
+Farben: Palette aus Magenta, Violett, warmem Orange und Cyan-Reflexen; kühle Schatten,
+glühender Himmel, kräftige Rimlights, weiches Bloom.
+
+Vermeiden: fotorealistische Oberflächen, 3D-/Kino-Poster-Look, Teal-und-Orange-Grading,
+Lens-Flare, erfundene Logos/lesbarer Text, Comic-Lineart, Cel-Shading, überladener
+Hintergrund.
+
+
+────────────────────────────────────────────────────────────────────────────
+④ illustrations/badges/ade.webp — Amsterdam Dance Event
+────────────────────────────────────────────────────────────────────────────
+Im angehängten Referenz-Blatt siehst du alle sechs Kapitel-Artworks. Nutze das Feld
+„Amsterdam Dance Event" strikt als Stil- und Farbreferenz.
+
+Erzeuge ein rundes Medaillon-Abzeichen im Stil eines modernen, malerischen Anime-
+Artbooks — genau der Malstil der Referenz: weiche, sichtbare Pinselstrukturen, große
+vereinfachte Farbflächen. Keine Comic-Lineart, kein Cel-Shading, kein Fotorealismus.
+
+Format: rundes Abzeichen, zentriert auf transparentem, quadratischem Hintergrund
+(freigestellt, 1:1), schmaler leuchtender Rahmen im Farbverlauf Cyan→Gold, dünne dunkle
+Innenkante. Motiv ikonisch vereinfacht, großzügiger Rand, lesbar bei ~56 px.
+
+Motiv: die Silhouette eines DJs an den Decks von hinten mit einer erhobenen Hand,
+darüber ein leuchtender gelber Lichtblock/Glow (abstrakt, KEIN Schriftzug), feine
+Laserstrahlen im Raum, davor angedeutet eine dunkle Menschenmenge, am Medaillon-Rand
+die Silhouetten von Amsterdamer Grachtenhäusern. KEIN lesbarer Text, keine Buchstaben,
+kein Logo.
+
+Farben: kühles Cyan-Blau und Violett mit leuchtend goldenem Zentrum; kühle Schatten,
+glühende Lichter, kräftige Rimlights, weiches Bloom.
+
+Vermeiden: fotorealistische Oberflächen, 3D-/Kino-Poster-Look, Teal-und-Orange-Grading,
+Lens-Flare, erfundene Logos/lesbarer Text, Comic-Lineart, Cel-Shading, überladener
+Hintergrund.
+
+
+────────────────────────────────────────────────────────────────────────────
+⑤ illustrations/badges/feest.webp — Niederländische Feierkultur
+────────────────────────────────────────────────────────────────────────────
+Im angehängten Referenz-Blatt siehst du alle sechs Kapitel-Artworks. Nutze das Feld
+„Niederländische Feierkultur" strikt als Stil- und Farbreferenz.
+
+Erzeuge ein rundes Medaillon-Abzeichen im Stil eines modernen, malerischen Anime-
+Artbooks — genau der Malstil der Referenz: weiche, sichtbare Pinselstrukturen, große
+vereinfachte Farbflächen. Keine Comic-Lineart, kein Cel-Shading, kein Fotorealismus.
+
+Format: rundes Abzeichen, zentriert auf transparentem, quadratischem Hintergrund
+(freigestellt, 1:1), schmaler leuchtender Rahmen im Farbverlauf Magenta→warmes Orange,
+dünne dunkle Innenkante. Motiv ikonisch vereinfacht, großzügiger Rand, lesbar bei ~56 px.
+
+Motiv: eine symmetrische Festival-Hauptbühne als leuchtender LED-Bogen, davor die
+erhobenen Hände einer Menschenmenge in Silhouette, nach oben sprühende Funken und
+Flammenzungen, dazwischen Rauchschwaden. KEIN lesbarer Text, keine Buchstaben, kein Logo.
+
+Farben: kräftiges Magenta, Orange und Violett; kühle Schatten, intensiv glühende
+Bühnenlichter, kräftige Rimlights, weiches Bloom.
+
+Vermeiden: fotorealistische Oberflächen, 3D-/Kino-Poster-Look, Teal-und-Orange-Grading,
+Lens-Flare, erfundene Logos/lesbarer Text, Comic-Lineart, Cel-Shading, überladener
+Hintergrund.
+
+
+────────────────────────────────────────────────────────────────────────────
+⑥ illustrations/badges/natuurkunde.webp — Nederlandse natuurkundigen
+────────────────────────────────────────────────────────────────────────────
+Im angehängten Referenz-Blatt siehst du alle sechs Kapitel-Artworks. Nutze das Feld
+„Nederlandse natuurkundigen" strikt als Stil- und Farbreferenz.
+
+Erzeuge ein rundes Medaillon-Abzeichen im Stil eines modernen, malerischen Anime-
+Artbooks — genau der Malstil der Referenz: weiche, sichtbare Pinselstrukturen, große
+vereinfachte Farbflächen. Keine Comic-Lineart, kein Cel-Shading, kein Fotorealismus.
+
+Format: rundes Abzeichen, zentriert auf transparentem, quadratischem Hintergrund
+(freigestellt, 1:1), schmaler leuchtender Rahmen in Regenbogen-auf-Marineblau, dünne
+dunkle Innenkante. Motiv ikonisch vereinfacht, großzügiger Rand, lesbar bei ~56 px.
+
+Motiv: ein leuchtendes weißes Glasprisma, das einen weißen Lichtstrahl in einen klaren
+Regenbogen bricht, daneben ein kleiner beringter Saturn und ein schwingendes Pendel an
+dünnem Faden, dahinter feine bunte Wellenlinien auf tiefem kosmischem Marineblau. KEINE
+Gesichter, KEIN lesbarer Text, keine Buchstaben, kein Logo.
+
+Farben: kühles Marineblau als Grund, darauf leuchtende Regenbogen-Spektralfarben, Cyan
+und Violett; kühle Schatten, glühende Lichtbrechung, weiches Bloom.
+
+Vermeiden: fotorealistische Oberflächen, 3D-/Kino-Poster-Look, Teal-und-Orange-Grading,
+Lens-Flare, erfundene Logos/lesbarer Text, Comic-Lineart, Cel-Shading, überladener
+Hintergrund.
