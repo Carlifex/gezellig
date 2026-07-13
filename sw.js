@@ -3,16 +3,17 @@
 // Strategie:
 //  - Navigation (die Seite selbst): NETWORK-FIRST → bei Offline aus dem Cache.
 //    So bekommst du beim Öffnen mit Internet immer die neueste Version.
-//  - Statische Dateien (js/css/svg): STALE-WHILE-REVALIDATE → sofort aus dem
-//    Cache (schnell), im Hintergrund neu laden und Cache aktualisieren.
-//    Updates erscheinen dadurch beim nächsten Öffnen, ohne dass etwas hängen bleibt.
+//  - Code (js/css/json/html): NETWORK-FIRST → online immer die neueste Version;
+//    der Cache dient nur als Offline-Reserve. So erscheinen Updates sofort.
+//  - Bilder/Medien (webp/png/…): CACHE-FIRST + Hintergrund-Refresh → schnell,
+//    da sie sich selten ändern; neue Bilder werden nachgezogen.
 //  - Offline: es wird die zuletzt gecachte Version ausgeliefert.
 //
 // Beim Ausbauen der App muss hier nichts geändert werden — geänderte Dateien
 // werden automatisch nachgezogen. (CACHE-Version nur bumpen, wenn man alle
 // Caches hart leeren will.)
 
-const CACHE = 'gezellig-v60';
+const CACHE = 'gezellig-v61';
 const ASSETS = [
   './',
   './index.html',
@@ -62,22 +63,27 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // 2) Eigene statische Dateien: stale-while-revalidate.
+  // 2) Eigene Dateien.
   if (sameOrigin) {
-    e.respondWith(
-      caches.match(req).then(cached => {
-        const network = fetch(req)
-          .then(res => {
-            if (res.ok) {
-              const copy = res.clone();
-              caches.open(CACHE).then(c => c.put(req, copy));
-            }
-            return res;
-          })
-          .catch(() => cached);
-        return cached || network;
-      })
-    );
+    const isMedia = /\.(webp|png|jpe?g|gif|svg|woff2?|ttf|mp3|ico)$/i.test(new URL(req.url).pathname);
+    if (isMedia) {
+      // Bilder/Medien: cache-first + Hintergrund-Refresh (schnell, offline-fest).
+      e.respondWith(
+        caches.match(req).then(cached => {
+          const network = fetch(req)
+            .then(res => { if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return res; })
+            .catch(() => cached);
+          return cached || network;
+        })
+      );
+    } else {
+      // Code (js/css/json/html): network-first, Cache nur als Offline-Reserve.
+      e.respondWith(
+        fetch(req)
+          .then(res => { if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return res; })
+          .catch(() => caches.match(req))
+      );
+    }
     return;
   }
 
