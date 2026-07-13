@@ -307,12 +307,12 @@ function chapterCard(t) {
     ? `<img src="${esc(t.hero)}" alt="" loading="lazy" onerror="this.closest('.chaphero').classList.add('noimg')"/>`
     : '';
   return `<div class="chapcard">
-    <button class="chaphero ${t.hero ? '' : 'noimg'} ${unlocked ? '' : 'locked'}" data-track="${t.key}">
+    <button class="chaphero ${t.hero ? '' : 'noimg'} ${unlocked ? '' : 'locked'}" data-track="${t.key}"${unlocked ? '' : ` title="Erst Prüfung „${esc(pv ? pv.label : '')}" bestehen"`}>
       ${img}<span class="heroslide-ph">${t.icon}</span>
+      ${unlocked ? '' : '<span class="chap-lock">🔒</span>'}
       <span class="hero-cap">
-        <span class="hero-top"><span class="hero-lvl">${esc(t.level)}</span><span class="hero-prog">${unlocked ? `${done}/${ls.length}${mark}` : '🔒'}</span></span>
+        <span class="hero-top"><span class="hero-lvl">${esc(t.level)}</span><span class="hero-prog">${unlocked ? `${done}/${ls.length}${mark}` : ''}</span></span>
         <span class="hero-title">${esc(t.label)}</span>
-        ${unlocked ? '' : `<span class="hero-lock">🔒 Erst Prüfung „${esc(pv ? pv.label : '')}" bestehen</span>`}
       </span>
     </button>
     <div class="chapbody">
@@ -444,18 +444,18 @@ function heroSlide(t) {
   const img = t.hero
     ? `<img src="${esc(t.hero)}" alt="" loading="eager" onerror="this.closest('.heroslide').classList.add('noimg')"/>`
     : '';
-  // Abgeschlossenes Kapitel → verdientes Badge oben rechts, sonst Fortschritt (bzw. Schloss).
+  // Abgeschlossenes Kapitel → verdientes Badge oben rechts, sonst Fortschritt (gesperrt: nichts).
   const corner = !unlocked
-    ? `<span class="hero-prog">🔒</span>`
+    ? ''
     : complete && BADGE_ART.has(t.key)
       ? `<img class="hero-badge" src="illustrations/badges/${t.key}.webp" alt="Abzeichen">`
       : `<span class="hero-prog">${done}/${ls.length}</span>`;
-  return `<button class="heroslide ${t.hero ? '' : 'noimg'} ${unlocked ? '' : 'locked'}" data-track="${t.key}">
+  return `<button class="heroslide ${t.hero ? '' : 'noimg'} ${unlocked ? '' : 'locked'}" data-track="${t.key}"${unlocked ? '' : ` title="Erst Prüfung „${esc(pv ? pv.label : '')}" bestehen"`}>
     ${img}<span class="heroslide-ph">${t.icon}</span>
+    ${unlocked ? '' : '<span class="chap-lock">🔒</span>'}
     <div class="hero-cap">
       <div class="hero-top">${corner}</div>
       <div class="greet hero-title">${esc(t.heroTitle)}</div>
-      ${unlocked ? '' : `<div class="hero-lock">🔒 Erst Prüfung „${esc(pv ? pv.label : '')}" bestehen</div>`}
     </div></button>`;
 }
 
