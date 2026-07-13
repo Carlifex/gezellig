@@ -143,7 +143,7 @@ function renderToday() {
 }
 function taskRow(t) {
   const cur = Math.min(state.daily.counters[t.metric], t.target);
-  return `<div class="dtask ${t.done ? 'done' : ''}"><span class="box">${t.done ? '✓' : ''}</span>
+  return `<div class="dtask ${t.done ? 'is-done' : ''}"><span class="box">${t.done ? '✓' : ''}</span>
     <b>${esc(t.label)}</b><span class="prog">${cur}/${t.target}</span></div>`;
 }
 
