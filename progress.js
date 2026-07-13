@@ -25,10 +25,11 @@ for (const v of VOCAB_BANK) {
 }
 export const ALL_VOCAB = Object.values(vocabById);
 
-// Lern-Reihenfolge für „neue Wörter": Bank (nach Niveau vorsortiert) zuerst, dann Lektions-Wörter.
+// Lern-Reihenfolge für „neue Wörter": Lektions-Wörter in Story-Reihenfolge zuerst
+// (Kontext-Kopplung hilft Kodierung), dann der Rest der Bank.
 const lessonVocab = [];
 LESSONS.forEach(l => l.vocab.forEach(v => lessonVocab.push(vocabById[v.id])));
-const LEARN_SEQ = [...bankVocab, ...lessonVocab];
+const LEARN_SEQ = [...lessonVocab, ...bankVocab];
 const notStarted = (v) => { const c = state.cards[v.id]; return !c || !c.reps; };
 export function unstartedVocab(n = 8) {
   const out = [];
@@ -51,7 +52,7 @@ export function learnWords(list) {
 function fresh() {
   return {
     xp: 0, streak: 0, maxStreak: 0, freezes: 1, lastGoalDate: null,
-    settings: { tts: true, rate: 0.92, theme: 'auto', dailyGoal: 'normaal', aiEndpoint: '' },
+    settings: { tts: true, rate: 0.92, theme: 'auto', dailyGoal: 'normaal', dailyNew: 8, aiEndpoint: '' },
     cards: {}, lessons: {}, milestones: {}, exams: {}, history: {},
     daily: null,
     totals: { reviews: 0, wordsLearned: 0, speakOk: 0, chats: 0, lessonsDone: 0, lessonsMastered: 0, sessions: 0, answers: 0, answersOk: 0 },
@@ -195,16 +196,50 @@ export function dueVocab(now = Date.now()) {
 }
 export function dueCount(now = Date.now()) { return dueVocab(now).length; }
 
-export function reviewCard(id, grade) {
-  state.cards[id] = schedule(cardOf(id), grade, Date.now());
+// Wiederholung mit OBJEKTIVER Bewertung (grade wird im UI aus der Antwort abgeleitet).
+// prod=true zählt eine erfolgreiche freie Produktion (für „gemeistert").
+export function reviewCard(id, grade, prod = false) {
+  const c = schedule(cardOf(id), grade, Date.now());
+  if (prod && (grade === 'good' || grade === 'easy')) c.prod = (c.prod || 0) + 1;
+  state.cards[id] = c;
   state.totals.reviews += 1;
   state.daily.counters.reviews += 1;
+  state.totals.answers = (state.totals.answers || 0) + 1;
+  if (grade !== 'again') state.totals.answersOk = (state.totals.answersOk || 0) + 1;
   addXp(XP.review);
   recomputeMastery();
   refreshTasks();
   checkMilestones();
   save();
 }
+
+// Neues Wort ins SRS aufnehmen — NUR nach echtem Abruf in der Einführung (grade aus
+// der Antwort). Ersetzt das pauschale Auto-Einplanen beim Lektions-Abschluss.
+export function introWord(id, grade = 'good') {
+  if (state.cards[id] && state.cards[id].reps) return { added: false };
+  state.cards[id] = schedule(newCard(), grade, Date.now());
+  state.totals.wordsLearned += 1;
+  state.daily.counters.newWords += 1;
+  addXp(XP.newWord);
+  refreshTasks();
+  checkMilestones();
+  save();
+  return { added: true };
+}
+
+// Vokabeln eines Kapitels (unique) + Reife-Quote (für Prüfungs-Freischaltung).
+export function trackVocab(key) {
+  const seen = new Set(); const out = [];
+  for (const l of LESSONS) if ((l.track || 'verhaal') === key)
+    for (const v of (l.vocab || [])) if (v && !seen.has(v.id)) { seen.add(v.id); out.push(v); }
+  return out;
+}
+export function trackVocabReady(key) {
+  const vs = trackVocab(key);
+  const ready = vs.filter(v => { const c = state.cards[v.id]; return c && c.reps >= 2; }).length;
+  return { ready, total: vs.length, pct: vs.length ? Math.round(ready / vs.length * 100) : 0 };
+}
+export function dailyNewLimit() { return state.settings.dailyNew || 8; }
 
 function recomputeMastery() {
   let mastered = 0;
@@ -224,19 +259,13 @@ export function completeLesson(lessonId) {
   state.lessons[lessonId] = state.lessons[lessonId] || {};
   state.lessons[lessonId].done = true;
 
-  let newWords = 0;
-  for (const v of l.vocab) {
-    if (!state.cards[v.id] || !state.cards[v.id].reps) {
-      state.cards[v.id] = schedule(newCard(), 'good', Date.now()); // ins SRS aufnehmen
-      newWords += 1;
-    }
-  }
+  // Wörter werden NICHT mehr pauschal eingeplant — sie kommen während der Lektion
+  // über den Einführungs-Flow (introWord) mit echtem Abruf-Grade ins Training.
+  const newWords = l.vocab.filter(v => state.cards[v.id] && state.cards[v.id].reps).length;
   if (first) {
     state.totals.lessonsDone += 1;
-    state.totals.wordsLearned += newWords;
     state.daily.counters.lessonsDone += 1;
-    state.daily.counters.newWords += newWords;
-    addXp(XP.lesson + XP.newWord * newWords);
+    addXp(XP.lesson);
   } else {
     addXp(5); // Wiederholte Lektion: kleiner Bonus
   }
