@@ -27,6 +27,16 @@
 :root[data-theme="light"]{ --orange:#ef5f14; --orange-soft:#ffe6d6; --orange-ink:#b8480c; --blue:#e7ecff; --blue-2:#0a84d8; --cyan:#0aa5c0; --magenta:#d61f8f; --violet:#7c3aed; --neon:#5fb800; --ink:#141a2b; --muted:#5a6382; --line:#e4e7f2; --card:#fff; --bg:#f5f6fc; --bg-2:#eceef7; --good:#1e9e5a; --bad:#d63b46; --warn:#c77b12; --grad:linear-gradient(90deg,#0aa5c0,#d61f8f,#ef5f14); --glow:0 6px 20px rgba(214,31,143,.22); --shadow:0 1px 2px rgba(16,30,54,.06), 0 8px 26px rgba(16,30,54,.08); }
 :root[data-theme="dark"]{ --orange:#ff7a2f; --orange-soft:#2a1a10; --orange-ink:#ffb27a; --blue:#1b2145; --blue-2:#3ad2ff; --cyan:#22d3ee; --magenta:#ff3ea5; --violet:#b57bff; --neon:#b6ff3a; --ink:#eef1fa; --muted:#98a2c4; --line:#242a44; --card:#141829; --bg:#0a0b14; --bg-2:#06070e; --good:#3fd48a; --bad:#ff5c72; --warn:#ffca4a; --grad:linear-gradient(90deg,#22d3ee,#ff3ea5,#ff7a2f); --glow:0 0 26px rgba(255,62,165,.45); --shadow:0 1px 2px rgba(0,0,0,.4), 0 12px 34px rgba(0,0,0,.55); }
 
+/* Color-Coding Wortentsprechungen (NL↔DE): 8 gut unterscheidbare Farben je Theme. */
+:root{--cc0:#0a90b0;--cc1:#d61f8f;--cc2:#b5720a;--cc3:#1e9e5a;--cc4:#7c3aed;--cc5:#e0611c;--cc6:#1f74d0;--cc7:#c0392b}
+@media (prefers-color-scheme:dark){:root{--cc0:#22d3ee;--cc1:#ff6fc0;--cc2:#ffca4a;--cc3:#4fe0a0;--cc4:#b98cff;--cc5:#ff9a5c;--cc6:#5aa8ff;--cc7:#ff7a7a}}
+:root[data-theme="light"]{--cc0:#0a90b0;--cc1:#d61f8f;--cc2:#b5720a;--cc3:#1e9e5a;--cc4:#7c3aed;--cc5:#e0611c;--cc6:#1f74d0;--cc7:#c0392b}
+:root[data-theme="dark"]{--cc0:#22d3ee;--cc1:#ff6fc0;--cc2:#ffca4a;--cc3:#4fe0a0;--cc4:#b98cff;--cc5:#ff9a5c;--cc6:#5aa8ff;--cc7:#ff7a7a}
+.cc{font-weight:700}
+.cc-0{color:var(--cc0)}.cc-1{color:var(--cc1)}.cc-2{color:var(--cc2)}.cc-3{color:var(--cc3)}
+.cc-4{color:var(--cc4)}.cc-5{color:var(--cc5)}.cc-6{color:var(--cc6)}.cc-7{color:var(--cc7)}
+.cc-hint{font-size:12px;color:var(--muted);margin:10px 2px 0;text-align:center}
+
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);
