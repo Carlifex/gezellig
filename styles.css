@@ -384,6 +384,33 @@ button{font-family:inherit}
 .culturecard b{color:var(--blue-2)}
 .lchip{font-size:11px;font-weight:800;color:var(--orange);letter-spacing:.04em}
 
+/* Kapitelübersicht: eine Karte je Kapitel */
+.chapgrid{display:flex;flex-direction:column;gap:12px}
+.chapcard{display:flex;align-items:stretch;gap:0;background:var(--card);border:1px solid var(--line);
+  border-radius:16px;overflow:hidden;box-shadow:var(--shadow);cursor:pointer;text-align:left;padding:0}
+.chapcard:active{transform:scale(.99)}
+.chapcard-img{position:relative;flex:0 0 108px;width:108px;background:var(--bg-2);display:grid;place-items:center;overflow:hidden}
+.chapcard-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.chapcard-ph{font-size:34px;line-height:1;opacity:.85}
+.chapcard-img img + .chapcard-ph{display:none}
+.chapcard-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;padding:13px 15px}
+.chapcard-body b{font-size:16px;line-height:1.25}
+.chapcard-sub{font-size:12.5px;color:var(--muted);line-height:1.4;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.chapcard .tprog{margin:4px 0 0}
+.backbtn{align-self:flex-start;width:auto;padding:8px 14px;font-size:13.5px;margin-bottom:2px}
+
+/* „Das lernst du" — Vorschau unter dem Einleitungstext */
+.learncard{background:linear-gradient(150deg,color-mix(in srgb,var(--cyan) 12%,var(--card)),var(--card));
+  border:1px solid var(--line);border-radius:16px;padding:16px 18px;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:8px}
+.learncard-h{font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--cyan)}
+.learncard-row{font-size:14.5px;line-height:1.5}
+.learncard-row b{color:var(--ink)}
+.learncard-vocab{margin:2px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.learncard-vocab li{font-size:14px;line-height:1.4;padding:7px 11px;border-radius:9px;background:var(--bg-2)}
+.learncard-vocab li b{color:var(--orange-ink);font-weight:700}
+
 @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
 
 /* ===== Atmosphäre: Körnung + Grachtenhaus-Skyline (typisch NL) ===== */
