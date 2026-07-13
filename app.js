@@ -173,6 +173,18 @@ const lemIcon = (l) => ICON_IDS.has(l.id)
   ? `<img class="lem-img" src="illustrations/icons/${l.id}.webp" alt="" loading="lazy">`
   : l.icon;
 
+// Profil-Embleme: Rang-Badges (illustrations/ranks/lvl-<N>.webp) und Meilenstein-
+// Medaillen (illustrations/medals/<id>.webp). Wird ein Level/eine ID hier
+// eingetragen, zeigt die App automatisch das Bild statt des Emoji-Fallbacks.
+const RANK_ART = new Set([]);   // z. B. 1,2,3 … sobald lvl-1.webp usw. existiert
+const MEDAL_ART = new Set([]);  // z. B. 'first_lesson' … sobald medals/first_lesson.webp existiert
+const rankIcon = (L) => RANK_ART.has(L.level)
+  ? `<img class="lvicon-img" src="illustrations/ranks/lvl-${L.level}.webp" alt="">`
+  : L.icon;
+const medalIcon = (m) => MEDAL_ART.has(m.id)
+  ? `<img class="ms-medal-img" src="illustrations/medals/${m.id}.webp" alt="" loading="lazy">`
+  : `<div class="em">${m.icon}</div>`;
+
 // Abgeschlossene Kapitel: ✅ statt Wort; gemeistert: 🏆.
 function statusBadge(st) {
   if (st === 'gemeistert') return `<span class="lst done" title="gemeistert">🏆</span>`;
@@ -429,7 +441,7 @@ function renderProfile() {
     <div class="section-sub">Dein Fortschritt & Einstellungen</div>
 
     <div class="card levelcard">
-      <div class="levelrow"><div class="lvicon">${L.icon}</div>
+      <div class="levelrow"><div class="lvicon">${rankIcon(L)}</div>
         <div class="lvtxt"><b>Level ${L.level} · ${esc(L.de)}</b><div class="nl">${state.xp} XP gesamt</div></div>
         <div class="lvnum"><b>🔥 ${state.streak}</b><span>Serie · Rekord ${s.maxStreak}</span></div></div>
       <div class="xpbar"><i style="width:${L.pct}%"></i></div>
@@ -444,7 +456,7 @@ function renderProfile() {
 
     <div class="section-sub" style="margin:22px 0 8px">Meilensteine</div>
     <div class="msgrid">${milestoneState().map(m =>
-      `<div class="ms ${m.unlocked ? '' : 'locked'}"><div class="em">${m.icon}</div><b>${esc(m.title)}</b><span>${esc(m.desc)}</span></div>`).join('')}</div>
+      `<div class="ms ${m.unlocked ? '' : 'locked'}">${medalIcon(m)}<b>${esc(m.title)}</b><span>${esc(m.desc)}</span></div>`).join('')}</div>
 
     <div class="section-sub" style="margin:22px 0 8px">Tagesziel</div>
     <div class="seg" id="goalseg">${Object.entries(DAILY_GOALS).map(([k, g]) =>
