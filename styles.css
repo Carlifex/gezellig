@@ -304,7 +304,7 @@ button{font-family:inherit}
 .heroslide .hero-cap{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;
   padding:14px 16px;
   background:linear-gradient(to top,rgba(8,10,18,.9) 0%,rgba(8,10,18,.42) 40%,rgba(8,10,18,0) 74%)}
-.hero-top{display:flex;justify-content:space-between;align-items:flex-start}
+.hero-top{display:flex;justify-content:flex-end;align-items:flex-start}
 .hero-lvl,.hero-prog{font-size:12px;font-weight:800;color:#fff;background:rgba(8,10,18,.5);
   backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);padding:5px 11px;border-radius:999px;
   border:1px solid rgba(255,255,255,.2);text-shadow:0 1px 3px rgba(0,0,0,.5)}
