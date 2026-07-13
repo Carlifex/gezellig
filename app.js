@@ -1,7 +1,7 @@
 // ============================================================================
 //  Gezellig v2 — App-Steuerung (deutsche UI, Inhalt Niederländisch)
 // ============================================================================
-import { LESSONS, GRAMMAR, GRAMMAR_EXAMPLES, CHAT_SCENARIOS, DAILY_GOALS } from './data.js';
+import { LESSONS, GRAMMAR, GRAMMAR_EXAMPLES, PLURAL_PAIRS, CHAT_SCENARIOS, DAILY_GOALS } from './data.js';
 import { statusLabel } from './srs.js';
 import { speak, speakSequence, ttsSupported, setTtsEnabled, setTtsRate, sttSupported, listen, similarity, normalize } from './speech.js';
 import {
@@ -11,6 +11,7 @@ import {
   recordAnswer, historyLast, stats, unstartedVocab, unstartedCount, learnWords,
   recordExam, examState, examPassed,
   introWord, trackVocab, trackVocabReady, dailyNewLimit,
+  checkpointPassed, passCheckpoint,
 } from './progress.js';
 
 setTtsEnabled(state.settings.tts);
@@ -208,11 +209,65 @@ function statusBadge(st) {
   return `<span class="lst neu">neu</span>`;
 }
 
-// Sequenziell freischalten: eine Lektion ist offen, wenn die vorige abgeschlossen ist.
+// Kapitel-Mitte (ab dieser Lektion braucht es den Zwischen-Check). Kleine Kapitel: kein Check.
+function chapterMid(ls) { return ls.length >= 4 ? Math.ceil(ls.length / 2) : ls.length; }
+// Freischalten: vorige Lektion durch (sequenziell) UND ggf. Zwischen-Check bestanden.
 function lessonUnlocked(l) {
-  const ls = trackLessons(l.track || 'verhaal');
+  const key = l.track || 'verhaal';
+  const ls = trackLessons(key);
   const i = ls.findIndex(x => x.id === l.id);
-  return i <= 0 || lessonStatus(ls[i - 1].id) !== 'neu';
+  if (i <= 0) return true;
+  if (lessonStatus(ls[i - 1].id) === 'neu') return false;
+  const mid = chapterMid(ls);
+  if (i >= mid && mid < ls.length && !checkpointPassed(key)) return false;
+  return true;
+}
+// Vokabeln der ersten Kapitelhälfte (für den Zwischen-Check).
+function checkpointVocab(key) {
+  const ls = trackLessons(key); const mid = chapterMid(ls);
+  const seen = new Set(); const out = [];
+  ls.slice(0, mid).forEach(l => (l.vocab || []).forEach(v => { if (v && !seen.has(v.id)) { seen.add(v.id); out.push(v); } }));
+  return out;
+}
+function checkpointCard(key) {
+  const ls = trackLessons(key); const mid = chapterMid(ls);
+  const firstHalfDone = lessonStatus(ls[mid - 1].id) !== 'neu';
+  const passed = checkpointPassed(key);
+  const cls = passed ? 'passed' : firstHalfDone ? 'ready' : 'locked';
+  const icon = passed ? '✅' : firstHalfDone ? '📝' : '🔒';
+  const sub = passed ? 'Bestanden — zweite Hälfte frei'
+    : firstHalfDone ? 'Pflicht-Check: erste Kapitelhälfte (ab 80 %)'
+    : 'Erst die erste Kapitelhälfte abschließen';
+  const badge = passed ? '<span class="lst done">✅</span>' : firstHalfDone ? '<span class="lst neu">Start</span>' : '<span class="lst lock">🔒</span>';
+  return `<button class="examcard checkpoint ${cls}" data-checkpoint="${key}">
+    <span class="lem">${icon}</span>
+    <span class="lmain"><span class="lchip">CHECKPOINT</span><b>Zwischen-Check</b><span>${esc(sub)}</span></span>
+    ${badge}</button>`;
+}
+function openCheckpoint(key) {
+  const ls = trackLessons(key); const mid = chapterMid(ls);
+  if (lessonStatus(ls[mid - 1].id) === 'neu') { toast('Erst die erste Kapitelhälfte abschließen.', '🔒'); return; }
+  if (checkpointPassed(key)) { toast('Zwischen-Check schon bestanden ✅', '✅'); return; }
+  const vocab = checkpointVocab(key);
+  const lvl = TRACK_LVL[key] ?? 0;
+  const n = Math.min(vocab.length, 10 + lvl * 2);
+  const nType = Math.round(n * [0.3, 0.4, 0.55, 0.7][lvl]);
+  const qs = shuffle(vocab.slice()).slice(0, n).map((v, i) => {
+    if (i < nType) return { type: 'type', q: `Tippe auf Niederländisch: „${v.de}"`, answer: v.nl };
+    const o = mcChoices(v, vocab); return { type: 'mc', q: `Was heißt „${v.de}"?`, options: o.map(x => x.nl), answer: o.indexOf(v) };
+  });
+  const total = qs.length; const score = { correct: 0 };
+  openFlow(qs.map((q, i) => examStep(q, i + 1, total, score)), (fe) => {
+    const pct = Math.round(score.correct / total * 100);
+    const pass = pct >= 80;
+    if (pass) passCheckpoint(key);
+    fe.innerHTML = `<div class="flow-body"><div class="done">
+      <div class="big">${pass ? '✅' : '📚'}</div><h2>${pass ? 'Zwischen-Check bestanden!' : 'Noch nicht geschafft'}</h2>
+      <p class="muted"><b style="color:${pass ? 'var(--good)' : 'var(--orange-ink)'}">${pct}%</b> · ${score.correct}/${total}${pass ? '' : ' · 80 % nötig'}</p>
+      <p class="muted">${pass ? 'Die zweite Kapitelhälfte ist jetzt frei.' : 'Wiederhol die Wörter im Training und versuch es nochmal.'}</p>
+      <button class="btn" id="fin" style="max-width:280px;margin-top:12px">${pass ? 'Weiter' : 'Zurück'}</button></div></div>`;
+    fe.querySelector('#fin').onclick = () => { closeFlow(); go('lessons', key); };
+  });
 }
 function lessonBtn(l, chip, n) {
   const label = `LEKTION ${n}`;
@@ -289,13 +344,20 @@ function renderLessons() {
       <button class="chaptext-toggle" type="button" aria-expanded="true">Weniger&nbsp;▲</button>
       <div class="tprog"><div class="tprog-bar"><i style="width:${pct}%"></i></div><span>${done}/${ls.length}</span></div>
     </div>
-    <div class="lgrid">${ls.map((l, i) => lessonBtn(l, t.chip, i + 1)).join('')}</div>
+    <div class="lgrid">${(() => {
+      const mid = chapterMid(ls);
+      return ls.map((l, i) => {
+        const btn = lessonBtn(l, t.chip, i + 1);
+        return (mid < ls.length && i === mid - 1) ? btn + checkpointCard(t.key) : btn;
+      }).join('');
+    })()}</div>
     ${examCard(t, ls)}
   </div>`;
   app.querySelector('#back').onclick = () => go('lessons');
   bindTextToggle(app.querySelector('.chapintro .chaptext-toggle'));
   app.querySelectorAll('.lesson').forEach(b => b.onclick = () => openLesson(b.dataset.id));
-  app.querySelectorAll('.examcard').forEach(b => b.onclick = () => openExam(b.dataset.exam));
+  app.querySelectorAll('[data-checkpoint]').forEach(b => b.onclick = () => openCheckpoint(b.dataset.checkpoint));
+  app.querySelectorAll('[data-exam]').forEach(b => b.onclick = () => openExam(b.dataset.exam));
 }
 
 // Erklärtext auf-/zuklappen (Übersichtskarten & Kapitel-Kopf).
@@ -608,18 +670,22 @@ function buildExamQuestions(key) {
   const lvl = TRACK_LVL[key] ?? 0;
   const seen = new Set(); const vocab = [];
   ls.forEach(l => (l.vocab || []).forEach(v => { if (v && !seen.has(v.id)) { seen.add(v.id); vocab.push(v); } }));
+  const gkeys = [...new Set(ls.map(l => l.grammar).filter(Boolean))];
   const gchecks = [];
-  [...new Set(ls.map(l => l.grammar).filter(Boolean))].forEach(g =>
-    (GRAMMAR[g] && GRAMMAR[g].checks || []).forEach(c => gchecks.push(c)));
+  gkeys.forEach(g => (GRAMMAR[g] && GRAMMAR[g].checks || []).forEach(c => gchecks.push(c)));
   const sentences = [];
   if (lvl >= 2) ls.forEach(l => (l.speak || []).forEach(s => { if (s && s.nl && s.de) sentences.push(s); }));
 
   const total = Math.min(30, vocab.length + gchecks.length + sentences.length,
     Math.max(14, Math.round(vocab.length * (0.3 + 0.08 * lvl))));
   const typeFrac = [0.2, 0.35, 0.5, 0.65][lvl];
+  // Generative Drills: Zahlen/Plural, wenn das Kapitel diese Grammatik enthält.
+  const drills = [];
+  if (gkeys.includes('getallen')) drills.push(...numberQuestions(3));
+  if (gkeys.includes('meervoud')) drills.push(...pluralQuestions(3));
   const nGram = Math.min(gchecks.length, Math.max(2, Math.round(total * 0.2)));
   const nSent = lvl >= 2 ? Math.min(sentences.length, 1 + lvl) : 0;
-  const nVocab = Math.max(0, total - nGram - nSent);
+  const nVocab = Math.max(0, total - nGram - nSent - drills.length);
   const nType = Math.round(nVocab * typeFrac);
 
   const qs = [];
@@ -629,6 +695,7 @@ function buildExamQuestions(key) {
   });
   shuffle(gchecks.slice()).slice(0, nGram).forEach(c => qs.push({ type: 'mc', q: c.q, options: c.options.slice(), answer: c.answer }));
   shuffle(sentences.slice()).slice(0, nSent).forEach(s => qs.push({ type: 'type', q: `Tippe auf Niederländisch: „${s.de}"`, answer: s.nl }));
+  qs.push(...drills);
   return shuffle(qs);
 }
 
@@ -810,6 +877,30 @@ function fmtByCard(card) {
 }
 // Distraktoren mit gleicher Oberflächenform wählen (Frage→Frage, ähnliche Länge,
 // Artikel) — damit man nicht durch Ausschluss rät.
+/* ---------- Generative Drills: Zahlen & Plural ---------- */
+const NL_ONES = ['nul', 'een', 'twee', 'drie', 'vier', 'vijf', 'zes', 'zeven', 'acht', 'negen', 'tien', 'elf', 'twaalf', 'dertien', 'veertien', 'vijftien', 'zestien', 'zeventien', 'achttien', 'negentien'];
+const NL_TENS = ['', '', 'twintig', 'dertig', 'veertig', 'vijftig', 'zestig', 'zeventig', 'tachtig', 'negentig'];
+function dutchNum(n) {
+  if (n < 20) return NL_ONES[n];
+  if (n < 100) { const t = Math.floor(n / 10), u = n % 10; if (!u) return NL_TENS[t]; return NL_ONES[u] + ((u === 2 || u === 3) ? 'ën' : 'en') + NL_TENS[t]; }
+  if (n === 100) return 'honderd';
+  return String(n);
+}
+function numberQuestions(count, max = 100) {
+  const out = [], used = new Set();
+  let guard = 0;
+  while (out.length < count && guard++ < 200) {
+    const n = Math.floor(Math.random() * (max + 1));
+    if (used.has(n)) continue; used.add(n);
+    out.push({ type: 'type', q: `Schreib die Zahl auf Niederländisch: ${n}`, answer: dutchNum(n) });
+  }
+  return out;
+}
+function pluralQuestions(count) {
+  return shuffle(PLURAL_PAIRS.slice()).slice(0, count).map(p =>
+    ({ type: 'type', q: `Wie heißt die Mehrzahl von „${p.sg}"?`, answer: p.pl }));
+}
+
 function mcChoices(v, pool, n = 3) {
   const shape = (s) => { s = String(s).trim(); return { q: /\?$/.test(s), words: s.split(/\s+/).length, art: /^(de|het|een)\s/i.test(s) }; };
   const sv = shape(v.nl);

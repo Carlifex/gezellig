@@ -249,6 +249,20 @@ export const GRAMMAR = {
 //  Vokabeln, 1 Grammatik-Fokus, Dialog, Sprech-Sätze, Kulturkarte.
 //  Rollen-Labels deutsch (UI), Sätze niederländisch (Inhalt).
 // ---------------------------------------------------------------------------
+// Singular→Plural-Paare für generative Mehrzahl-Drills (korrekte niederländische Plurale).
+export const PLURAL_PAIRS = [
+  { sg: 'de kat', pl: 'de katten' }, { sg: 'het huis', pl: 'de huizen' },
+  { sg: 'de appel', pl: 'de appels' }, { sg: 'het broodje', pl: 'de broodjes' },
+  { sg: 'de stad', pl: 'de steden' }, { sg: 'de man', pl: 'de mannen' },
+  { sg: 'de vrouw', pl: 'de vrouwen' }, { sg: 'het kind', pl: 'de kinderen' },
+  { sg: 'de fiets', pl: 'de fietsen' }, { sg: 'de bloem', pl: 'de bloemen' },
+  { sg: 'de dag', pl: 'de dagen' }, { sg: 'de week', pl: 'de weken' },
+  { sg: 'het boek', pl: 'de boeken' }, { sg: "de auto", pl: "de auto's" },
+  { sg: 'de straat', pl: 'de straten' }, { sg: 'de winkel', pl: 'de winkels' },
+  { sg: 'de plant', pl: 'de planten' }, { sg: 'de tafel', pl: 'de tafels' },
+  { sg: 'het glas', pl: 'de glazen' }, { sg: 'de vriend', pl: 'de vrienden' },
+];
+
 // Zusätzliche Beispiele je Grammatik-Thema (zweisprachig) — im Grammatik-Schritt gezeigt.
 export const GRAMMAR_EXAMPLES = {
   woordvolgorde: [
