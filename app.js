@@ -164,22 +164,28 @@ function lessonBtn(l, chip, n) {
     ${statusBadge(lessonStatus(l.id))}</button>`;
 }
 
-// Übersichtskarte je Kapitel (Kapitel-Auswahl).
+// Übersichtskarte je Kapitel: volles Artwork (wie Startseite) + auf-/zuklappbarer Text.
 function chapterCard(t) {
   const ls = trackLessons(t.key);
   const done = ls.filter(l => lessonStatus(l.id) !== 'neu').length;
-  const pct = ls.length ? Math.round(done / ls.length * 100) : 0;
   const ex = examState(t.key);
-  const badge = ex && ex.passed ? '🏅' : (ls.length && done === ls.length ? '✅' : '');
-  const img = t.hero ? `<img src="${esc(t.hero)}" alt="" loading="lazy" onerror="this.remove()"/>` : '';
-  return `<button class="chapcard" data-track="${t.key}">
-    <span class="chapcard-img">${img}<span class="chapcard-ph">${t.icon}</span></span>
-    <span class="chapcard-body">
-      <span class="lchip">${esc(t.level)} · KAPITEL</span>
-      <b>${esc(t.label)}</b>
-      <span class="chapcard-sub">${esc(t.sub)}</span>
-      <span class="tprog"><span class="tprog-bar"><i style="width:${pct}%"></i></span><span>${done}/${ls.length} ${badge}</span></span>
-    </span></button>`;
+  const mark = ex && ex.passed ? ' 🏅' : (ls.length && done === ls.length ? ' ✅' : '');
+  const img = t.hero
+    ? `<img src="${esc(t.hero)}" alt="" loading="lazy" onerror="this.closest('.chaphero').classList.add('noimg')"/>`
+    : '';
+  return `<div class="chapcard">
+    <button class="chaphero ${t.hero ? '' : 'noimg'}" data-track="${t.key}">
+      ${img}<span class="heroslide-ph">${t.icon}</span>
+      <span class="hero-cap">
+        <span class="hero-top"><span class="hero-lvl">${esc(t.level)} · KAPITEL</span><span class="hero-prog">${done}/${ls.length}${mark}</span></span>
+        <span class="hero-title">${esc(t.label)}</span>
+      </span>
+    </button>
+    <div class="chapbody">
+      <p class="chaptext">${esc(t.sub)}</p>
+      <button class="chaptext-toggle" type="button" aria-expanded="false">Mehr&nbsp;▾</button>
+    </div>
+  </div>`;
 }
 
 function renderLessons() {
@@ -191,24 +197,57 @@ function renderLessons() {
       <div class="section-sub">Wähle ein Kapitel — dann siehst du nur dessen Lektionen.</div>
       <div class="chapgrid">${TRACKS.filter(x => trackLessons(x.key).length).map(chapterCard).join('')}</div>
     </div>`;
-    app.querySelectorAll('.chapcard').forEach(b => b.onclick = () => openTrack(b.dataset.track));
+    app.querySelectorAll('.chaphero').forEach(b => b.onclick = () => openTrack(b.dataset.track));
+    app.querySelectorAll('.chapbody .chaptext-toggle').forEach(bindTextToggle);
     return;
   }
-  // Ein Kapitel gewählt: NUR dessen Lektionen.
+  // Ein Kapitel gewählt: sticky Artwork-Banner + NUR dessen Lektionen.
   const ls = trackLessons(t.key);
   const done = ls.filter(l => lessonStatus(l.id) !== 'neu').length;
   const pct = ls.length ? Math.round(done / ls.length * 100) : 0;
+  const ex = examState(t.key);
+  const mark = ex && ex.passed ? ' 🏅' : (ls.length && done === ls.length ? ' ✅' : '');
+  const img = t.hero
+    ? `<img src="${esc(t.hero)}" alt="" loading="eager" onerror="this.closest('.chaphead').classList.add('noimg')"/>`
+    : '';
   app.innerHTML = `<div class="stack">
-    <button class="btn ghost backbtn" id="back">← Alle Kapitel</button>
-    <div class="section-title" id="track-${t.key}">${esc(t.label)}</div>
-    <div class="section-sub">${esc(t.sub)}</div>
-    <div class="tprog"><div class="tprog-bar"><i style="width:${pct}%"></i></div><span>${done}/${ls.length}</span></div>
+    <div class="chaphead ${t.hero ? '' : 'noimg'}">
+      ${img}<span class="heroslide-ph">${t.icon}</span>
+      <span class="hero-cap">
+        <span class="hero-top">
+          <button class="chaphead-back" id="back" type="button">← Alle Kapitel</button>
+          <span class="hero-prog">${done}/${ls.length}${mark}</span>
+        </span>
+        <span class="chaphead-titles">
+          <span class="hero-eyebrow">${esc(t.level)} · KAPITEL</span>
+          <span class="hero-title">${esc(t.label)}</span>
+        </span>
+      </span>
+    </div>
+    <div class="chapintro open">
+      <p class="chaptext">${esc(t.sub)}</p>
+      <button class="chaptext-toggle" type="button" aria-expanded="true">Weniger&nbsp;▲</button>
+      <div class="tprog"><div class="tprog-bar"><i style="width:${pct}%"></i></div><span>${done}/${ls.length}</span></div>
+    </div>
     <div class="lgrid">${ls.map((l, i) => lessonBtn(l, t.chip, i + 1)).join('')}</div>
     ${examCard(t, ls)}
   </div>`;
   app.querySelector('#back').onclick = () => go('lessons');
+  bindTextToggle(app.querySelector('.chapintro .chaptext-toggle'));
   app.querySelectorAll('.lesson').forEach(b => b.onclick = () => openLesson(b.dataset.id));
   app.querySelectorAll('.examcard').forEach(b => b.onclick = () => openExam(b.dataset.exam));
+}
+
+// Erklärtext auf-/zuklappen (Übersichtskarten & Kapitel-Kopf).
+function bindTextToggle(btn) {
+  if (!btn) return;
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    const box = btn.parentElement;
+    const open = box.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.innerHTML = open ? 'Weniger&nbsp;▲' : 'Mehr&nbsp;▾';
+  };
 }
 
 // Abschlussprüfung eines Kapitels: erscheint am Ende der Lektionsliste.
