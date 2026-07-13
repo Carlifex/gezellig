@@ -338,8 +338,16 @@ button{font-family:inherit}
 .ms .em{font-size:26px;line-height:1.2}
 .ms b{font-size:12px;display:block;margin-top:4px}
 .ms span{font-size:10.5px;color:var(--muted);display:block;line-height:1.3;margin-top:2px}
-.ms.locked{opacity:.42;filter:grayscale(.7)}
+.ms.locked{opacity:.5;filter:grayscale(.75)}
 .ms.locked .em{filter:grayscale(1)}
+/* Lernpfad-Abzeichen: echtes Kapitel-Cover als Thumbnail (Fallback: Emoji) */
+.ms-cover{position:relative;width:100%;aspect-ratio:16/10;border-radius:9px;overflow:hidden;
+  background:var(--bg-2);display:grid;place-items:center}
+.ms-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.ms-cover .em{position:absolute;font-size:26px;line-height:1}
+.ms-cover:not(.noimg) .em{display:none}
+.ms-cover .ms-mark{position:absolute;right:5px;bottom:4px;font-size:16px;line-height:1;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.65))}
 
 /* ---- v2: segmented (daily goal) ---- */
 .seg{display:flex;gap:6px;background:var(--bg-2);border-radius:11px;padding:4px}

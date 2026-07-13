@@ -410,9 +410,14 @@ function trackBadges() {
       const done = ls.filter(l => lessonStatus(l.id) !== 'neu').length;
       const mast = ls.filter(l => lessonStatus(l.id) === 'gemeistert').length;
       const unlocked = done === ls.length, gold = mast === ls.length;
-      const mark = gold ? '🏆' : unlocked ? '✅' : t.icon;
+      const mark = gold ? '🏆' : unlocked ? '✅' : '';
       const txt = gold ? 'Alle gemeistert!' : unlocked ? 'Alle Kapitel geschafft' : `${done}/${ls.length} Kapitel`;
-      return `<div class="ms ${unlocked ? '' : 'locked'}"><div class="em">${mark}</div><b>${esc(t.label)}</b><span>${txt}</span></div>`;
+      return `<div class="ms ${unlocked ? '' : 'locked'}">
+        <div class="ms-cover">
+          <img src="${esc(t.hero)}" alt="" loading="lazy" onerror="this.closest('.ms-cover').classList.add('noimg')">
+          <span class="em">${t.icon}</span>${mark ? `<span class="ms-mark">${mark}</span>` : ''}
+        </div>
+        <b>${esc(t.label)}</b><span>${txt}</span></div>`;
     }).join('')}</div>`;
 }
 
