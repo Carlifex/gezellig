@@ -1003,19 +1003,25 @@ export const LEVELS = [
   { level: 8, minXp: 1800, nl: 'Thuis in Utrecht',  de: 'Zuhause in Utrecht', icon: '🧡' },
 ];
 
+// Meilenstein-Leiter, skaliert auf den aktuellen App-Umfang (Lektionen & Vokabelbank).
+// „Alle Lektionen"-Ziele referenzieren LESSONS.length → bleiben bei neuen Lektionen korrekt.
 export const MILESTONES = [
-  { id: 'first_lesson', icon: '🎓', title: 'Erster Schritt',   desc: 'Erste Lektion abgeschlossen', metric: 'lessonsDone', gte: 1 },
-  { id: 'words_10',     icon: '📗', title: '10 Wörter',        desc: '10 Vokabeln gelernt',          metric: 'wordsLearned', gte: 10 },
-  { id: 'words_25',     icon: '📘', title: '25 Wörter',        desc: '25 Vokabeln gelernt',          metric: 'wordsLearned', gte: 25 },
-  { id: 'words_50',     icon: '📚', title: '50 Wörter',        desc: '50 Vokabeln gelernt',          metric: 'wordsLearned', gte: 50 },
-  { id: 'first_chat',   icon: '💬', title: 'Erstes Gespräch',  desc: 'Mit dem Bäcker geredet',       metric: 'chats', gte: 1 },
-  { id: 'speaker_20',   icon: '🗣️', title: 'Aussprache-Profi', desc: '20 Sätze richtig gesprochen',  metric: 'speakOk', gte: 20 },
-  { id: 'reviews_100',  icon: '✨', title: 'Fleißig',          desc: '100 Wiederholungen gemacht',   metric: 'reviews', gte: 100 },
-  { id: 'streak_3',     icon: '🔥', title: '3 Tage am Stück',  desc: '3-Tage-Streak erreicht',       metric: 'streak', gte: 3 },
-  { id: 'streak_7',     icon: '🔥', title: 'Eine Woche',       desc: '7-Tage-Streak erreicht',       metric: 'streak', gte: 7 },
-  { id: 'streak_30',    icon: '🏆', title: 'Ein Monat!',       desc: '30-Tage-Streak erreicht',      metric: 'streak', gte: 30 },
-  { id: 'halfway',      icon: '🎧', title: 'In der Szene',     desc: 'Level 5 erreicht',             metric: 'level', gte: 5 },
-  { id: 'all_lessons',  icon: '🔊', title: 'Achter de decks',  desc: 'Alle 9 Lektionen gemeistert',  metric: 'lessonsMastered', gte: 9 },
+  { id: 'first_lesson', icon: '🎓', title: 'Erster Schritt',     desc: 'Erste Lektion abgeschlossen',                metric: 'lessonsDone',     gte: 1 },
+  { id: 'lessons_10',   icon: '📖', title: '10 Lektionen',        desc: '10 Lektionen abgeschlossen',                 metric: 'lessonsDone',     gte: 10 },
+  { id: 'lessons_40',   icon: '📚', title: '40 Lektionen',        desc: '40 Lektionen abgeschlossen',                 metric: 'lessonsDone',     gte: 40 },
+  { id: 'all_lessons',  icon: '🏁', title: 'Alle Lektionen',      desc: `Alle ${LESSONS.length} Lektionen abgeschlossen`, metric: 'lessonsDone', gte: LESSONS.length },
+  { id: 'words_25',     icon: '🌱', title: '25 Wörter',           desc: '25 Vokabeln gelernt',                        metric: 'wordsLearned',    gte: 25 },
+  { id: 'words_100',    icon: '📗', title: '100 Wörter',          desc: '100 Vokabeln gelernt',                       metric: 'wordsLearned',    gte: 100 },
+  { id: 'words_500',    icon: '📘', title: '500 Wörter',          desc: '500 Vokabeln gelernt',                       metric: 'wordsLearned',    gte: 500 },
+  { id: 'words_1500',   icon: '🧠', title: '1500 Wörter',         desc: '1500 Vokabeln gelernt',                      metric: 'wordsLearned',    gte: 1500 },
+  { id: 'first_chat',   icon: '💬', title: 'Erstes Gespräch',     desc: 'Erstes Gespräch geführt',                    metric: 'chats',           gte: 1 },
+  { id: 'speaker_20',   icon: '🗣️', title: 'Aussprache-Profi',    desc: '20 Sätze richtig gesprochen',                metric: 'speakOk',         gte: 20 },
+  { id: 'reviews_100',  icon: '✨', title: 'Fleißig',             desc: '100 Wiederholungen gemacht',                 metric: 'reviews',         gte: 100 },
+  { id: 'reviews_1000', icon: '💎', title: 'Ausdauernd',          desc: '1000 Wiederholungen gemacht',                metric: 'reviews',         gte: 1000 },
+  { id: 'streak_3',     icon: '🔥', title: '3 Tage am Stück',     desc: '3-Tage-Streak erreicht',                     metric: 'streak',          gte: 3 },
+  { id: 'streak_7',     icon: '🔥', title: 'Eine Woche',          desc: '7-Tage-Streak erreicht',                     metric: 'streak',          gte: 7 },
+  { id: 'streak_30',    icon: '🏆', title: 'Ein Monat!',          desc: '30-Tage-Streak erreicht',                    metric: 'streak',          gte: 30 },
+  { id: 'mastered_all', icon: '👑', title: 'Meister',             desc: `Alle ${LESSONS.length} Lektionen gemeistert`, metric: 'lessonsMastered', gte: LESSONS.length },
 ];
 
 export const DAILY_GOALS = {

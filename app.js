@@ -394,12 +394,12 @@ function statsCard() {
       <div class="chart">${bars}</div>
     </div>
     <div class="statgrid">
-      <div class="sg"><b>🔥 ${s.streak}</b><span>Serie (Tage)</span></div>
-      <div class="sg"><b>${s.maxStreak}</b><span>Längste Serie</span></div>
+      <div class="sg"><b>${s.started}</b><span>Wörter im Training</span></div>
       <div class="sg"><b>${s.mastered}</b><span>Wörter gemeistert</span></div>
       <div class="sg"><b>${s.due}</b><span>Jetzt fällig</span></div>
-      <div class="sg"><b>${s.accuracy == null ? '—' : s.accuracy + '%'}</b><span>Trefferquote (aktiv)</span></div>
-      <div class="sg"><b>${s.started}/${s.total}</b><span>Wörter gestartet</span></div>
+      <div class="sg"><b>${s.accuracy == null ? '—' : s.accuracy + '%'}</b><span>Trefferquote</span></div>
+      <div class="sg"><b>${s.reviews}</b><span>Wiederholungen</span></div>
+      <div class="sg"><b>${s.lessonsMastered}/${LESSONS.length}</b><span>Lektionen gemeistert</span></div>
     </div>`;
 }
 
@@ -418,7 +418,7 @@ function trackBadges() {
 
 function renderProfile() {
   const L = levelInfo();
-  const words = ALL_VOCAB.filter(v => state.cards[v.id]).length;
+  const s = stats();
   app.innerHTML = `
     <div class="section-title">Profil</div>
     <div class="section-sub">Dein Fortschritt & Einstellungen</div>
@@ -426,22 +426,16 @@ function renderProfile() {
     <div class="card levelcard">
       <div class="levelrow"><div class="lvicon">${L.icon}</div>
         <div class="lvtxt"><b>Level ${L.level} · ${esc(L.de)}</b><div class="nl">${state.xp} XP gesamt</div></div>
-        <div class="lvnum"><b>🔥 ${state.streak}</b><span>STREAK</span></div></div>
+        <div class="lvnum"><b>🔥 ${state.streak}</b><span>Serie · Rekord ${s.maxStreak}</span></div></div>
       <div class="xpbar"><i style="width:${L.pct}%"></i></div>
+      <div class="lvnext">${L.next
+        ? `Noch <b>${L.next.minXp - state.xp} XP</b> bis Level ${L.next.level} · ${esc(L.next.de)}`
+        : 'Höchstes Level erreicht 🎉'}</div>
     </div>
 
     ${statsCard()}
 
     ${trackBadges()}
-
-    <div class="card" style="margin-top:14px">
-      <div class="stat"><span>Sitzungen (Serie)</span><b>🔥 ${state.streak} Tage</b></div>
-      <div class="stat"><span>Wiederholungen</span><b>${state.totals.reviews}</b></div>
-      <div class="stat"><span>Wörter gelernt</span><b>${state.totals.wordsLearned}</b></div>
-      <div class="stat"><span>Wörter gestartet</span><b>${words} / ${ALL_VOCAB.length}</b></div>
-      <div class="stat"><span>Lektionen gemeistert</span><b>${state.totals.lessonsMastered} / ${LESSONS.length}</b></div>
-      <div class="stat" style="border:none"><span>Gespräche geführt</span><b>${state.totals.chats}</b></div>
-    </div>
 
     <div class="section-sub" style="margin:22px 0 8px">Meilensteine</div>
     <div class="msgrid">${milestoneState().map(m =>
