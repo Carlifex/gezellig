@@ -69,7 +69,7 @@ function renderToday() {
 
       <div class="card levelcard">
         <div class="levelrow">
-          <div class="lvicon">${L.icon}</div>
+          <div class="lvicon">${rankIcon(L)}</div>
           <div class="lvtxt"><b>Level ${L.level} · ${esc(L.de)}</b><div class="nl">„${esc(L.nl)}"</div></div>
           <div class="lvnum"><b>${state.xp}</b><span>XP</span></div>
         </div>
@@ -323,7 +323,7 @@ function heroSlide(t) {
   return `<button class="heroslide ${t.hero ? '' : 'noimg'}" data-track="${t.key}">
     ${img}<span class="heroslide-ph">${t.icon}</span>
     <div class="hero-cap">
-      <div class="hero-top"><span class="hero-lvl">${esc(t.level)}</span><span class="hero-prog">${done}/${ls.length} ✅</span></div>
+      <div class="hero-top"><span class="hero-prog">${done}/${ls.length}</span></div>
       <div class="greet hero-title">${esc(t.heroTitle)}</div>
     </div></button>`;
 }
