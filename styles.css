@@ -160,6 +160,22 @@ button{font-family:inherit}
   text-align:left;font-size:15px;font-weight:600;cursor:pointer;color:var(--ink)}
 .choice.correct{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,transparent)}
 .choice.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+/* Vokabel-Training: Tipp-Antwort, Feedback, Übungs-Hub */
+.answer{margin:16px 0 4px}
+.answer input{width:100%;box-sizing:border-box;font-size:22px;font-weight:700;text-align:center;
+  padding:14px 16px;border:2px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);outline:none}
+.answer input:focus{border-color:var(--blue-2)}
+.answer input:disabled{opacity:1}
+.afb{min-height:22px;text-align:center;margin-top:8px}
+.afb .ok{color:var(--good);font-size:19px;font-weight:800}
+.afb .bad{color:var(--bad);font-size:19px;font-weight:800}
+.afb .ex{color:var(--muted);font-size:14px;font-style:italic;margin-top:4px}
+.practicehub{display:flex;flex-direction:column;gap:12px}
+.practicehub .ph-stats{display:flex;justify-content:space-around;text-align:center}
+.practicehub .ph-stats b{display:block;font-size:22px;font-weight:800}
+.practicehub .ph-stats span{font-size:11px;color:var(--muted);font-weight:600}
+.practicehub .ph-sub{display:flex;gap:8px}
+.practicehub .ph-sub .btn{flex:1;margin:0}
 /* Satzbau-Übung: Wort-Chips */
 .buildslot{min-height:56px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
   background:var(--card);border:1.4px dashed var(--line);border-radius:12px;padding:12px;margin-bottom:12px}

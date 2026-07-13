@@ -10,6 +10,7 @@ import {
   todayXp, dailyGoalXp, goalMetToday, cardOf, ALL_VOCAB, gainXp, weakVocab, startedVocab,
   recordAnswer, historyLast, stats, unstartedVocab, unstartedCount, learnWords,
   recordExam, examState, examPassed,
+  introWord, trackVocab, trackVocabReady, dailyNewLimit,
 } from './progress.js';
 
 setTtsEnabled(state.settings.tts);
@@ -293,16 +294,24 @@ function bindTextToggle(btn) {
 // Abschlussprüfung eines Kapitels: erscheint am Ende der Lektionsliste.
 // Freigeschaltet, wenn alle Lektionen des Kapitels durchgearbeitet sind;
 // bestanden ab 80 % richtiger Antworten.
-function examUnlocked(ls) { return ls.length > 0 && ls.every(l => lessonStatus(l.id) !== 'neu'); }
+// Prüfung freigeschaltet: alle Lektionen durch UND Vokabeln trainiert (Reife ≥ 80 %).
+const EXAM_VOCAB_PCT = 80;
+function lessonsAllDone(ls) { return ls.length > 0 && ls.every(l => lessonStatus(l.id) !== 'neu'); }
+function examUnlocked(key) {
+  const ls = trackLessons(key);
+  return lessonsAllDone(ls) && trackVocabReady(key).pct >= EXAM_VOCAB_PCT;
+}
 function examCard(t, ls) {
-  const unlocked = examUnlocked(ls);
+  const unlocked = examUnlocked(t.key);
   const ex = examState(t.key);
   const passed = !!(ex && ex.passed);
   const cls = passed ? 'passed' : unlocked ? 'ready' : 'locked';
   const icon = passed ? '🏅' : unlocked ? '📝' : '🔒';
+  const vr = trackVocabReady(t.key);
   const sub = passed ? `Bestanden — Bestleistung ${ex.bestPct}%`
     : unlocked ? '10 Fragen · ab 80 % richtig bestanden'
-    : `Erst alle ${ls.length} Lektionen abschließen`;
+    : !lessonsAllDone(ls) ? `Erst alle ${ls.length} Lektionen abschließen`
+    : `Vokabeln trainieren: ${vr.ready}/${vr.total} bereit (${vr.pct} %, ${EXAM_VOCAB_PCT} % nötig)`;
   const badge = passed ? '<span class="lst done">🏅</span>'
     : unlocked ? '<span class="lst neu">Start</span>'
     : '<span class="lst lock">🔒</span>';
@@ -340,7 +349,7 @@ function renderVocab() {
   const now = Date.now();
   const q = normalize(vocabQuery);
   const weakIds = new Set(weakVocab(999).map(v => v.id));
-  const isMast = (c) => c && c.reps >= 2 && c.S >= 8;
+  const isMast = (c) => c && c.S >= 8 && (c.prod || 0) >= 1;
   const match = (v) => {
     const c = state.cards[v.id];
     if (q && !(normalize(v.nl).includes(q) || normalize(v.de).includes(q))) return false;
@@ -361,33 +370,48 @@ function renderVocab() {
       <button class="iconbtn play" data-say="${esc(v.nl)}" aria-label="vorlesen">🔊</button>
       <span class="st ${st.cls}">${st.text}</span></div>`;
   }).join('') || '<div class="muted" style="padding:16px;text-align:center">Keine Wörter — anderer Filter oder Suchbegriff?</div>';
-  const started = ALL_VOCAB.filter(v => state.cards[v.id] && state.cards[v.id].reps).length;
+  const started = ALL_VOCAB.filter(v => { const c = state.cards[v.id]; return c && c.reps; }).length;
+  const mastered = ALL_VOCAB.filter(v => isMast(state.cards[v.id])).length;
   const due = dueCount();
+  const newAvail = unstartedCount();
+  const weak = weakIds.size;
   app.innerHTML = `
-    <div class="section-title">Wörter</div>
-    <div class="section-sub">${started} von ${ALL_VOCAB.length} gestartet · <b style="color:var(--orange-ink)">${due} fällig</b></div>
+    <div class="section-title">Training</div>
+    <div class="section-sub">Übe mit echtem Abruf — Tippen & Wiedererkennen, automatisch bewertet.</div>
+
+    <div class="card practicehub">
+      <div class="ph-stats">
+        <div><b style="color:var(--orange-ink)">${due}</b><span>fällig</span></div>
+        <div><b>${newAvail}</b><span>neu verfügbar</span></div>
+        <div><b>${mastered}</b><span>gemeistert</span></div>
+      </div>
+      <button class="btn" id="practice">💪 Üben${due || newAvail ? ` · ${due} + ${Math.min(newAvail, dailyNewLimit())} neu` : ''}</button>
+      ${due || weak ? `<div class="ph-sub">
+        ${due ? `<button class="btn ghost" id="review">🔁 Nur wiederholen</button>` : ''}
+        ${weak ? `<button class="btn ghost" id="weak">🎯 Schwachstellen</button>` : ''}
+      </div>` : ''}
+    </div>
+
+    <div class="section-sub" style="margin:20px 0 8px">Alle Wörter · ${started}/${ALL_VOCAB.length} im Training</div>
     <div class="field" style="margin:2px 0 10px"><input id="vq" placeholder="🔎 Suchen (niederländisch oder deutsch)…" value="${esc(vocabQuery)}" autocomplete="off"/></div>
     <div class="seg wrap" id="vf">${filters.map(([k, l]) => `<button data-f="${k}" class="${vocabFilter === k ? 'on' : ''}">${l}</button>`).join('')}</div>
-    ${due ? `<button class="btn" id="review" style="margin:12px 0 4px">🔁 ${due} Wörter wiederholen</button>` : ''}
-    <button class="btn ghost" id="learnnew" style="margin:8px 0 4px">➕ Neue Wörter lernen (${unstartedCount()} verfügbar)</button>
     <div class="section-sub" style="margin:12px 0 6px">${list.length} ${list.length === 1 ? 'Wort' : 'Wörter'}</div>
     <div class="card" style="padding:6px 16px">${rows}</div>`;
   app.querySelectorAll('.play').forEach(b => b.onclick = () => speak(b.dataset.say));
+  const pr = app.querySelector('#practice'); if (pr) pr.onclick = () => openPractice();
   const rv = app.querySelector('#review'); if (rv) rv.onclick = () => openReview();
+  const wk = app.querySelector('#weak'); if (wk) wk.onclick = () => openWeak();
   app.querySelectorAll('#vf button').forEach(b => b.onclick = () => { vocabFilter = b.dataset.f; renderVocab(); });
   const qi = app.querySelector('#vq');
   qi.oninput = () => { vocabQuery = qi.value; const p = qi.selectionStart; renderVocab(); const n = app.querySelector('#vq'); n.focus(); n.setSelectionRange(p, p); };
-  const ln = app.querySelector('#learnnew'); if (ln) ln.onclick = () => openLearnNew();
 }
 
 // Neue Wörter aus der großen Vokabelbank ins Training holen (Reihenfolge: A1→A2→B1).
-function openLearnNew(n = 8) {
-  const pool = unstartedVocab(n);
+function openLearnNew(n = null) {
+  const pool = unstartedVocab(n || dailyNewLimit());
   if (!pool.length) { toast('Alle Wörter sind schon im Training! 🎉', '➕'); return; }
-  openFlow([stepLearn(pool)], (fe) => {
-    const added = learnWords(pool); flushUnlocks();
-    finishScreen(fe, '➕', `${added} neue ${added === 1 ? 'Wort' : 'Wörter'}!`, 'Sie sind jetzt in deinem Training.', 'vocab');
-  });
+  openFlow([stepIntro(pool)], (fe) =>
+    finishScreen(fe, '➕', `${pool.length} neue ${pool.length === 1 ? 'Wort' : 'Wörter'}`, 'Mit Abruf eingeführt — jetzt im Training.', 'vocab'));
 }
 
 /* ============================ PROFIL ============================ */
@@ -528,7 +552,7 @@ function openLesson(lessonId) {
   const l = LESSONS.find(x => x.id === lessonId);
   const steps = [];
   if (l.story) steps.push(stepStory(l));
-  steps.push(stepGrammar(l.grammar, 'Grammatik'), stepLearn(l.vocab), stepQuiz(l.vocab), stepDialogue(l), stepGrammarCheck(l.grammar));
+  steps.push(stepGrammar(l.grammar, 'Grammatik'), stepIntro(l.vocab), stepDialogue(l), stepGrammarCheck(l.grammar));
   if (l.speak && l.speak.length) steps.push(stepSpeak(l.speak));
   if (l.culture) steps.push(stepCulture(l));
   openFlow(steps, (fe) => {
@@ -593,7 +617,11 @@ function examStep(question, num, total, score) {
 function openExam(key) {
   const track = TRACKS.find(t => t.key === key);
   const ls = trackLessons(key);
-  if (!examUnlocked(ls)) { toast(`Erst alle ${ls.length} Lektionen abschließen.`, '🔒'); return; }
+  if (!examUnlocked(key)) {
+    const vr = trackVocabReady(key);
+    toast(lessonsAllDone(ls) ? `Erst Vokabeln trainieren (${vr.pct} %/${EXAM_VOCAB_PCT} %).` : `Erst alle ${ls.length} Lektionen abschließen.`, '🔒');
+    return;
+  }
   const questions = buildExamQuestions(key, 10);
   const total = questions.length;
   if (!total) { toast('Keine Fragen verfügbar.', '📝'); return; }
@@ -681,20 +709,97 @@ function stepGrammar(gid, label) {
     foot.querySelector('#n').onclick = done;
   }};
 }
-function stepLearn(vocab) {
-  let i = 0;
+/* ---------- Objektive Antwort-Bewertung & Format-nach-Reife ---------- */
+function lev(a, b) {
+  const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, i) => i), cur = new Array(n + 1);
+  for (let i = 1; i <= m; i++) {
+    cur[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const c = a[i - 1] === b[j - 1] ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + c);
+    }
+    [prev, cur] = [cur, prev];
+  }
+  return prev[n];
+}
+const stripArt = (s) => s.replace(/^(de|het|een)\s+/, '');
+// { ok, typo } — Artikel de/het/een optional, Tippfehler (Levenshtein ≤1) = „fast".
+function gradeAnswer(input, target) {
+  const a = normalize(input), t = normalize(target);
+  if (!a) return { ok: false, typo: false };
+  const a2 = stripArt(a), t2 = stripArt(t);
+  if (a === t || a2 === t2) return { ok: true, typo: false };
+  if (lev(a2, t2) <= 1) return { ok: true, typo: true };
+  return { ok: false, typo: false };
+}
+// Abruf-Format nach Reife: Wiedererkennen → gestützter Abruf → freie Produktion.
+function fmtByCard(card) {
+  const S = (card && card.S) || 0, reps = (card && card.reps) || 0;
+  if (reps < 2 || S < 2) return 'mc';
+  if (S < 8) return 'cued';
+  return 'prod';
+}
+function mcChoices(v, pool, n = 3) {
+  const others = shuffle(pool.filter(x => x.id !== v.id && x.nl !== v.nl)).slice(0, n);
+  return shuffle([v, ...others]);
+}
+
+// Neues Wort einführen: kodieren → Wiedererkennen (MC) → gestützter Abruf (Tippen).
+// Erst nach echtem Abruf kommt es MIT echtem Grade ins SRS (introWord). Nur NEUE Wörter.
+function stepIntro(vocab) {
+  const pool = vocab.slice();
   return { render(body, foot, done) {
+    const queue = vocab.filter(v => !cardOf(v.id).reps);
+    let i = 0, phase = 0, mcOk = true;
     const draw = () => {
-      if (i >= vocab.length) return done();
-      const v = vocab[i];
-      body.innerHTML = `<div class="step-label">Neue Wörter · ${i + 1}/${vocab.length}</div>
-        <div class="step-title">Lern dieses Wort</div>
-        <div class="flash"><div class="word">${esc(v.nl)}</div><div class="trans">${esc(v.de)}</div>
-          <div class="ex">${esc(v.ex)} — ${esc(v.exDe)}</div>${v.note ? `<div class="ex" style="color:var(--orange-ink)">💡 ${esc(v.note)}</div>` : ''}</div>`;
-      speak(v.nl);
-      foot.innerHTML = `<button class="btn ghost" id="say">🔊 Nochmal hören</button><button class="btn" id="n">${i === vocab.length - 1 ? 'Weiter' : 'Kenne ich'}</button>`;
-      foot.querySelector('#say').onclick = () => speak(v.nl);
-      foot.querySelector('#n').onclick = () => { i++; draw(); };
+      if (i >= queue.length) return done();
+      const v = queue[i];
+      const head = `<div class="step-label">Neues Wort · ${i + 1}/${queue.length}</div>`;
+      if (phase === 0) {
+        body.innerHTML = `${head}<div class="step-title">Neu: „${esc(v.nl)}"</div>
+          <div class="flash"><div class="word">${esc(v.nl)}</div><div class="trans">${esc(v.de)}</div>
+            <div class="ex">${esc(v.ex)} — ${esc(v.exDe)}</div>
+            ${v.note ? `<div class="ex" style="color:var(--orange-ink)">💡 ${esc(v.note)}</div>` : ''}</div>`;
+        speak(v.nl);
+        foot.innerHTML = `<button class="btn ghost" id="say">🔊 Hören</button><button class="btn" id="n">Verstanden</button>`;
+        foot.querySelector('#say').onclick = () => speak(v.nl);
+        foot.querySelector('#n').onclick = () => { phase = 1; draw(); };
+      } else if (phase === 1) {
+        const opts = mcChoices(v, pool.length >= 4 ? pool : ALL_VOCAB);
+        body.innerHTML = `${head}<div class="step-title">Was heißt „${esc(v.de)}"?</div>
+          <div class="choices">${opts.map(o => `<button class="choice" data-id="${o.id}">${esc(o.nl)}</button>`).join('')}</div>`;
+        let answered = false;
+        body.querySelectorAll('.choice').forEach(btn => btn.onclick = () => {
+          if (answered) return; answered = true;
+          mcOk = btn.dataset.id === v.id;
+          body.querySelectorAll('.choice').forEach(b2 => {
+            if (b2.dataset.id === v.id) b2.classList.add('correct');
+            else if (b2 === btn) b2.classList.add('wrong');
+          });
+          if (mcOk) speak(v.nl);
+          foot.innerHTML = `<button class="btn" id="n">Weiter</button>`;
+          foot.querySelector('#n').onclick = () => { phase = 2; draw(); };
+        });
+        foot.innerHTML = '';
+      } else {
+        const hint = stripArt(normalize(v.nl))[0] || '';
+        body.innerHTML = `${head}<div class="step-title">Tippe auf Niederländisch: „${esc(v.de)}"</div>
+          <div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="beginnt mit „${esc(hint)}…"></div>
+          <div id="fb" class="afb"></div>`;
+        const inp = body.querySelector('#ans'); inp.focus();
+        foot.innerHTML = `<button class="btn" id="chk">Prüfen</button>`;
+        const check = () => {
+          const r = gradeAnswer(inp.value, v.nl); inp.disabled = true;
+          body.querySelector('#fb').innerHTML = `<div class="${r.ok ? 'ok' : 'bad'}">${r.ok ? (r.typo ? '✓ Fast! ' : '✓ Richtig! ') : '✗ '}<b>${esc(v.nl)}</b></div><div class="ex">${esc(v.ex)}</div>`;
+          speak(v.nl);
+          introWord(v.id, (mcOk && r.ok && !r.typo) ? 'good' : 'hard'); flushUnlocks();
+          foot.innerHTML = `<button class="btn" id="n">${i === queue.length - 1 ? 'Fertig' : 'Nächstes Wort'}</button>`;
+          foot.querySelector('#n').onclick = () => { i++; phase = 0; mcOk = true; draw(); };
+        };
+        foot.querySelector('#chk').onclick = check;
+        inp.onkeydown = (e) => { if (e.key === 'Enter') check(); };
+      }
     };
     draw();
   }};
@@ -807,44 +912,79 @@ function stepSpeak(sentences) {
 }
 
 /* ---------- REVIEW / SCHWACHSTELLEN (interleaved SRS-Flash) ---------- */
-function flashStep(queue, label) {
-  let i = 0, revealed = false;
+// Wiederholung: Format nach Reife, Antwort VERDECKT, OBJEKTIVE Auto-Bewertung
+// (Grade aus der Antwort abgeleitet — kein Selbst-Rating mehr).
+function reviewStep(queue, label) {
+  let i = 0;
   return { render(body, foot, done) {
     const draw = () => {
       if (i >= queue.length) return done();
       const v = queue[i];
-      body.innerHTML = `<div class="step-label">${esc(label)} · ${i + 1}/${queue.length}</div>
-        <div class="step-title">Was heißt das?</div>
-        <div class="flash"><div class="word">${esc(v.nl)}</div>
-          ${revealed ? `<div class="trans">${esc(v.de)}</div><div class="ex">${esc(v.ex)}</div>` : '<div class="muted">Überleg… dann aufdecken.</div>'}</div>`;
-      if (!revealed) {
-        foot.innerHTML = `<button class="btn ghost" id="say">🔊</button><button class="btn" id="rev">Aufdecken</button>`;
-        foot.querySelector('#say').onclick = () => speak(v.nl);
-        foot.querySelector('#rev').onclick = () => { revealed = true; draw(); };
+      const fmt = fmtByCard(cardOf(v.id));
+      const head = `<div class="step-label">${esc(label)} · ${i + 1}/${queue.length}</div>`;
+      const finish = (grade, prod) => {
         speak(v.nl);
+        reviewCard(v.id, grade, prod); flushUnlocks();
+        foot.innerHTML = `<button class="btn" id="n">${i === queue.length - 1 ? 'Fertig' : 'Weiter'}</button>`;
+        foot.querySelector('#n').onclick = () => { i++; draw(); };
+      };
+      if (fmt === 'mc') {
+        const opts = mcChoices(v, ALL_VOCAB);
+        body.innerHTML = `${head}<div class="step-title">Was heißt „${esc(v.de)}"?</div>
+          <div class="choices">${opts.map(o => `<button class="choice" data-id="${o.id}">${esc(o.nl)}</button>`).join('')}</div><div id="fb" class="afb"></div>`;
+        let answered = false;
+        body.querySelectorAll('.choice').forEach(btn => btn.onclick = () => {
+          if (answered) return; answered = true;
+          const ok = btn.dataset.id === v.id;
+          body.querySelectorAll('.choice').forEach(b2 => {
+            if (b2.dataset.id === v.id) b2.classList.add('correct');
+            else if (b2 === btn) b2.classList.add('wrong');
+          });
+          body.querySelector('#fb').innerHTML = `<div class="ex">${esc(v.nl)} — ${esc(v.ex)}</div>`;
+          finish(ok ? 'good' : 'again', false);
+        });
+        foot.innerHTML = '';
       } else {
-        foot.innerHTML = `<div class="grades">
-          <button class="grade again" data-g="again">Nochmal<small>&lt;1 Min</small></button>
-          <button class="grade" data-g="hard">Schwer<small>morgen</small></button>
-          <button class="grade good" data-g="good">Gut<small>Tage</small></button>
-          <button class="grade" data-g="easy">Leicht<small>länger</small></button></div>`;
-        foot.querySelectorAll('.grade').forEach(b => b.onclick = () => { reviewCard(v.id, b.dataset.g); flushUnlocks(); i++; revealed = false; draw(); });
+        const prod = fmt === 'prod';
+        const hint = stripArt(normalize(v.nl))[0] || '';
+        body.innerHTML = `${head}<div class="step-title">Tippe auf Niederländisch: „${esc(v.de)}"</div>
+          <div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${prod ? 'auf Niederländisch…' : `beginnt mit „${esc(hint)}…"`}"></div>
+          <div id="fb" class="afb"></div>`;
+        const inp = body.querySelector('#ans'); inp.focus();
+        foot.innerHTML = `<button class="btn" id="chk">Prüfen</button>`;
+        const check = () => {
+          const r = gradeAnswer(inp.value, v.nl); inp.disabled = true;
+          body.querySelector('#fb').innerHTML = `<div class="${r.ok ? 'ok' : 'bad'}">${r.ok ? (r.typo ? '✓ Fast! ' : '✓ Richtig! ') : '✗ '}<b>${esc(v.nl)}</b></div><div class="ex">${esc(v.ex)}</div>`;
+          finish(!r.ok ? 'again' : r.typo ? 'hard' : 'good', prod && r.ok && !r.typo);
+        };
+        foot.querySelector('#chk').onclick = check;
+        inp.onkeydown = (e) => { if (e.key === 'Enter') check(); };
       }
     };
     draw();
   }};
 }
-function runFlashReview(cards, opts) {
+function runReview(cards, opts) {
   if (!cards.length) { toast(opts.empty, opts.emoji); return; }
-  const queue = shuffle(cards.slice());   // gemischt = interleaved
-  openFlow([flashStep(queue, opts.label)], (fe) =>
-    finishScreen(fe, opts.emoji, opts.title, `${queue.length} Wörter · +${queue.length * 2} XP · 🔥 ${state.streak}`, opts.returnTab));
+  openFlow([reviewStep(shuffle(cards.slice()), opts.label)], (fe) =>
+    finishScreen(fe, opts.emoji, opts.title, `${cards.length} Wörter · 🔥 ${state.streak}`, opts.returnTab));
 }
 function openReview() {
-  runFlashReview(dueVocab(), { label: 'Wiederholen', emoji: '✅', title: 'Wiederholt!', empty: 'Nichts fällig — mach eine Lektion!', returnTab: 'today' });
+  runReview(dueVocab(), { label: 'Wiederholen', emoji: '✅', title: 'Wiederholt!', empty: 'Nichts fällig — üb neue Wörter!', returnTab: 'vocab' });
 }
 function openWeak() {
-  runFlashReview(weakVocab(), { label: 'Schwachstellen', emoji: '🎯', title: 'Stärker geworden!', empty: 'Keine Schwachstellen — stark!', returnTab: 'practice' });
+  runReview(weakVocab(), { label: 'Schwachstellen', emoji: '🎯', title: 'Stärker geworden!', empty: 'Keine Schwachstellen — stark!', returnTab: 'vocab' });
+}
+// Gemischte Übungseinheit: neue Wörter geblockt einführen, dann fällige Reviews (interleaved).
+function openPractice() {
+  const news = unstartedVocab(dailyNewLimit());
+  const due = dueVocab();
+  if (!news.length && !due.length) { toast('Nichts zu üben — alles im grünen Bereich! 🎉', '✅'); return; }
+  const steps = [];
+  if (news.length) steps.push(stepIntro(news));
+  if (due.length) steps.push(reviewStep(shuffle(due.slice()), 'Wiederholen'));
+  openFlow(steps, (fe) =>
+    finishScreen(fe, '💪', 'Stark geübt!', `${news.length} neu · ${due.length} wiederholt · 🔥 ${state.streak}`, 'vocab'));
 }
 
 /* ---------- ONBOARDING (Erst-Start) ---------- */

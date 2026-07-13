@@ -82,7 +82,8 @@ export function statusLabel(card, now) {
   return { text: Math.round(days / 30) + ' Mon', cls: 'good' };
 }
 
-// Ist die Karte "gemeistert"? (stabil genug, dass sie sitzt)
+// Ist die Karte "gemeistert"? Stabil genug (S≥8) UND mindestens einmal FREI
+// produziert (getippt, ohne Hilfe) — reine Wiedererkennung reicht nicht.
 export function isMastered(card) {
-  return card && card.reps >= 2 && card.S >= 8;
+  return card && card.S >= 8 && (card.prod || 0) >= 1;
 }
