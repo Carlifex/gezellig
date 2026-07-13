@@ -177,7 +177,7 @@ const lemIcon = (l) => ICON_IDS.has(l.id)
 // Medaillen (illustrations/medals/<id>.webp). Wird ein Level/eine ID hier
 // eingetragen, zeigt die App automatisch das Bild statt des Emoji-Fallbacks.
 const RANK_ART = new Set([1,2,3,4,5,6,7,8,9,10]);   // illustrations/ranks/lvl-<N>.webp
-const MEDAL_ART = new Set([]);  // z. B. 'first_lesson' … sobald medals/first_lesson.webp existiert
+const MEDAL_ART = new Set(['first_lesson','lessons_10','lessons_40','all_lessons','words_25','words_100','words_500','words_1500','first_chat','speaker_20','reviews_100','reviews_1000','streak_3','streak_7','streak_30','mastered_all']);  // illustrations/medals/<id>.webp
 // Lernpfad-Abzeichen mit eigener Badge-Grafik (illustrations/badges/<track>.webp);
 // solange leer, zeigt die App das Kapitel-Cover als Fallback.
 const BADGE_ART = new Set(['verhaal','personen','mythen','ade','feest','natuurkunde']);  // illustrations/badges/<track>.webp
