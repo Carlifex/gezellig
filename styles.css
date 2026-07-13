@@ -309,16 +309,19 @@ button{font-family:inherit}
 .dtask .prog{margin-left:auto;font-size:12px;font-weight:800;color:var(--blue-2);font-variant-numeric:tabular-nums}
 
 /* Tagesziel + Tagesaufgaben in EINER kompakten Karte */
-.daycard{padding:13px 15px;display:flex;flex-direction:column;gap:11px}
-.daycard .daytop{display:flex;align-items:center;gap:13px}
-.daycard .dial{width:52px;height:52px;flex:0 0 52px}
-.daycard .dial i{width:40px;height:40px;font-size:12.5px}
-.daycard .txt b{font-size:14.5px}.daycard .txt div{font-size:12.5px;color:var(--muted)}
-.daycard .streak b{font-size:18px}
-.daycard .daytasks{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:11px}
-.daycard .dtask{border:none;background:none;border-radius:8px;padding:4px 2px;gap:10px}
-.daycard .dtask .box{width:19px;height:19px;flex:0 0 19px;border-radius:6px}
-.daycard .dtask b{font-size:13px}
+.daycard{padding:12px 14px;display:flex;flex-direction:column;gap:9px}
+.daycard .daytop{display:flex;align-items:center;gap:12px}
+.daycard .dial{width:44px;height:44px;flex:0 0 44px}
+.daycard .dial i{width:34px;height:34px;font-size:11px}
+.daycard .txt b{font-size:14px}.daycard .txt div{font-size:12px;color:var(--muted)}
+.daycard .streak b{font-size:17px}
+.daycard .streak span{font-size:10px}
+.daycard .daytasks{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding-top:8px}
+/* Jede Tagesaufgabe strikt EINZEILIG (kein Umbruch/Stapeln) */
+.daycard .dtask{display:flex;align-items:center;flex-wrap:nowrap;border:none;background:none;border-radius:8px;padding:5px 2px;gap:10px}
+.daycard .dtask .box{width:18px;height:18px;flex:0 0 18px;border-radius:5px;font-size:11px}
+.daycard .dtask b{font-size:13px;font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.daycard .dtask .prog{flex:0 0 auto;margin-left:auto}
 
 /* ---- v2: lesson map ---- */
 .lgrid{display:flex;flex-direction:column;gap:10px}
