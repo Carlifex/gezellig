@@ -65,6 +65,23 @@ function render() {
 }
 
 /* ============================ START ============================ */
+// Der Haupt-Button auf der Startseite garantiert IMMER Fortschritt:
+// 1) nächste freie Lektion  2) fällige/nötige Prüfung  3) Vokabeltraining  4) Weiterlernen.
+function homeCTA() {
+  const nl = LESSONS.find(l => lessonStatus(l.id) === 'neu' && lessonUnlocked(l));
+  if (nl) return { kind: 'lesson', label: 'Nächste Lektion starten', icon: lemIcon(nl), run: () => openLesson(nl.id) };
+  // Alle freien Lektionen durch → wartet eine Prüfung, die schon bereit ist?
+  const exReady = TRACKS.find(t => trackLessons(t.key).length && examUnlocked(t.key) && !examPassed(t.key));
+  if (exReady) return { kind: 'exam', label: `Prüfung: ${exReady.label}`, icon: '📝', run: () => go('lessons', exReady.key) };
+  // Prüfung hängt noch am Vokabeltraining, oder es sind Wörter fällig → ins Training.
+  if (examsNeedingVocab().length || dueCount() || unstartedCount()) {
+    return { kind: 'train', label: 'Vokabeln trainieren', icon: '🔁', run: () => openPractice() };
+  }
+  // Sonst: noch nicht gemeisterte Lektion wiederholen, sonst Kapitelübersicht.
+  const rl = LESSONS.find(l => lessonStatus(l.id) !== 'gemeistert' && lessonUnlocked(l));
+  if (rl) return { kind: 'lesson', label: 'Weiterlernen', icon: lemIcon(rl), run: () => openLesson(rl.id) };
+  return { kind: 'browse', label: 'Zur Kapitelübersicht', icon: '📚', run: () => go('lessons') };
+}
 function renderToday() {
   const L = levelInfo();
   const due = dueCount();
@@ -72,13 +89,11 @@ function renderToday() {
   const gpct = Math.min(100, Math.round(tXp / goalXp * 100));
   const hour = new Date().getHours();
   const greet = hour < 11 ? 'Guten Morgen!' : hour < 18 ? 'Guten Tag!' : 'Guten Abend!';
-  const nextLesson = LESSONS.find(l => lessonStatus(l.id) === 'neu' && lessonUnlocked(l))
-    || LESSONS.find(l => lessonStatus(l.id) !== 'gemeistert' && lessonUnlocked(l))
-    || LESSONS[0];
-  const curKey = (nextLesson && nextLesson.track) || 'verhaal';
-  const curIdx = Math.max(0, TRACKS.filter(x => trackLessons(x.key).length).findIndex(t => t.key === curKey));
   const heroTracks = TRACKS.filter(x => trackLessons(x.key).length);
-  const learnLabel = nextLesson && lessonStatus(nextLesson.id) === 'neu' ? 'Nächste Lektion starten' : 'Weiterlernen';
+  // Aktuelles Kapitel = das am weitesten freigeschaltete (durch bestandene Prüfungen).
+  let curIdx = 0;
+  heroTracks.forEach((t, i) => { if (trackUnlocked(t.key)) curIdx = i; });
+  const cta = homeCTA();
 
   app.innerHTML = `
     <div class="stack">
@@ -96,8 +111,8 @@ function renderToday() {
       <div class="herocar" id="herocar">${heroTracks.map(heroSlide).join('')}</div>
       <div class="cardots" id="cardots">${heroTracks.map((_, i) => `<button class="dot ${i === curIdx ? 'on' : ''}" data-i="${i}" aria-label="Cover ${i + 1}"></button>`).join('')}</div>
 
-      <button class="btn learn-cta" id="learn"><span class="learn-ic">${nextLesson ? lemIcon(nextLesson) : '📚'}</span><span>${learnLabel}</span></button>
-      ${due ? `<button class="btn secondary" id="review">🔁 ${due} Wörter wiederholen</button>` : ''}
+      <button class="btn learn-cta" id="learn"><span class="learn-ic">${cta.icon}</span><span>${esc(cta.label)}</span></button>
+      ${due && cta.kind !== 'train' ? `<button class="btn secondary" id="review">🔁 ${due} Wörter wiederholen</button>` : ''}
 
       <div class="card daycard">
         <div class="daytop">
@@ -109,7 +124,7 @@ function renderToday() {
       </div>
     </div>`;
 
-  app.querySelector('#learn').onclick = () => nextLesson ? openLesson(nextLesson.id) : go('lessons');
+  app.querySelector('#learn').onclick = cta.run;
   const rv = app.querySelector('#review'); if (rv) rv.onclick = () => openReview();
 
   // Hero-Carousel: Cover anklicken → Kapitel öffnen; Punkte = durchklicken; Wisch-Sync.
