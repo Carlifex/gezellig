@@ -58,7 +58,7 @@ function syncTabs() {
   const up = document.getElementById('trainUp');
   if (up) up.hidden = examsNeedingVocab().length === 0;
 }
-function go(tab, track) { activeTab = tab; if (tab === 'lessons') activeTrack = track ?? null; syncTabs(); render(); }
+function go(tab, track) { activeTab = tab; if (tab === 'lessons') activeTrack = track ?? null; if (tab !== 'vocab') vocabSub = null; syncTabs(); render(); }
 function render() {
   ({ today: renderToday, lessons: renderLessons, vocab: renderVocab, profile: renderProfile }[activeTab] || renderToday)();
   window.scrollTo(0, 0);
@@ -486,8 +486,9 @@ function openTrack(key) {
 }
 
 /* ============================ WÖRTER ============================ */
-let vocabFilter = 'alle', vocabQuery = '';
+let vocabFilter = 'alle', vocabQuery = '', vocabSub = null;
 function renderVocab() {
+  if (vocabSub === 'numbers') return renderNumbers();
   const now = Date.now();
   const q = normalize(vocabQuery);
   const weakIds = new Set(weakVocab(999).map(v => v.id));
@@ -543,6 +544,13 @@ function renderVocab() {
       </div>` : ''}
     </div>
 
+    <div class="section-sub" style="margin:20px 0 8px">Spezial-Training</div>
+    <button class="card special-card" id="numbers">
+      <span class="sc-ic">🔢</span>
+      <span class="sc-txt"><b>Zahlen lernen</b><span>Getallen: 0 bis 1000 — hören, verstehen, tippen</span></span>
+      <span class="sc-go">›</span>
+    </button>
+
     <div class="section-sub" style="margin:20px 0 8px">Alle Wörter · ${started}/${ALL_VOCAB.length} im Training</div>
     <div class="field" style="margin:2px 0 10px"><input id="vq" placeholder="🔎 Suchen (niederländisch oder deutsch)…" value="${esc(vocabQuery)}" autocomplete="off"/></div>
     <div class="seg wrap" id="vf">${filters.map(([k, l]) => `<button data-f="${k}" class="${vocabFilter === k ? 'on' : ''}">${l}</button>`).join('')}</div>
@@ -552,9 +560,120 @@ function renderVocab() {
   const pr = app.querySelector('#practice'); if (pr) pr.onclick = () => openPractice();
   const rv = app.querySelector('#review'); if (rv) rv.onclick = () => openReview();
   const wk = app.querySelector('#weak'); if (wk) wk.onclick = () => openWeak();
+  const nm = app.querySelector('#numbers'); if (nm) nm.onclick = () => { vocabSub = 'numbers'; renderVocab(); };
   app.querySelectorAll('#vf button').forEach(b => b.onclick = () => { vocabFilter = b.dataset.f; renderVocab(); });
   const qi = app.querySelector('#vq');
   qi.oninput = () => { vocabQuery = qi.value; const p = qi.selectionStart; renderVocab(); const n = app.querySelector('#vq'); n.focus(); n.setSelectionRange(p, p); };
+}
+
+/* ---------- ZAHLEN LERNEN (Getallen) — eigenes Spezial-Modul ---------- */
+function renderNumbers() {
+  const chip = (n) => `<button class="numchip" data-say="${esc(dutchNum(n))}"><b>${n}</b><span>${esc(dutchNum(n))}</span></button>`;
+  const range = (a, b) => { let s = ''; for (let i = a; i <= b; i++) s += chip(i); return s; };
+  const tens = [20, 30, 40, 50, 60, 70, 80, 90].map(chip).join('');
+  const comp = [21, 22, 33, 45, 58, 67, 99].map(chip).join('');
+  const big = [100, 200, 750, 1000, 2024].map(chip).join('');
+  app.innerHTML = `<div class="stack">
+    <div class="row" style="align-items:center;gap:10px">
+      <button class="btn small ghost" id="back">← Training</button>
+      <div class="section-title" style="margin:0">🔢 Zahlen</div>
+    </div>
+    <div class="gcard">
+      <p><b>So funktionieren niederländische Zahlen</b></p>
+      <p style="margin-top:6px">Bis <b>20</b> lernt man sie einfach auswendig. Ab <b>21</b> kommt die
+      <b>Einer-Zahl zuerst</b>, dann „en", dann der Zehner — genau wie im Deutschen „<i>einund</i>zwanzig":
+      <b>een&#8288;en&#8288;twintig</b>.</p>
+      <p style="margin-top:6px">Endet die Einer-Zahl auf <b>twee</b> oder <b>drie</b>, wird aus „en" ein
+      <b>„ën"</b> (mit Trema): <b>twee&#8288;ën&#8288;twintig</b> (22), <b>drie&#8288;ën&#8288;dertig</b> (33).</p>
+      <p style="margin-top:6px" class="muted">Tipp auf jede Zahl, um sie zu hören 🔊</p>
+    </div>
+    <div class="section-sub">0–12 · die Basis</div><div class="numgrid">${range(0, 12)}</div>
+    <div class="section-sub">13–19 · …tien</div><div class="numgrid">${range(13, 19)}</div>
+    <div class="section-sub">Zehner · 20–90</div><div class="numgrid">${tens}</div>
+    <div class="section-sub">Zusammengesetzt · Einer zuerst</div><div class="numgrid">${comp}</div>
+    <div class="section-sub">Große Zahlen · honderd &amp; duizend</div><div class="numgrid">${big}</div>
+    <button class="btn learn-cta" id="drill" style="margin-top:8px">▶ Zahlen üben</button>
+  </div>`;
+  app.querySelector('#back').onclick = () => { vocabSub = null; renderVocab(); };
+  app.querySelector('#drill').onclick = () => openNumberDrill();
+  app.querySelectorAll('.numchip').forEach(b => b.onclick = () => speak(b.dataset.say));
+}
+function numberDrillQuestions(count = 10) {
+  const qs = [], used = new Set();
+  const rnd = () => Math.floor(Math.random() * 100); // 0–99
+  let guard = 0;
+  while (qs.length < count && guard++ < 300) {
+    const n = rnd(); if (used.has(n)) continue; used.add(n);
+    const kind = ['write', 'read', 'listen'][qs.length % 3];
+    if (kind === 'read') {
+      const opts = new Set([n]); while (opts.size < 4) opts.add(rnd());
+      const options = shuffle([...opts]);
+      qs.push({ kind: 'read', n, options, answer: options.indexOf(n) });
+    } else qs.push({ kind, n });
+  }
+  return shuffle(qs);
+}
+function openNumberDrill() {
+  let qs = numberDrillQuestions(10);
+  if (!ttsSupported()) qs = qs.map(q => q.kind === 'listen' ? { kind: 'write', n: q.n } : q);
+  const total = qs.length, score = { correct: 0 };
+  openFlow(qs.map((q, i) => numDrillStep(q, i + 1, total, score)), (fe) => {
+    const pct = Math.round(score.correct / total * 100);
+    fe.innerHTML = `<div class="flow-body"><div class="done">
+      <div class="big">${pct >= 80 ? '🎉' : '🔢'}</div><h2>${pct}% richtig</h2>
+      <p class="muted">${score.correct}/${total} · ${pct >= 80 ? 'Sterk! Je kent je getallen.' : 'Übung macht den Meister.'}</p>
+      <button class="btn" id="again" style="max-width:280px;margin-top:12px">Nochmal üben</button>
+      <button class="btn ghost" id="fin" style="max-width:280px;margin-top:8px">Fertig</button></div></div>`;
+    fe.querySelector('#again').onclick = () => { closeFlow(); openNumberDrill(); };
+    fe.querySelector('#fin').onclick = () => closeFlow();
+  });
+}
+function numDrillStep(question, num, total, score) {
+  const word = dutchNum(question.n);
+  const nextBtn = (foot, done) => { foot.innerHTML = `<button class="btn" id="n">${num === total ? 'Auswertung' : 'Weiter'}</button>`; foot.querySelector('#n').onclick = done; };
+  return { render(body, foot, done) {
+    const head = `<div class="step-label">Zahlen · ${num}/${total}</div>`;
+    if (question.kind === 'read') {
+      body.innerHTML = `${head}<div class="step-title">Welche Zahl ist „${esc(word)}"?</div>
+        <div class="choices">${question.options.map((o, i) => `<button class="choice" data-i="${i}">${o}</button>`).join('')}</div>`;
+      speak(word);
+      let answered = false;
+      body.querySelectorAll('.choice').forEach(btn => btn.onclick = () => {
+        if (answered) return; answered = true;
+        const ok = (+btn.dataset.i) === question.answer; if (ok) score.correct++; recordAnswer(ok);
+        body.querySelectorAll('.choice').forEach((b2, i) => { if (i === question.answer) b2.classList.add('correct'); else if (i === +btn.dataset.i) b2.classList.add('wrong'); });
+        nextBtn(foot, done);
+      });
+      foot.innerHTML = '';
+    } else if (question.kind === 'listen') {
+      body.innerHTML = `${head}<div class="step-title">Hör zu und tippe die Zahl (Ziffern):</div>
+        <div style="text-align:center;margin:12px 0"><button class="iconbtn" id="rep" style="width:64px;height:64px;font-size:28px">🔊</button></div>
+        <div class="answer"><input id="ans" inputmode="numeric" autocomplete="off" placeholder="z. B. 42"></div><div id="fb" class="afb"></div>`;
+      speak(word);
+      body.querySelector('#rep').onclick = () => speak(word);
+      const inp = body.querySelector('#ans'); inp.focus();
+      foot.innerHTML = `<button class="btn" id="chk">Prüfen</button>`;
+      const check = () => {
+        const ok = inp.value.trim() === String(question.n); inp.disabled = true; if (ok) score.correct++; recordAnswer(ok);
+        body.querySelector('#fb').innerHTML = `<div class="${ok ? 'ok' : 'bad'}">${ok ? '✓ Richtig! ' : '✗ '}<b>${question.n} = ${esc(word)}</b></div>`;
+        nextBtn(foot, done);
+      };
+      foot.querySelector('#chk').onclick = check; inp.onkeydown = (e) => { if (e.key === 'Enter') check(); };
+    } else { // write
+      body.innerHTML = `${head}<div class="step-title">Schreib auf Niederländisch:</div>
+        <div class="bignum">${question.n}</div>
+        <div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="op zijn Nederlands…"></div><div id="fb" class="afb"></div>`;
+      const inp = body.querySelector('#ans'); inp.focus();
+      foot.innerHTML = `<button class="btn" id="chk">Prüfen</button>`;
+      const check = () => {
+        const r = gradeAnswer(inp.value, word); inp.disabled = true; if (r.ok) score.correct++; recordAnswer(r.ok);
+        body.querySelector('#fb').innerHTML = `<div class="${r.ok ? 'ok' : 'bad'}">${r.ok ? (r.typo ? '✓ Fast — ' : '✓ Richtig! ') : '✗ '}<b>${esc(word)}</b></div>`;
+        if (r.ok) speak(word);
+        nextBtn(foot, done);
+      };
+      foot.querySelector('#chk').onclick = check; inp.onkeydown = (e) => { if (e.key === 'Enter') check(); };
+    }
+  }};
 }
 
 // Neue Wörter aus der großen Vokabelbank ins Training holen (Reihenfolge: A1→A2→B1).
@@ -948,7 +1067,8 @@ const NL_TENS = ['', '', 'twintig', 'dertig', 'veertig', 'vijftig', 'zestig', 'z
 function dutchNum(n) {
   if (n < 20) return NL_ONES[n];
   if (n < 100) { const t = Math.floor(n / 10), u = n % 10; if (!u) return NL_TENS[t]; return NL_ONES[u] + ((u === 2 || u === 3) ? 'ën' : 'en') + NL_TENS[t]; }
-  if (n === 100) return 'honderd';
+  if (n < 1000) { const h = Math.floor(n / 100), r = n % 100; return (h === 1 ? '' : NL_ONES[h]) + 'honderd' + (r ? dutchNum(r) : ''); }
+  if (n < 1000000) { const th = Math.floor(n / 1000), r = n % 1000; return (th === 1 ? '' : dutchNum(th)) + 'duizend' + (r ? dutchNum(r) : ''); }
   return String(n);
 }
 function numberQuestions(count, max = 100) {
