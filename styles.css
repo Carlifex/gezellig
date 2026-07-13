@@ -235,7 +235,9 @@ button{font-family:inherit}
 /* ---- v2: level bar ---- */
 .levelcard{display:flex;flex-direction:column;gap:10px}
 .levelrow{display:flex;align-items:center;gap:12px}
-.levelrow .lvicon{width:44px;height:44px;flex:0 0 44px;border-radius:12px;display:grid;place-items:center;
+.lvicon-img{width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.ms-medal-img{width:48px;height:48px;object-fit:contain;display:block;margin:0 auto}
+.levelrow .lvicon{width:44px;height:44px;flex:0 0 44px;border-radius:12px;display:grid;place-items:center;overflow:hidden;
   font-size:22px;background:var(--orange-soft)}
 .levelrow .lvtxt b{font-size:15px}
 .levelrow .lvtxt .nl{font-size:12.5px;color:var(--muted)}
