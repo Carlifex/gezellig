@@ -176,7 +176,7 @@ const lemIcon = (l) => ICON_IDS.has(l.id)
 // Profil-Embleme: Rang-Badges (illustrations/ranks/lvl-<N>.webp) und Meilenstein-
 // Medaillen (illustrations/medals/<id>.webp). Wird ein Level/eine ID hier
 // eingetragen, zeigt die App automatisch das Bild statt des Emoji-Fallbacks.
-const RANK_ART = new Set([]);   // z. B. 1,2,3 … sobald lvl-1.webp usw. existiert
+const RANK_ART = new Set([1,2,3,4,5,6,7,8,9,10]);   // illustrations/ranks/lvl-<N>.webp
 const MEDAL_ART = new Set([]);  // z. B. 'first_lesson' … sobald medals/first_lesson.webp existiert
 // Lernpfad-Abzeichen mit eigener Badge-Grafik (illustrations/badges/<track>.webp);
 // solange leer, zeigt die App das Kapitel-Cover als Fallback.
