@@ -77,14 +77,20 @@ strikt orientieren!)**, `welt-bibel.md` (Canon), `prompt-lab.md`, `szenen-rezept
 **Ich (Claude) erzeuge KEINE Pixel** — ich liefere fertige Prompts + je Szene EIN
 kombiniertes Referenz-Blatt (PIL-Montage).
 
-**Auslieferung (Nutzer-Wunsch, minimale Browserarbeit — IMMER so):**
-- **Referenz-Blätter:** temporär ins **öffentliche** Repo unter `_refs/<id>-<sha8>.jpg`
-  (unique Name → sauberer Browser-Download), direkter Link
-  `https://raw.githubusercontent.com/carlifex/gezellig/main/_refs/<name>`. **Löschen,
-  sobald eine brauchbare Grafik erstellt ist** (git rm; ggf. später History-Scrub der
-  `_refs/`, da temp-public sonst in der History bleibt).
-- **Prompts:** je Prompt als **eigener Code-Block** im Chat (Copy-Button) **und**
-  dauerhaft in der **privaten `welt-bibel.md`** (Abschnitt „Bild-Prompts", Code-Blöcke).
+**Auslieferung (Nutzer-Wunsch, minimale Browserarbeit — IMMER exakt so):**
+Pro Lieferung immer **beides** liefern: (1) das Referenzmaterial als **einen** Link,
+(2) die Prompts **einzeln inline**.
+- **Referenzmaterial (Referenz-Blatt):** temporär ins Repo unter `_refs/<id>-<sha8>.jpg`,
+  auf den **Arbeits-/Dev-Branch** committen und als **ein einziger one-click Raw-Link**
+  schicken (kein main-Push nötig — nur Referenzmaterial). Link-Form für Branch mit
+  Slash: `https://raw.githubusercontent.com/carlifex/gezellig/refs/heads/<branch>/_refs/<name>`.
+  **Löschen, sobald eine brauchbare Grafik erstellt ist** (git rm; ggf. später
+  History-Scrub der `_refs/`).
+- **Prompts:** **JEDER Prompt EINZELN inline im Chat als eigenes kopierbares Code-Element**
+  (ein Code-Block pro Prompt, mit Copy-Button). **NICHT** als Sammel-Datei/-Link und
+  **nicht** mehrere Prompts in einem Block. Optional zusätzlich dauerhaft in der privaten
+  `welt-bibel.md` (Abschnitt „Bild-Prompts").
+- **Nach jedem größeren Baustein** fragen, ob nach `main` gepusht/live geschaltet werden soll.
 
 **Ablage (App nutzt automatisch):** `illustrations/<lektions-id>.webp` (Cover
 `illustrations/cover-<track>.webp`), Querformat, WebP ~Q80, **< 200 KB**.
