@@ -178,6 +178,9 @@ const lemIcon = (l) => ICON_IDS.has(l.id)
 // eingetragen, zeigt die App automatisch das Bild statt des Emoji-Fallbacks.
 const RANK_ART = new Set([]);   // z. B. 1,2,3 … sobald lvl-1.webp usw. existiert
 const MEDAL_ART = new Set([]);  // z. B. 'first_lesson' … sobald medals/first_lesson.webp existiert
+// Lernpfad-Abzeichen mit eigener Badge-Grafik (illustrations/badges/<track>.webp);
+// solange leer, zeigt die App das Kapitel-Cover als Fallback.
+const BADGE_ART = new Set([]);  // z. B. 'verhaal' … sobald badges/verhaal.webp existiert
 const rankIcon = (L) => RANK_ART.has(L.level)
   ? `<img class="lvicon-img" src="illustrations/ranks/lvl-${L.level}.webp" alt="">`
   : L.icon;
@@ -424,9 +427,11 @@ function trackBadges() {
       const unlocked = done === ls.length, gold = mast === ls.length;
       const mark = gold ? '🏆' : unlocked ? '✅' : '';
       const txt = gold ? 'Alle gemeistert!' : unlocked ? 'Alle Kapitel geschafft' : `${done}/${ls.length} Kapitel`;
+      const hasBadge = BADGE_ART.has(t.key);
+      const src = hasBadge ? `illustrations/badges/${t.key}.webp` : esc(t.hero);
       return `<div class="ms ${unlocked ? '' : 'locked'}">
-        <div class="ms-cover">
-          <img src="${esc(t.hero)}" alt="" loading="lazy" onerror="this.closest('.ms-cover').classList.add('noimg')">
+        <div class="ms-cover ${hasBadge ? 'badge' : ''}">
+          <img src="${src}" alt="" loading="lazy" onerror="this.closest('.ms-cover').classList.add('noimg')">
           <span class="em">${t.icon}</span>${mark ? `<span class="ms-mark">${mark}</span>` : ''}
         </div>
         <b>${esc(t.label)}</b><span>${txt}</span></div>`;
