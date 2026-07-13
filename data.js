@@ -992,15 +992,20 @@ export const CHAT = CHAT_SCENARIOS[0];
 // ---------------------------------------------------------------------------
 //  PROGRESSION — Level (Story-Etappen), Meilensteine, XP-Werte, Tagesziele
 // ---------------------------------------------------------------------------
+// Rang-System „Inburgering" — vom Ankömmling zum Local (A1→C1). 10 Ränge; Kurve auf
+// den App-Umfang (89 Lektionen, 3063 Vokabeln, Reviews) skaliert. Icon = Emoji-Fallback,
+// bis illustrations/ranks/lvl-<N>.webp existiert (siehe RANK_ART in app.js).
 export const LEVELS = [
-  { level: 1, minXp: 0,    nl: 'Aankomst',          de: 'Ankunft',            icon: '📦' },
-  { level: 2, minXp: 80,   nl: 'Het nieuwe huis',   de: 'Das neue Zuhause',   icon: '🐈' },
-  { level: 3, minXp: 200,  nl: 'Op de fiets',       de: 'Auf dem Rad',        icon: '🚲' },
-  { level: 4, minXp: 380,  nl: 'In de studio',      de: 'Im Studio',          icon: '🎚️' },
-  { level: 5, minXp: 620,  nl: 'De scene',          de: 'Die Szene',          icon: '🎧' },
-  { level: 6, minXp: 920,  nl: 'Bijna klaar',       de: 'Fast fertig',        icon: '🎛️' },
-  { level: 7, minXp: 1300, nl: 'Achter de decks',   de: 'Hinter den Decks',   icon: '🔊' },
-  { level: 8, minXp: 1800, nl: 'Thuis in Utrecht',  de: 'Zuhause in Utrecht', icon: '🧡' },
+  { level: 1,  minXp: 0,     nl: 'Toerist',           de: 'Tourist',                icon: '🧳' },
+  { level: 2,  minXp: 200,   nl: 'Nieuwkomer',        de: 'Neuankömmling',          icon: '📦' },
+  { level: 3,  minXp: 500,   nl: 'Buurman',           de: 'Nachbar',                icon: '🔑' },
+  { level: 4,  minXp: 1000,  nl: 'Inburgeraar',       de: 'Einbürgerungs-Anwärter', icon: '🇳🇱' },
+  { level: 5,  minXp: 1700,  nl: 'Fietser',           de: 'Radler',                 icon: '🚲' },
+  { level: 6,  minXp: 2700,  nl: 'Local',             de: 'Einheimischer',          icon: '☕' },
+  { level: 7,  minXp: 4200,  nl: 'Bijna-Nederlander', de: 'Fast-Niederländer',      icon: '🌷' },
+  { level: 8,  minXp: 6300,  nl: 'Ingeburgerd',       de: 'Eingebürgert',           icon: '👑' },
+  { level: 9,  minXp: 9200,  nl: 'Kenner',            de: 'Kenner',                 icon: '🦉' },
+  { level: 10, minXp: 13000, nl: 'Meester',           de: 'Meister',                icon: '🦁' },
 ];
 
 // Meilenstein-Leiter, skaliert auf den aktuellen App-Umfang (Lektionen & Vokabelbank).
