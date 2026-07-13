@@ -328,7 +328,7 @@ function examCard(t, ls) {
   const icon = passed ? '🏅' : unlocked ? '📝' : '🔒';
   const vr = trackVocabReady(t.key);
   const sub = passed ? `Bestanden — Bestleistung ${ex.bestPct}%`
-    : unlocked ? '10 Fragen · ab 80 % richtig bestanden'
+    : unlocked ? 'Prüfung: ab 80 % richtig bestanden'
     : !lessonsAllDone(ls) ? `Erst alle ${ls.length} Lektionen abschließen`
     : `Vokabeln trainieren: ${vr.ready}/${vr.total} bereit (${vr.pct} %, ${EXAM_VOCAB_PCT} % nötig)`;
   const badge = passed ? '<span class="lst done">🏅</span>'
@@ -600,47 +600,73 @@ function openLesson(lessonId) {
 /* ---------- ABSCHLUSSPRÜFUNG (Kapitel-Ende, 80%-Schwelle) ---------- */
 // Baut die Prüfungsfragen: Mix aus Vokabel-Quiz (de→nl) und Grammatik-Checks
 // aus allen Lektionen des Kapitels.
-function buildExamQuestions(key, n = 10) {
+const TRACK_LVL = { verhaal: 0, personen: 1, mythen: 1, ade: 2, feest: 2, natuurkunde: 3 };
+// Prüfung: Umfang & Tipp-Anteil skalieren mit dem Niveau; Mix aus MC-Vokabeln,
+// getippten Vokabeln, Grammatik-Checks und (ab B1) ganzen Sätzen. Vokabeln dedupliziert.
+function buildExamQuestions(key) {
   const ls = trackLessons(key);
+  const lvl = TRACK_LVL[key] ?? 0;
   const seen = new Set(); const vocab = [];
   ls.forEach(l => (l.vocab || []).forEach(v => { if (v && !seen.has(v.id)) { seen.add(v.id); vocab.push(v); } }));
-  const gkeys = [...new Set(ls.map(l => l.grammar).filter(Boolean))];
   const gchecks = [];
-  gkeys.forEach(g => (GRAMMAR[g] && GRAMMAR[g].checks || []).forEach(c => gchecks.push(c)));
+  [...new Set(ls.map(l => l.grammar).filter(Boolean))].forEach(g =>
+    (GRAMMAR[g] && GRAMMAR[g].checks || []).forEach(c => gchecks.push(c)));
+  const sentences = [];
+  if (lvl >= 2) ls.forEach(l => (l.speak || []).forEach(s => { if (s && s.nl && s.de) sentences.push(s); }));
 
-  const nGram = Math.min(gchecks.length, Math.min(3, Math.max(0, n - 4)));
-  const nVocab = Math.min(vocab.length, n - nGram);
+  const total = Math.min(30, vocab.length + gchecks.length + sentences.length,
+    Math.max(14, Math.round(vocab.length * (0.3 + 0.08 * lvl))));
+  const typeFrac = [0.2, 0.35, 0.5, 0.65][lvl];
+  const nGram = Math.min(gchecks.length, Math.max(2, Math.round(total * 0.2)));
+  const nSent = lvl >= 2 ? Math.min(sentences.length, 1 + lvl) : 0;
+  const nVocab = Math.max(0, total - nGram - nSent);
+  const nType = Math.round(nVocab * typeFrac);
+
   const qs = [];
-  shuffle(vocab.slice()).slice(0, nVocab).forEach(v => {
-    const distr = shuffle(vocab.filter(x => x.id !== v.id)).slice(0, 3);
-    const opts = shuffle([v, ...distr]);
-    qs.push({ q: `Was heißt „${esc(v.de)}"?`, options: opts.map(o => esc(o.nl)), answer: opts.indexOf(v) });
+  shuffle(vocab.slice()).slice(0, nVocab).forEach((v, i) => {
+    if (i < nType) qs.push({ type: 'type', q: `Tippe auf Niederländisch: „${v.de}"`, answer: v.nl });
+    else { const opts = mcChoices(v, vocab); qs.push({ type: 'mc', q: `Was heißt „${v.de}"?`, options: opts.map(o => o.nl), answer: opts.indexOf(v) }); }
   });
-  shuffle(gchecks.slice()).slice(0, nGram).forEach(c =>
-    qs.push({ q: esc(c.q), options: c.options.map(esc), answer: c.answer }));
+  shuffle(gchecks.slice()).slice(0, nGram).forEach(c => qs.push({ type: 'mc', q: c.q, options: c.options.slice(), answer: c.answer }));
+  shuffle(sentences.slice()).slice(0, nSent).forEach(s => qs.push({ type: 'type', q: `Tippe auf Niederländisch: „${s.de}"`, answer: s.nl }));
   return shuffle(qs);
 }
 
 function examStep(question, num, total, score) {
   return { render(body, foot, done) {
-    body.innerHTML = `<div class="step-label">Prüfung · Frage ${num}/${total}</div>
-      <div class="step-title">${question.q}</div>
-      <div class="choices">${question.options.map((o, i) => `<button class="choice" data-i="${i}">${o}</button>`).join('')}</div>`;
-    let answered = false;
-    body.querySelectorAll('.choice').forEach(btn => btn.onclick = () => {
-      if (answered) return; answered = true;
-      const chosen = +btn.dataset.i;
-      const ok = chosen === question.answer;
-      if (ok) score.correct++;
-      recordAnswer(ok);
-      body.querySelectorAll('.choice').forEach((b2, i) => {
-        if (i === question.answer) b2.classList.add('correct');
-        else if (i === chosen) b2.classList.add('wrong');
+    const head = `<div class="step-label">Prüfung · Frage ${num}/${total}</div><div class="step-title">${esc(question.q)}</div>`;
+    if (question.type === 'type') {
+      body.innerHTML = `${head}<div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="auf Niederländisch…"></div><div id="fb" class="afb"></div>`;
+      const inp = body.querySelector('#ans'); inp.focus();
+      foot.innerHTML = `<button class="btn" id="chk">Prüfen</button>`;
+      const check = () => {
+        const r = gradeAnswer(inp.value, question.answer); inp.disabled = true;
+        if (r.ok) score.correct++;
+        recordAnswer(r.ok);
+        body.querySelector('#fb').innerHTML = `<div class="${r.ok ? 'ok' : 'bad'}">${r.ok ? (r.typo ? '✓ Fast — richtig: ' : '✓ Richtig! ') : '✗ '}<b>${esc(question.answer)}</b></div>`;
+        foot.innerHTML = `<button class="btn" id="n">${num === total ? 'Auswertung' : 'Weiter'}</button>`;
+        foot.querySelector('#n').onclick = done;
+      };
+      foot.querySelector('#chk').onclick = check;
+      inp.onkeydown = (e) => { if (e.key === 'Enter') check(); };
+    } else {
+      body.innerHTML = `${head}<div class="choices">${question.options.map((o, i) => `<button class="choice" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
+      let answered = false;
+      body.querySelectorAll('.choice').forEach(btn => btn.onclick = () => {
+        if (answered) return; answered = true;
+        const chosen = +btn.dataset.i;
+        const ok = chosen === question.answer;
+        if (ok) score.correct++;
+        recordAnswer(ok);
+        body.querySelectorAll('.choice').forEach((b2, i) => {
+          if (i === question.answer) b2.classList.add('correct');
+          else if (i === chosen) b2.classList.add('wrong');
+        });
+        foot.innerHTML = `<button class="btn" id="n">${num === total ? 'Auswertung' : 'Weiter'}</button>`;
+        foot.querySelector('#n').onclick = done;
       });
-      foot.innerHTML = `<button class="btn" id="n">${num === total ? 'Auswertung' : 'Weiter'}</button>`;
-      foot.querySelector('#n').onclick = done;
-    });
-    foot.innerHTML = '';
+      foot.innerHTML = '';
+    }
   }};
 }
 
@@ -656,7 +682,7 @@ function openExam(key) {
     toast(`Erst alle ${ls.length} Lektionen abschließen.`, '🔒');
     return;
   }
-  const questions = buildExamQuestions(key, 10);
+  const questions = buildExamQuestions(key);
   const total = questions.length;
   if (!total) { toast('Keine Fragen verfügbar.', '📝'); return; }
   const score = { correct: 0 };
