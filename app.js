@@ -23,6 +23,7 @@ applyTheme(state.settings.theme);
 const app = document.getElementById('app');
 const tabbar = document.getElementById('tabbar');
 let activeTab = 'today';
+let activeTrack = null; // null = Kapitelübersicht; sonst Schlüssel des offenen Kapitels
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 
@@ -43,9 +44,9 @@ function flushUnlocks() {
 /* ---------- tabs ---------- */
 tabbar.hidden = false;
 tabbar.querySelectorAll('button').forEach(b =>
-  b.addEventListener('click', () => { activeTab = b.dataset.tab; syncTabs(); render(); }));
+  b.addEventListener('click', () => go(b.dataset.tab)));
 function syncTabs() { tabbar.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.tab === activeTab)); }
-function go(tab) { activeTab = tab; syncTabs(); render(); }
+function go(tab, track) { activeTab = tab; if (tab === 'lessons') activeTrack = track ?? null; syncTabs(); render(); }
 function render() {
   ({ today: renderToday, lessons: renderLessons, vocab: renderVocab, profile: renderProfile }[activeTab] || renderToday)();
   window.scrollTo(0, 0);
@@ -156,26 +157,56 @@ function statusBadge(st) {
 }
 
 function lessonBtn(l, chip, n) {
-  const label = chip === 'KAPITEL' ? `KAPITEL ${l.order}` : `${chip} ${n}`;
+  const label = `LEKTION ${n}`;
   return `<button class="lesson" data-id="${l.id}">
     <span class="lem">${lemIcon(l)}</span>
     <span class="lmain"><span class="lchip">${label}</span><b>${esc(l.title)}</b><span>${esc(l.situation)}</span></span>
     ${statusBadge(lessonStatus(l.id))}</button>`;
 }
 
+// Übersichtskarte je Kapitel (Kapitel-Auswahl).
+function chapterCard(t) {
+  const ls = trackLessons(t.key);
+  const done = ls.filter(l => lessonStatus(l.id) !== 'neu').length;
+  const pct = ls.length ? Math.round(done / ls.length * 100) : 0;
+  const ex = examState(t.key);
+  const badge = ex && ex.passed ? '🏅' : (ls.length && done === ls.length ? '✅' : '');
+  const img = t.hero ? `<img src="${esc(t.hero)}" alt="" loading="lazy" onerror="this.remove()"/>` : '';
+  return `<button class="chapcard" data-track="${t.key}">
+    <span class="chapcard-img">${img}<span class="chapcard-ph">${t.icon}</span></span>
+    <span class="chapcard-body">
+      <span class="lchip">${esc(t.level)} · KAPITEL</span>
+      <b>${esc(t.label)}</b>
+      <span class="chapcard-sub">${esc(t.sub)}</span>
+      <span class="tprog"><span class="tprog-bar"><i style="width:${pct}%"></i></span><span>${done}/${ls.length} ${badge}</span></span>
+    </span></button>`;
+}
+
 function renderLessons() {
-  const sections = TRACKS.map(t => {
-    const ls = trackLessons(t.key);
-    if (!ls.length) return '';
-    const done = ls.filter(l => lessonStatus(l.id) !== 'neu').length;
-    const pct = Math.round(done / ls.length * 100);
-    return `<div class="section-title" id="track-${t.key}">${esc(t.label)}</div>
-      <div class="section-sub">${esc(t.sub)}</div>
-      <div class="tprog"><div class="tprog-bar"><i style="width:${pct}%"></i></div><span>${done}/${ls.length}</span></div>
-      <div class="lgrid">${ls.map((l, i) => lessonBtn(l, t.chip, i + 1)).join('')}</div>
-      ${examCard(t, ls)}`;
-  }).join('');
-  app.innerHTML = `<div class="stack">${sections}</div>`;
+  const t = TRACKS.find(x => x.key === activeTrack);
+  // Ohne gewähltes Kapitel: Kapitelübersicht.
+  if (!t) {
+    app.innerHTML = `<div class="stack">
+      <div class="section-title">Kapitel</div>
+      <div class="section-sub">Wähle ein Kapitel — dann siehst du nur dessen Lektionen.</div>
+      <div class="chapgrid">${TRACKS.filter(x => trackLessons(x.key).length).map(chapterCard).join('')}</div>
+    </div>`;
+    app.querySelectorAll('.chapcard').forEach(b => b.onclick = () => openTrack(b.dataset.track));
+    return;
+  }
+  // Ein Kapitel gewählt: NUR dessen Lektionen.
+  const ls = trackLessons(t.key);
+  const done = ls.filter(l => lessonStatus(l.id) !== 'neu').length;
+  const pct = ls.length ? Math.round(done / ls.length * 100) : 0;
+  app.innerHTML = `<div class="stack">
+    <button class="btn ghost backbtn" id="back">← Alle Kapitel</button>
+    <div class="section-title" id="track-${t.key}">${esc(t.label)}</div>
+    <div class="section-sub">${esc(t.sub)}</div>
+    <div class="tprog"><div class="tprog-bar"><i style="width:${pct}%"></i></div><span>${done}/${ls.length}</span></div>
+    <div class="lgrid">${ls.map((l, i) => lessonBtn(l, t.chip, i + 1)).join('')}</div>
+    ${examCard(t, ls)}
+  </div>`;
+  app.querySelector('#back').onclick = () => go('lessons');
   app.querySelectorAll('.lesson').forEach(b => b.onclick = () => openLesson(b.dataset.id));
   app.querySelectorAll('.examcard').forEach(b => b.onclick = () => openExam(b.dataset.exam));
 }
@@ -218,13 +249,10 @@ function heroSlide(t) {
     </div></button>`;
 }
 
-// Zu einem Track springen (Lektionen-Tab, zur Sektion scrollen).
+// Ein Kapitel öffnen: Lektionen-Tab, nur dessen Lektionen zeigen.
 function openTrack(key) {
-  go('lessons');
-  requestAnimationFrame(() => {
-    const el = document.getElementById('track-' + key);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
+  go('lessons', key);
+  app.scrollTo ? app.scrollTo(0, 0) : window.scrollTo(0, 0);
 }
 
 /* ============================ WÖRTER ============================ */
@@ -522,15 +550,31 @@ function sceneImg(l, slot) {
   return src ? `<img class="story-illus" src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()"/>` : '';
 }
 
+// „Das lernst du"-Vorschau: Grammatik-Fokus + neue Vokabeln (dynamisch aus der Lektion).
+function learnPreview(l) {
+  const g = GRAMMAR[l.grammar];
+  const vocab = l.vocab || [];
+  const list = vocab.map(v => `<li><b>${esc(v.nl)}</b> — ${esc(v.de)}</li>`).join('');
+  if (!g && !vocab.length) return '';
+  return `<div class="learncard">
+    <div class="learncard-h">Das lernst du in dieser Lektion</div>
+    ${g ? `<p class="learncard-row">🧩 Grammatik-Fokus: <b>${esc(g.title)}</b></p>` : ''}
+    ${vocab.length ? `<p class="learncard-row">🗣️ Neue Vokabeln: <b>${vocab.length}</b></p><ul class="learncard-vocab">${list}</ul>` : ''}
+  </div>`;
+}
+
 function stepStory(l) {
+  const ls = trackLessons(l.track || 'verhaal');
+  const n = ls.findIndex(x => x.id === l.id) + 1;
   return { render(body, foot, done) {
     // Panel 1: Establishing-Illustration über der Text-Karte; ohne Bild Emoji-Fallback.
     const illus = sceneImg(l, 'story');
     const iconInCard = illus ? '' : `<div class="storyicon">${l.icon}</div>`;
-    body.innerHTML = `<div class="step-label">Kapitel ${l.order}</div>
+    body.innerHTML = `<div class="step-label">Lektion ${n || l.order}</div>
       <div class="step-title">${esc(l.title)}</div>
       ${illus}
-      <div class="storycard">${iconInCard}<p>${l.story}</p></div>`;
+      <div class="storycard">${iconInCard}<p>${l.story}</p></div>
+      ${learnPreview(l)}`;
     foot.innerHTML = `<button class="btn" id="n">Los geht’s</button>`;
     foot.querySelector('#n').onclick = done;
   }};
