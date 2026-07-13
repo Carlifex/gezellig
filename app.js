@@ -30,16 +30,22 @@ const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&a
 
 /* ---------- toast / unlock notifications ---------- */
 let toastEl = null, toastTimer = null;
-function toast(msg, icon) {
+function toast(msg, icon, iconHtml) {
   if (!toastEl) { toastEl = document.createElement('div'); toastEl.id = 'toast'; document.body.appendChild(toastEl); }
-  toastEl.innerHTML = (icon ? `<span style="font-size:18px">${icon}</span>` : '') + `<span>${esc(msg)}</span>`;
+  const iconPart = icon ? (iconHtml ? `<span class="ticon">${icon}</span>` : `<span style="font-size:18px">${icon}</span>`) : '';
+  toastEl.innerHTML = iconPart + `<span>${esc(msg)}</span>`;
   toastEl.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
 }
 function flushUnlocks() {
   const u = takeUnlocks();
-  u.forEach((m, i) => setTimeout(() => toast(`Meilenstein: ${m.title}`, m.icon), 400 + i * 2800));
+  u.forEach((m, i) => setTimeout(() => {
+    const icon = MEDAL_ART.has(m.id)
+      ? `<img src="illustrations/medals/${m.id}.webp" alt="" style="width:34px;height:34px;object-fit:contain;vertical-align:middle">`
+      : (m.icon || '🏅');
+    toast(`Meilenstein: ${m.title}`, icon, MEDAL_ART.has(m.id));
+  }, 400 + i * 2800));
 }
 
 /* ---------- tabs ---------- */
@@ -196,12 +202,19 @@ function statusBadge(st) {
   return `<span class="lst neu">neu</span>`;
 }
 
+// Sequenziell freischalten: eine Lektion ist offen, wenn die vorige abgeschlossen ist.
+function lessonUnlocked(l) {
+  const ls = trackLessons(l.track || 'verhaal');
+  const i = ls.findIndex(x => x.id === l.id);
+  return i <= 0 || lessonStatus(ls[i - 1].id) !== 'neu';
+}
 function lessonBtn(l, chip, n) {
   const label = `LEKTION ${n}`;
-  return `<button class="lesson" data-id="${l.id}">
-    <span class="lem">${lemIcon(l)}</span>
-    <span class="lmain"><span class="lchip">${label}</span><b>${esc(l.title)}</b><span>${esc(l.situation)}</span></span>
-    ${statusBadge(lessonStatus(l.id))}</button>`;
+  const locked = !lessonUnlocked(l);
+  return `<button class="lesson ${locked ? 'locked' : ''}" data-id="${l.id}">
+    <span class="lem">${locked ? '🔒' : lemIcon(l)}</span>
+    <span class="lmain"><span class="lchip">${label}</span><b>${esc(l.title)}</b><span>${locked ? 'Erst die vorige Lektion abschließen' : esc(l.situation)}</span></span>
+    ${locked ? '<span class="lst lock">🔒</span>' : statusBadge(lessonStatus(l.id))}</button>`;
 }
 
 // Übersichtskarte je Kapitel: volles Artwork (wie Startseite) + auf-/zuklappbarer Text.
@@ -388,7 +401,7 @@ function renderVocab() {
       <button class="btn" id="practice">💪 Üben${due || newAvail ? ` · ${due} + ${Math.min(newAvail, dailyNewLimit())} neu` : ''}</button>
       ${due || weak ? `<div class="ph-sub">
         ${due ? `<button class="btn ghost" id="review">🔁 Nur wiederholen</button>` : ''}
-        ${weak ? `<button class="btn ghost" id="weak">🎯 Schwachstellen</button>` : ''}
+        ${weak ? `<button class="btn ghost" id="weak">🎯 Wiederholung (Schwachstellen)</button>` : ''}
       </div>` : ''}
     </div>
 
@@ -438,7 +451,7 @@ function statsCard() {
       <div class="sg"><b>${s.due}</b><span>Jetzt fällig</span></div>
       <div class="sg"><b>${s.accuracy == null ? '—' : s.accuracy + '%'}</b><span>Trefferquote</span></div>
       <div class="sg"><b>${s.reviews}</b><span>Wiederholungen</span></div>
-      <div class="sg"><b>${s.lessonsMastered}/${LESSONS.length}</b><span>Lektionen gemeistert</span></div>
+      <div class="sg"><b>${s.lessonsDone}/${LESSONS.length}</b><span>Lektionen gemacht</span></div>
     </div>`;
 }
 
@@ -449,14 +462,13 @@ function trackBadges() {
       const done = ls.filter(l => lessonStatus(l.id) !== 'neu').length;
       const mast = ls.filter(l => lessonStatus(l.id) === 'gemeistert').length;
       const unlocked = done === ls.length, gold = mast === ls.length;
-      const mark = gold ? '🏆' : unlocked ? '✅' : '';
-      const txt = gold ? 'Alle gemeistert!' : unlocked ? 'Alle Kapitel geschafft' : `${done}/${ls.length} Kapitel`;
+      const txt = gold ? 'Alle gemeistert!' : unlocked ? 'Kapitel geschafft' : `${done}/${ls.length} Lektionen`;
       const hasBadge = BADGE_ART.has(t.key);
       const src = hasBadge ? `illustrations/badges/${t.key}.webp` : esc(t.hero);
       return `<div class="ms ${unlocked ? '' : 'locked'}">
         <div class="ms-cover ${hasBadge ? 'badge' : ''}">
           <img src="${src}" alt="" loading="lazy" onerror="this.closest('.ms-cover').classList.add('noimg')">
-          <span class="em">${t.icon}</span>${mark ? `<span class="ms-mark">${mark}</span>` : ''}
+          <span class="em">${t.icon}</span>
         </div>
         <b>${esc(t.label)}</b><span>${txt}</span></div>`;
     }).join('')}</div>`;
@@ -466,8 +478,8 @@ function renderProfile() {
   const L = levelInfo();
   const s = stats();
   app.innerHTML = `
-    <div class="section-title">Profil</div>
-    <div class="section-sub">Dein Fortschritt & Einstellungen</div>
+    <div class="section-title">Mijn reis</div>
+    <div class="section-sub">Deine Reise, Abzeichen & Einstellungen</div>
 
     <div class="card levelcard">
       <div class="levelrow"><div class="lvicon">${rankIcon(L)}</div>
@@ -550,6 +562,7 @@ function finishScreen(fe, emoji, title, sub, returnTab) {
 /* ---------- LEKTION (erst blocken) ---------- */
 function openLesson(lessonId) {
   const l = LESSONS.find(x => x.id === lessonId);
+  if (!lessonUnlocked(l)) { toast('Erst die vorherige Lektion abschließen.', '🔒'); return; }
   const steps = [];
   if (l.story) steps.push(stepStory(l));
   steps.push(stepGrammar(l.grammar, 'Grammatik'), stepIntro(l.vocab), stepDialogue(l), stepGrammarCheck(l.grammar));
@@ -558,12 +571,18 @@ function openLesson(lessonId) {
   openFlow(steps, (fe) => {
     const res = completeLesson(lessonId);
     flushUnlocks();
+    const key = l.track || 'verhaal';
+    const tls = trackLessons(key);
+    const next = tls[tls.findIndex(x => x.id === lessonId) + 1];
     fe.innerHTML = `<div class="flow-body"><div class="done">
       <div class="big">🎉</div><h2>Lektion geschafft!</h2>
-      <p class="muted">${res && res.first ? `+${20 + (res.newWords || 0)} XP · ${res.newWords} neue Wörter im Training` : 'Wiederholt — gut gemacht!'}</p>
+      <p class="muted">${res && res.first ? `+${20 + (res.newWords || 0)} XP · ${res.newWords} Wörter im Training` : 'Wiederholt — gut gemacht!'}</p>
       <p class="muted">🔥 Streak: ${state.streak} · Level-XP: ${state.xp}</p>
-      <button class="btn" id="fin" style="max-width:240px;margin-top:10px">Zurück</button></div></div>`;
-    fe.querySelector('#fin').onclick = () => { go('today'); closeFlow(); };
+      ${next ? `<button class="btn" id="next" style="max-width:280px;margin-top:12px">Weiter → nächste Lektion</button>` : `<button class="btn" id="exam" style="max-width:280px;margin-top:12px">Zur Abschlussprüfung</button>`}
+      <button class="btn ghost" id="fin" style="max-width:280px;margin-top:8px">Zurück zum Kapitel</button></div></div>`;
+    const nb = fe.querySelector('#next'); if (nb) nb.onclick = () => { closeFlow(); openLesson(next.id); };
+    const eb = fe.querySelector('#exam'); if (eb) eb.onclick = () => { closeFlow(); go('lessons', key); setTimeout(() => openExam(key), 60); };
+    fe.querySelector('#fin').onclick = () => { closeFlow(); go('lessons', key); };
   });
 }
 
@@ -619,7 +638,11 @@ function openExam(key) {
   const ls = trackLessons(key);
   if (!examUnlocked(key)) {
     const vr = trackVocabReady(key);
-    toast(lessonsAllDone(ls) ? `Erst Vokabeln trainieren (${vr.pct} %/${EXAM_VOCAB_PCT} %).` : `Erst alle ${ls.length} Lektionen abschließen.`, '🔒');
+    if (lessonsAllDone(ls)) {                    // Lektionen durch → gesperrte Prüfung startet das nötige Training
+      toast(`Noch ${Math.max(1, EXAM_VOCAB_PCT - vr.pct)} % — trainier die Vokabeln!`, '🔁');
+      return openPractice();
+    }
+    toast(`Erst alle ${ls.length} Lektionen abschließen.`, '🔒');
     return;
   }
   const questions = buildExamQuestions(key, 10);
@@ -636,8 +659,11 @@ function openExam(key) {
 
 function examResult(fe, track, res, correct, total) {
   const pass = res.pass;
+  const bigArt = pass && BADGE_ART.has(track.key)
+    ? `<img src="illustrations/badges/${track.key}.webp" alt="" style="width:140px;height:140px;object-fit:contain;filter:drop-shadow(0 8px 22px rgba(0,0,0,.45))">`
+    : `<div class="big">${pass ? '🏅' : '📚'}</div>`;
   fe.innerHTML = `<div class="flow-body"><div class="done">
-    <div class="big">${pass ? '🏅' : '📚'}</div>
+    ${bigArt}
     <h2>${pass ? 'Prüfung bestanden!' : 'Noch nicht bestanden'}</h2>
     <p class="muted"><b style="color:${pass ? 'var(--good)' : 'var(--orange-ink)'}">${res.pct}%</b> · ${correct}/${total} richtig${pass ? '' : ' · mindestens 80% nötig'}</p>
     <p class="muted">${pass
@@ -740,8 +766,14 @@ function fmtByCard(card) {
   if (S < 8) return 'cued';
   return 'prod';
 }
+// Distraktoren mit gleicher Oberflächenform wählen (Frage→Frage, ähnliche Länge,
+// Artikel) — damit man nicht durch Ausschluss rät.
 function mcChoices(v, pool, n = 3) {
-  const others = shuffle(pool.filter(x => x.id !== v.id && x.nl !== v.nl)).slice(0, n);
+  const shape = (s) => { s = String(s).trim(); return { q: /\?$/.test(s), words: s.split(/\s+/).length, art: /^(de|het|een)\s/i.test(s) }; };
+  const sv = shape(v.nl);
+  const score = (x) => { const sx = shape(x.nl); return (sx.q === sv.q ? 5 : 0) + (Math.abs(sx.words - sv.words) <= 1 ? 2 : 0) + (sx.art === sv.art ? 1 : 0); };
+  const others = shuffle(pool.filter(x => x.id !== v.id && x.nl !== v.nl))
+    .sort((a, b) => score(b) - score(a)).slice(0, n);
   return shuffle([v, ...others]);
 }
 
