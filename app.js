@@ -1675,57 +1675,80 @@ function stepIntro(vocab) {
   const pool = vocab.slice();
   return { render(body, foot, done) {
     const queue = vocab.filter(v => !cardOf(v.id).reps);
-    let i = 0, phase = 0, mcOk = true;
-    const draw = () => {
-      if (i >= queue.length) return done();
-      const v = queue[i];
-      const head = `<div class="step-label">Neues Wort · ${i + 1}/${queue.length}</div>`;
-      if (phase === 0) {
-        const cx = ccApply(v.ex, v.exDe, [v]);
-        body.innerHTML = `${head}<div class="step-title">Neu: „${esc(v.nl)}"</div>
-          <div class="flash"><div class="word">${esc(v.nl)}</div><div class="trans">${esc(v.de)}</div>
-            <div class="ex">${cx.nl} — ${cx.de}</div>
-            ${v.note ? `<div class="ex" style="color:var(--orange-ink)">💡 ${esc(v.note)}</div>` : ''}</div>`;
-        speak(v.nl);
-        foot.innerHTML = `<button class="btn ghost" id="say">🔊 Hören</button><button class="btn" id="n">Verstanden</button>`;
-        foot.querySelector('#say').onclick = () => speak(v.nl);
-        foot.querySelector('#n').onclick = () => { phase = 1; draw(); };
-      } else if (phase === 1) {
-        const opts = mcChoices(v, pool.length >= 4 ? pool : ALL_VOCAB);
-        body.innerHTML = `${head}<div class="step-title">Was heißt „${esc(v.de)}"?</div>
-          <div class="choices">${opts.map(o => `<button class="choice" data-id="${o.id}">${esc(o.nl)}</button>`).join('')}</div>`;
-        let answered = false;
-        body.querySelectorAll('.choice').forEach(btn => btn.onclick = () => {
-          if (answered) return; answered = true;
-          mcOk = btn.dataset.id === v.id;
-          body.querySelectorAll('.choice').forEach(b2 => {
-            if (b2.dataset.id === v.id) b2.classList.add('correct');
-            else if (b2 === btn) b2.classList.add('wrong');
-          });
-          if (mcOk) speak(v.nl);
-          foot.innerHTML = `<button class="btn" id="n">Weiter</button>`;
-          foot.querySelector('#n').onclick = () => { phase = 2; draw(); };
-        });
-        foot.innerHTML = '';
-      } else {
-        const hint = stripArt(normalize(v.nl))[0] || '';
-        body.innerHTML = `${head}<div class="step-title">Tippe auf Niederländisch: „${esc(v.de)}"</div>
-          <div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="beginnt mit „${esc(hint)}…"></div>
-          <div id="fb" class="afb"></div>`;
-        const inp = body.querySelector('#ans'); inp.focus();
-        foot.innerHTML = `<button class="btn" id="chk">Prüfen</button>`;
-        const check = () => {
-          const r = gradeAnswer(inp.value, v.nl); inp.disabled = true;
-          body.querySelector('#fb').innerHTML = `<div class="${r.ok ? 'ok' : 'bad'}">${r.ok ? (r.typo ? '✓ Fast! ' : '✓ Richtig! ') : '✗ '}<b>${esc(v.nl)}</b></div><div class="ex">${esc(v.ex)}</div>`;
-          speak(v.nl);
-          introWord(v.id, (mcOk && r.ok && !r.typo) ? 'good' : 'hard'); flushUnlocks();
-          foot.innerHTML = `<button class="btn" id="n">${i === queue.length - 1 ? 'Fertig' : 'Nächstes Wort'}</button>`;
-          foot.querySelector('#n').onclick = () => { i++; phase = 0; mcOk = true; draw(); };
-        };
-        foot.querySelector('#chk').onclick = check;
-        inp.onkeydown = (e) => { if (e.key === 'Enter') check(); };
-      }
+    if (!queue.length) return done();
+    const supported = ttsSupported();
+    const total = queue.length;
+    const encode = queue.slice();                 // Kennenlernen: ein Flash je Wort
+    const retrieve = shuffle(queue.slice());       // Abruf: interleaved über den ganzen Satz
+    // Abruf-Formate wechseln sich ab: Wiedererkennen (hin/zurück), Hören, freier Abruf.
+    const FMT = supported ? ['mc', 'audio', 'type', 'mcRev', 'listenType'] : ['mc', 'type', 'mcRev', 'type', 'mc'];
+    let stage = 'encode', i = 0;
+
+    const grade = (v, ok, typo) => { recordAnswer(ok); introWord(v.id, (ok && !typo) ? 'good' : 'hard'); flushUnlocks(); };
+    const nextBtn = (fn) => { foot.innerHTML = `<button class="btn" id="n">${i === total - 1 ? 'Fertig' : 'Weiter'}</button>`; foot.querySelector('#n').onclick = fn; };
+    const advance = () => { i++; if (i >= retrieve.length) return done(); draw(); };
+    const audioBtn = () => `<div style="text-align:center;margin:4px 0 12px"><button class="iconbtn" id="rep" style="width:60px;height:60px;font-size:26px">🔊</button></div>`;
+
+    // ---- Kennenlernen ----
+    const drawEncode = (v) => {
+      const cx = ccApply(v.ex, v.exDe, [v]);
+      body.innerHTML = `<div class="step-label">Neues Wort · ${i + 1}/${total}</div>
+        <div class="step-title">Neu: „${esc(v.nl)}"</div>
+        <div class="flash"><div class="word">${esc(v.nl)}</div><div class="trans">${esc(v.de)}</div>
+          <div class="ex">${cx.nl} — ${cx.de}</div>
+          ${v.note ? `<div class="ex" style="color:var(--orange-ink)">💡 ${esc(v.note)}</div>` : ''}</div>`;
+      speak(v.nl);
+      foot.innerHTML = `<button class="btn ghost" id="say">🔊 Hören</button><button class="btn" id="n">Verstanden</button>`;
+      foot.querySelector('#say').onclick = () => speak(v.nl);
+      foot.querySelector('#n').onclick = () => { i++; if (i >= encode.length) { stage = 'retrieve'; i = 0; } draw(); };
     };
+
+    // ---- Abruf (Format wechselt) ----
+    const optionStep = (v, prompt, keyField, doSpeak) => {
+      const opts = mcChoices(v, pool.length >= 4 ? pool : ALL_VOCAB);
+      body.innerHTML = `<div class="step-label">Abruf · ${i + 1}/${total}</div>
+        <div class="step-title">${prompt}</div>${doSpeak ? audioBtn() : ''}
+        <div class="choices">${opts.map(o => `<button class="choice" data-id="${o.id}">${esc(o[keyField])}</button>`).join('')}</div>`;
+      if (doSpeak) { speak(v.nl); const rp = body.querySelector('#rep'); if (rp) rp.onclick = () => speak(v.nl); }
+      let answered = false;
+      body.querySelectorAll('.choice').forEach(btn => btn.onclick = () => {
+        if (answered) return; answered = true;
+        const ok = btn.dataset.id === v.id;
+        body.querySelectorAll('.choice').forEach(b2 => { if (b2.dataset.id === v.id) b2.classList.add('correct'); else if (b2 === btn) b2.classList.add('wrong'); });
+        if (ok) speak(v.nl);
+        grade(v, ok, false);
+        nextBtn(advance);
+      });
+      foot.innerHTML = '';
+    };
+    const inputStep = (v, prompt, doSpeak) => {
+      const hint = stripArt(normalize(v.nl))[0] || '';
+      body.innerHTML = `<div class="step-label">Abruf · ${i + 1}/${total}</div>
+        <div class="step-title">${prompt}</div>${doSpeak ? audioBtn() : ''}
+        <div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${doSpeak ? 'auf Niederländisch…' : 'beginnt mit „' + esc(hint) + '…“'}"></div>
+        <div id="fb" class="afb"></div>`;
+      if (doSpeak) { speak(v.nl); const rp = body.querySelector('#rep'); if (rp) rp.onclick = () => speak(v.nl); }
+      const inp = body.querySelector('#ans'); inp.focus();
+      foot.innerHTML = `<button class="btn" id="chk">Prüfen</button>`;
+      const check = () => {
+        const r = gradeAnswer(inp.value, v.nl); inp.disabled = true;
+        body.querySelector('#fb').innerHTML = `<div class="${r.ok ? 'ok' : 'bad'}">${r.ok ? (r.typo ? '✓ Fast! ' : '✓ Richtig! ') : '✗ '}<b>${esc(v.nl)}</b></div><div class="ex">${esc(v.de)}</div>`;
+        speak(v.nl);
+        grade(v, r.ok, r.typo);
+        nextBtn(advance);
+      };
+      foot.querySelector('#chk').onclick = check;
+      inp.onkeydown = (e) => { if (e.key === 'Enter') check(); };
+    };
+    const drawRetrieve = (v, fmt) => {
+      if (fmt === 'mcRev') optionStep(v, `Was bedeutet „${esc(v.nl)}"?`, 'de', false);
+      else if (fmt === 'audio') optionStep(v, `Welches Wort hörst du?`, 'nl', true);
+      else if (fmt === 'listenType') inputStep(v, `Hör zu und tippe, was du hörst:`, true);
+      else if (fmt === 'type') inputStep(v, `Tippe auf Niederländisch: „${esc(v.de)}"`, false);
+      else optionStep(v, `Was heißt „${esc(v.de)}"?`, 'nl', false);
+    };
+
+    const draw = () => stage === 'encode' ? drawEncode(encode[i]) : drawRetrieve(retrieve[i], FMT[i % FMT.length]);
     draw();
   }};
 }
