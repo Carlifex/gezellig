@@ -343,9 +343,11 @@ button{font-family:inherit}
 .ms.locked{opacity:.5;filter:grayscale(.75)}
 .ms.locked .em{filter:grayscale(1)}
 /* Lernpfad-Abzeichen: echtes Kapitel-Cover als Thumbnail (Fallback: Emoji) */
-.ms-cover{position:relative;width:100%;aspect-ratio:16/10;border-radius:9px;overflow:hidden;
+.ms-cover{position:relative;width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;
   background:var(--bg-2);display:grid;place-items:center}
 .ms-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.ms-cover.badge{background:none;border-radius:0;overflow:visible}
+.ms-cover.badge img{object-fit:contain}
 .ms-cover .em{position:absolute;font-size:26px;line-height:1}
 .ms-cover:not(.noimg) .em{display:none}
 .ms-cover .ms-mark{position:absolute;right:5px;bottom:4px;font-size:16px;line-height:1;
