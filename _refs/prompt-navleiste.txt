@@ -1,0 +1,17 @@
+ICON-LEISTE UNTEN — EIN RASTER-PROMPT (4 Tab-Icons)
+Referenz-Blatt: navbar-referenz-a97c65e8.jpg
+Ausgabe: EIN Querformat-Bild, 4 Icons in EINER Reihe, TRANSPARENTER Hintergrund
+→ wird in 4 Icons geschnitten. Wichtig: müssen auf HELL und DUNKEL funktionieren.
+============================================================================
+
+Erzeuge EIN einziges Bild im Querformat (Seitenverhältnis 16:9) mit 4 App-Icons in EINER Reihe (4 Spalten × 1 Reihe), gleich groß, gleichmäßige Abstände, jedes exakt mittig in seiner Zelle. HINTERGRUND KOMPLETT TRANSPARENT (freigestellt, PNG mit Alpha) — kein Rahmen, keine Grundfläche, keine Kacheln.
+
+Stil: flache, moderne, minimalistische App-/Tab-Icons — bold und stark vereinfacht, klare kräftige Silhouette, gut lesbar bei ~24 px. Jedes Icon als kompaktes Glyph mit einem sanften Farbverlauf in seiner Akzentfarbe und einem dezenten weichen Glow. KEINE feinen Details, KEINE Szene, KEIN Fotorealismus, KEIN 3D, KEIN Text. Wichtig: die Icons müssen sowohl auf HELLEM als auch auf DUNKLEM Hintergrund gut sichtbar sein — daher kräftige Mitteltöne der Palette (Cyan/Magenta/Türkis/Orange), KEIN reines Weiß und KEIN reines Schwarz als Hauptfarbe.
+
+Reihenfolge links→rechts:
+(1) START: ein einfaches Haus (Zuhause) — Akzent Cyan.
+(2) KAPITEL: ein aufgeschlagenes Buch — Akzent Magenta.
+(3) WÖRTER: zwei leicht überlappende Karteikarten (Vokabelkarten) — Akzent Türkis.
+(4) PROFIL: eine schlichte Person/Avatar-Silhouette (Kopf + Schultern) — Akzent warmes Orange.
+
+Alle 4 im EXAKT gleichen Stil, gleicher Strichstärke/Formsprache und gleicher Größe, damit sie als Set wirken. Vermeiden: Fotorealismus, 3D-/Kino-Poster-Look, Teal-und-Orange-Grading, Lens-Flare, Comic-Lineart, unruhiger/gefüllter Hintergrund, unterschiedliche Stile je Icon.

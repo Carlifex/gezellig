@@ -1,0 +1,16 @@
+MEILENSTEIN-MEDAILLEN — EIN RASTER-PROMPT (16 Stück, 4×4)
+Referenz-Blatt: meilensteine-referenz-e828ce17.jpg
+Ausgabe: EIN quadratisches Bild, 4×4-Raster → wird in 16 Medaillen geschnitten.
+============================================================================
+
+Erzeuge EIN einziges quadratisches Bild (1:1) mit einem sauberen Raster aus 4 Spalten × 4 Reihen = 16 gleich großen quadratischen Feldern: gleichmäßige Zellengröße, mittige runde Medaillons, gleichmäßige Abstände, alles auf EINEM einheitlichen, tiefdunklen marineblauen Hintergrund (#0a0b14).
+
+In jedem Feld ein rundes Medaillon-Abzeichen im Stil der angehängten Referenz (Rang-/Lernpfad-Icons): malerisches Anime-Artbook mit sichtbaren weichen Pinselstrukturen und großen, vereinfachten Farbflächen. KEIN Cel-Shading, KEIN Fotorealismus, KEIN 3D-Render. Jedes Medaillon mit schmalem, sanft leuchtendem Rahmen in seiner Akzentfarbe und dünner dunkler Innenkante. Alle 16 im EXAKT gleichen Stil, gleicher Größe und gleichem Rahmenprinzip, je ein einzelnes Symbol-Objekt (keine Szene).
+
+Reihenfolge links→rechts, oben→unten:
+Reihe 1: (1) akademischer Doktorhut mit Quaste — Cyan. (2) ein aufgeschlagenes Buch — Cyan. (3) ein ordentlicher Stapel aus drei Büchern — Violett. (4) eine geschwenkte Zielflagge mit Schachbrettmuster — warmes Orange.
+Reihe 2: (5) ein junger Keimling mit zwei Blättchen aus dunkler Erde — Neon-Grün. (6) ein einzelnes geschlossenes Buch, aufrecht — Grün-Türkis. (7) ein dicker gebundener Wälzer mit Buchrücken — Cyan-Blau. (8) ein stilisiertes Gehirn — Magenta.
+Reihe 3: (9) eine einzelne klare Sprechblase — Magenta. (10) ein sprechender Kopf im Profil mit stilisierten Schallwellen aus dem Mund — Violett. (11) drei funkelnde Sterne/Sparkles — Cyan. (12) ein facettierter Edelstein/Diamant mit klaren Glanzkanten — kühles Cyan-Weiß.
+Reihe 4: (13) eine einzelne kleine Flamme — warmes Orange. (14) eine größere, kräftigere Flamme mit doppelter Zunge — warmes Orange. (15) ein klassischer Siegerpokal mit zwei Henkeln — Orange-Gold. (16) eine fünfzackige Krone mit kleinen Edelsteinen — Gold.
+
+Palette: Cyan, Türkis, Magenta, Violett, warmes Orange, Neon-Grün; kühle Schatten, leuchtende Lichter, Rimlight, weiches Bloom. KEIN lesbarer Text, keine Buchstaben, keine Zahlen, kein Logo. Vermeiden: Fotorealismus, glänzender 3D-/Kino-Poster-Look, Teal-und-Orange-Grading, Lens-Flare, Comic-Lineart, Cel-Shading, ungleichmäßiges Raster.
