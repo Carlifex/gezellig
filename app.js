@@ -80,13 +80,7 @@ function renderToday() {
 
   app.innerHTML = `
     <div class="stack">
-      <div class="herocar" id="herocar">${heroTracks.map(heroSlide).join('')}</div>
-      <div class="cardots" id="cardots">${heroTracks.map((_, i) => `<button class="dot ${i === curIdx ? 'on' : ''}" data-i="${i}" aria-label="Cover ${i + 1}"></button>`).join('')}</div>
-
-      <button class="btn learn-cta" id="learn"><span class="learn-ic">${nextLesson ? lemIcon(nextLesson) : '📚'}</span><span>${learnLabel}</span></button>
-      ${due ? `<button class="btn secondary" id="review">🔁 ${due} Wörter wiederholen</button>` : ''}
-
-      <div class="card levelcard">
+      <div class="card levelcard compact">
         <div class="levelrow">
           <div class="lvicon">${rankIcon(L)}</div>
           <div class="lvtxt"><b>Level ${L.level} · ${esc(L.de)}</b><div class="nl">„${esc(L.nl)}"</div></div>
@@ -97,15 +91,19 @@ function renderToday() {
           <span>🔥 ${state.streak} ${state.streak === 1 ? 'Tag' : 'Tage'}</span></div>
       </div>
 
-      <div class="card goal">
-        <div class="dial" style="--p:${gpct}%"><i>${gpct}%</i></div>
-        <div class="txt"><b>Tagesziel</b><div>${tXp} / ${goalXp} XP heute</div></div>
-        <div class="streak"><b>🔥 ${state.streak}</b><span>STREAK</span></div>
-      </div>
+      <div class="herocar" id="herocar">${heroTracks.map(heroSlide).join('')}</div>
+      <div class="cardots" id="cardots">${heroTracks.map((_, i) => `<button class="dot ${i === curIdx ? 'on' : ''}" data-i="${i}" aria-label="Cover ${i + 1}"></button>`).join('')}</div>
 
-      <div>
-        <div class="section-sub" style="margin:2px 0 10px">Heutige Aufgaben</div>
-        <div class="tasks">${dailyTasks().map(taskRow).join('')}</div>
+      <button class="btn learn-cta" id="learn"><span class="learn-ic">${nextLesson ? lemIcon(nextLesson) : '📚'}</span><span>${learnLabel}</span></button>
+      ${due ? `<button class="btn secondary" id="review">🔁 ${due} Wörter wiederholen</button>` : ''}
+
+      <div class="card daycard">
+        <div class="daytop">
+          <div class="dial" style="--p:${gpct}%"><i>${gpct}%</i></div>
+          <div class="txt"><b>Tagesziel</b><div>${tXp} / ${goalXp} XP heute</div></div>
+          <div class="streak"><b>🔥 ${state.streak}</b><span>STREAK</span></div>
+        </div>
+        <div class="daytasks">${dailyTasks().map(taskRow).join('')}</div>
       </div>
     </div>`;
 
