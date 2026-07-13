@@ -987,9 +987,10 @@ function stepIntro(vocab) {
       const v = queue[i];
       const head = `<div class="step-label">Neues Wort · ${i + 1}/${queue.length}</div>`;
       if (phase === 0) {
+        const cx = ccApply(v.ex, v.exDe, [v]);
         body.innerHTML = `${head}<div class="step-title">Neu: „${esc(v.nl)}"</div>
           <div class="flash"><div class="word">${esc(v.nl)}</div><div class="trans">${esc(v.de)}</div>
-            <div class="ex">${esc(v.ex)} — ${esc(v.exDe)}</div>
+            <div class="ex">${cx.nl} — ${cx.de}</div>
             ${v.note ? `<div class="ex" style="color:var(--orange-ink)">💡 ${esc(v.note)}</div>` : ''}</div>`;
         speak(v.nl);
         foot.innerHTML = `<button class="btn ghost" id="say">🔊 Hören</button><button class="btn" id="n">Verstanden</button>`;
@@ -1064,6 +1065,60 @@ function stepQuiz(vocab) {
     draw();
   }};
 }
+/* ---------- Zweisprachiges Color-Coding (Wortentsprechungen NL↔DE) ----------
+   Grundlage sind die Vokabelpaare der Lektion (hohe Präzision) plus wenige,
+   eindeutige Funktionswörter. Gleiche Farbe = gleiche Bedeutung. */
+const CC_N = 8;
+const CC_FUNC = [
+  ['ik', 'ich'], ['jij', 'du'], ['u', 'Sie'], ['wij', 'wir'], ['we', 'wir'], ['jullie', 'ihr'],
+  ['en', 'und'], ['maar', 'aber'], ['niet', 'nicht'], ['ook', 'auch'],
+  ['ja', 'ja'], ['nee', 'nein'], ['hallo', 'hallo'],
+];
+const ccEscRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const ccNorm = (s) => String(s).replace(/[?!.,;:„""'()]/g, '').replace(/\s+/g, ' ').trim();
+const ccVariants = (nl) => String(nl).split('/').map(ccNorm).filter(Boolean);
+function ccFindAll(text, phrase) {
+  const out = [];
+  let re;
+  try { re = new RegExp(`(?<![\\p{L}])${ccEscRe(phrase)}(?![\\p{L}])`, 'giu'); }
+  catch (_) { return out; }
+  let m; while ((m = re.exec(text))) { out.push([m.index, m.index + m[0].length]); if (m.index === re.lastIndex) re.lastIndex++; }
+  return out;
+}
+function ccWrap(text, hits) {
+  if (!hits.length) return esc(text);
+  hits.sort((a, b) => a.start - b.start);
+  let out = '', i = 0;
+  for (const h of hits) {
+    if (h.start < i) continue;
+    out += esc(text.slice(i, h.start));
+    out += `<span class="cc cc-${h.color}">${esc(text.slice(h.start, h.end))}</span>`;
+    i = h.end;
+  }
+  return out + esc(text.slice(i));
+}
+// Färbt NL- und DE-Text so ein, dass zusammengehörige Wörter dieselbe Farbe tragen.
+function ccApply(nlText, deText, vocab) {
+  const pairs = [];
+  (vocab || []).forEach(v => { if (v && v.nl && v.de) ccVariants(v.nl).forEach(nlv => pairs.push([nlv, ccNorm(v.de)])); });
+  CC_FUNC.forEach(([n, d]) => pairs.push([ccNorm(n), ccNorm(d)]));
+  pairs.sort((a, b) => b[0].length - a[0].length);
+  const nlHits = [], deHits = [], usedNl = [], usedDe = [];
+  const free = (arr, s, e) => !arr.some(h => s < h.end && e > h.start);
+  let color = 0;
+  for (const [nlp, dep] of pairs) {
+    if (nlp.length < 2 || dep.length < 2) continue;
+    const nm = ccFindAll(nlText, nlp).find(([s, e]) => free(usedNl, s, e));
+    const dm = ccFindAll(deText, dep).find(([s, e]) => free(usedDe, s, e));
+    if (nm && dm) {
+      const c = color++ % CC_N;
+      nlHits.push({ start: nm[0], end: nm[1], color: c }); usedNl.push({ start: nm[0], end: nm[1] });
+      deHits.push({ start: dm[0], end: dm[1], color: c }); usedDe.push({ start: dm[0], end: dm[1] });
+    }
+  }
+  return { nl: ccWrap(nlText, nlHits), de: ccWrap(deText, deHits), n: color };
+}
+
 function stepDialogue(l) {
   return { render(body, foot, done) {
     body.innerHTML = `<div class="step-label">Im Gespräch</div><div class="step-title">${esc(l.title)}</div>
@@ -1071,8 +1126,9 @@ function stepDialogue(l) {
       <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:4px">
         <p class="muted" style="font-size:13px;margin:0">Tipp auf eine Zeile, um sie zu hören.</p>
         ${ttsSupported() ? '<button class="btn small ghost" id="playall">▶ Ganzer Dialog</button>' : ''}</div>
-      ${l.dialogue.map((d, k) => `<div class="line" data-i="${k}"><div class="who">${esc(d.who)}</div>
-        <div><div class="nl">${esc(d.nl)}</div><div class="de">${esc(d.de)}</div></div><div class="spk">🔊</div></div>`).join('')}`;
+      ${l.dialogue.map((d, k) => { const cc = ccApply(d.nl, d.de, l.vocab); return `<div class="line" data-i="${k}"><div class="who">${esc(d.who)}</div>
+        <div><div class="nl">${cc.nl}</div><div class="de">${cc.de}</div></div><div class="spk">🔊</div></div>`; }).join('')}
+      <p class="cc-hint">🎨 Gleiche Farbe = gleiche Bedeutung (Niederländisch ↔ Deutsch).</p>`;
     body.querySelectorAll('.line').forEach(el => el.onclick = () => speak(l.dialogue[+el.dataset.i].nl));
     const pa = body.querySelector('#playall'); if (pa) pa.onclick = () => speakSequence(l.dialogue.map(d => d.nl));
     foot.innerHTML = `<button class="btn" id="n">Weiter</button>`;
