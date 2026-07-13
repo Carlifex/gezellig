@@ -1,7 +1,7 @@
 // ============================================================================
 //  Gezellig v2 — App-Steuerung (deutsche UI, Inhalt Niederländisch)
 // ============================================================================
-import { LESSONS, GRAMMAR, CHAT_SCENARIOS, DAILY_GOALS } from './data.js';
+import { LESSONS, GRAMMAR, GRAMMAR_EXAMPLES, CHAT_SCENARIOS, DAILY_GOALS } from './data.js';
 import { statusLabel } from './srs.js';
 import { speak, speakSequence, ttsSupported, setTtsEnabled, setTtsRate, sttSupported, listen, similarity, normalize } from './speech.js';
 import {
@@ -68,11 +68,18 @@ function renderToday() {
   const hour = new Date().getHours();
   const greet = hour < 11 ? 'Guten Morgen!' : hour < 18 ? 'Guten Tag!' : 'Guten Abend!';
   const nextLesson = LESSONS.find(l => lessonStatus(l.id) === 'neu') || LESSONS.find(l => lessonStatus(l.id) !== 'gemeistert') || LESSONS[0];
+  const curKey = (nextLesson && nextLesson.track) || 'verhaal';
+  const curIdx = Math.max(0, TRACKS.filter(x => trackLessons(x.key).length).findIndex(t => t.key === curKey));
+  const heroTracks = TRACKS.filter(x => trackLessons(x.key).length);
+  const learnLabel = nextLesson && lessonStatus(nextLesson.id) === 'neu' ? 'Nächste Lektion starten' : 'Weiterlernen';
 
   app.innerHTML = `
     <div class="stack">
-      <div class="herocar" id="herocar">${TRACKS.map(heroSlide).join('')}</div>
-      <div class="cardots" id="cardots">${TRACKS.map((_, i) => `<button class="dot ${i === 0 ? 'on' : ''}" data-i="${i}" aria-label="Cover ${i + 1}"></button>`).join('')}</div>
+      <div class="herocar" id="herocar">${heroTracks.map(heroSlide).join('')}</div>
+      <div class="cardots" id="cardots">${heroTracks.map((_, i) => `<button class="dot ${i === curIdx ? 'on' : ''}" data-i="${i}" aria-label="Cover ${i + 1}"></button>`).join('')}</div>
+
+      <button class="btn learn-cta" id="learn"><span class="learn-ic">${nextLesson ? lemIcon(nextLesson) : '📚'}</span><span>${learnLabel}</span></button>
+      ${due ? `<button class="btn secondary" id="review">🔁 ${due} Wörter wiederholen</button>` : ''}
 
       <div class="card levelcard">
         <div class="levelrow">
@@ -95,9 +102,6 @@ function renderToday() {
         <div class="section-sub" style="margin:2px 0 10px">Heutige Aufgaben</div>
         <div class="tasks">${dailyTasks().map(taskRow).join('')}</div>
       </div>
-
-      <button class="btn" id="learn">${nextLesson && lessonStatus(nextLesson.id) === 'neu' ? 'Nächste Lektion starten' : 'Weiterlernen'}</button>
-      ${due ? `<button class="btn secondary" id="review">🔁 ${due} Wörter wiederholen</button>` : ''}
     </div>`;
 
   app.querySelector('#learn').onclick = () => nextLesson ? openLesson(nextLesson.id) : go('lessons');
@@ -113,6 +117,8 @@ function renderToday() {
       const idx = Math.round(car.scrollLeft / step());
       dots.forEach((d, i) => d.classList.toggle('on', i === idx));
     }, { passive: true });
+    // Startseite öffnet direkt beim aktuellen Kapitel.
+    requestAnimationFrame(() => { car.scrollLeft = curIdx * step(); });
   }
 }
 function taskRow(t) {
@@ -339,13 +345,18 @@ function examCard(t, ls) {
 function heroSlide(t) {
   const ls = trackLessons(t.key);
   const done = ls.filter(l => lessonStatus(l.id) !== 'neu').length;
+  const complete = ls.length && done === ls.length;
   const img = t.hero
     ? `<img src="${esc(t.hero)}" alt="" loading="eager" onerror="this.closest('.heroslide').classList.add('noimg')"/>`
     : '';
+  // Abgeschlossenes Kapitel → verdientes Badge oben rechts, sonst Fortschritt.
+  const corner = complete && BADGE_ART.has(t.key)
+    ? `<img class="hero-badge" src="illustrations/badges/${t.key}.webp" alt="Abzeichen">`
+    : `<span class="hero-prog">${done}/${ls.length}</span>`;
   return `<button class="heroslide ${t.hero ? '' : 'noimg'}" data-track="${t.key}">
     ${img}<span class="heroslide-ph">${t.icon}</span>
     <div class="hero-cap">
-      <div class="hero-top"><span class="hero-prog">${done}/${ls.length}</span></div>
+      <div class="hero-top">${corner}</div>
       <div class="greet hero-title">${esc(t.heroTitle)}</div>
     </div></button>`;
 }
@@ -727,10 +738,15 @@ function stepCulture(l) {
 }
 function stepGrammar(gid, label) {
   const g = GRAMMAR[gid];
+  const ex = (GRAMMAR_EXAMPLES && GRAMMAR_EXAMPLES[gid]) || [];
   return { render(body, foot, done) {
     body.innerHTML = `<div class="step-label">${esc(label)}</div><div class="step-title">${esc(g.title)}</div>
       <div class="gcard"><p>${g.body}</p><p style="margin-top:8px">${g.rule}</p></div>
-      <p class="muted" style="font-size:13px">Kurz merken — gleich probierst du es aus.</p>`;
+      ${ex.length ? `<div class="gexamples"><div class="gex-h">Beispiele</div>
+        ${ex.map(e => `<div class="gex"><div class="gex-t"><span class="gex-nl">${esc(e.nl)}</span><span class="gex-de">${esc(e.de)}</span></div>
+          <button class="gex-say iconbtn" data-say="${esc(e.nl)}" aria-label="vorlesen">🔊</button></div>`).join('')}</div>` : ''}
+      <p class="muted" style="font-size:13px;margin-top:10px">Kurz merken — gleich probierst du es aus.</p>`;
+    body.querySelectorAll('.gex-say').forEach(b => b.onclick = () => speak(b.dataset.say));
     foot.innerHTML = `<button class="btn" id="n">Verstanden</button>`;
     foot.querySelector('#n').onclick = done;
   }};

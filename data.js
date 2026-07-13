@@ -249,6 +249,156 @@ export const GRAMMAR = {
 //  Vokabeln, 1 Grammatik-Fokus, Dialog, Sprech-Sätze, Kulturkarte.
 //  Rollen-Labels deutsch (UI), Sätze niederländisch (Inhalt).
 // ---------------------------------------------------------------------------
+// Zusätzliche Beispiele je Grammatik-Thema (zweisprachig) — im Grammatik-Schritt gezeigt.
+export const GRAMMAR_EXAMPLES = {
+  woordvolgorde: [
+    { nl: 'Ik woon in Utrecht.', de: 'Ich wohne in Utrecht.' },
+    { nl: 'Vandaag ga ik naar de markt.', de: 'Heute gehe ich zum Markt.' },
+    { nl: 'Morgen begint de cursus.', de: 'Morgen beginnt der Kurs.' },
+    { nl: 'Zij drinkt koffie op het terras.', de: 'Sie trinkt Kaffee auf der Terrasse.' },
+  ],
+  hebbenzijn: [
+    { nl: 'Ik heb honger.', de: 'Ich habe Hunger.' },
+    { nl: 'Wij hebben een kat.', de: 'Wir haben eine Katze.' },
+    { nl: 'Hij is moe.', de: 'Er ist müde.' },
+    { nl: 'Er is een probleem.', de: 'Es gibt ein Problem.' },
+    { nl: 'Er zijn veel mensen.', de: 'Es gibt viele Menschen.' },
+  ],
+  dehet: [
+    { nl: 'de man, de vrouw', de: 'der Mann, die Frau' },
+    { nl: 'het huis, het kind', de: 'das Haus, das Kind' },
+    { nl: 'het broodje (verkleining → altijd het)', de: 'das Brötchen (Verkleinerung → immer „het")' },
+    { nl: 'De kaas is oud.', de: 'Der Käse ist alt.' },
+  ],
+  verkleining: [
+    { nl: 'het broodje', de: 'das Brötchen' },
+    { nl: 'een kopje koffie', de: 'ein Tässchen Kaffee' },
+    { nl: 'een biertje', de: 'ein Bierchen' },
+    { nl: 'twee broodjes', de: 'zwei Brötchen' },
+  ],
+  presens: [
+    { nl: 'ik werk, jij werkt, hij werkt', de: 'ich arbeite, du arbeitest, er arbeitet' },
+    { nl: 'Wij wonen in Utrecht.', de: 'Wir wohnen in Utrecht.' },
+    { nl: 'Zij eet een appel.', de: 'Sie isst einen Apfel.' },
+    { nl: 'Jullie spreken Nederlands.', de: 'Ihr sprecht Niederländisch.' },
+  ],
+  modaal: [
+    { nl: 'Ik wil naar huis.', de: 'Ich will nach Hause.' },
+    { nl: 'Kun jij mij helpen?', de: 'Kannst du mir helfen?' },
+    { nl: 'We moeten nu gaan.', de: 'Wir müssen jetzt gehen.' },
+    { nl: 'Mag ik een biertje?', de: 'Darf ich ein Bier?' },
+  ],
+  mening: [
+    { nl: 'Ik vind het lekker.', de: 'Ich finde es lecker.' },
+    { nl: 'Wat vind jij ervan?', de: 'Was hältst du davon?' },
+    { nl: 'Ik hou van muziek.', de: 'Ich mag Musik.' },
+    { nl: 'Dat is echt leuk!', de: 'Das ist echt schön!' },
+  ],
+  negatie: [
+    { nl: 'Ik drink niet.', de: 'Ich trinke nicht.' },
+    { nl: 'Ik heb geen tijd.', de: 'Ich habe keine Zeit.' },
+    { nl: 'Dat is niet waar.', de: 'Das ist nicht wahr.' },
+    { nl: 'Er is geen kaas meer.', de: 'Es gibt keinen Käse mehr.' },
+  ],
+  toekomst: [
+    { nl: 'Ik ga morgen werken.', de: 'Ich werde morgen arbeiten.' },
+    { nl: 'We gaan naar Amsterdam.', de: 'Wir fahren nach Amsterdam.' },
+    { nl: 'Het gaat regenen.', de: 'Es wird regnen.' },
+    { nl: 'Zij gaat koken.', de: 'Sie wird kochen.' },
+  ],
+  getallen: [
+    { nl: 'een, twee, drie, vier, vijf', de: 'eins, zwei, drei, vier, fünf' },
+    { nl: 'eenentwintig, tweeëntwintig', de: 'einundzwanzig, zweiundzwanzig' },
+    { nl: 'honderd euro', de: 'hundert Euro' },
+    { nl: 'Het kost vier euro vijftig.', de: 'Es kostet vier Euro fünfzig.' },
+    { nl: 'Ik ben vijfendertig jaar.', de: 'Ich bin fünfunddreißig Jahre alt.' },
+  ],
+  meervoud: [
+    { nl: 'de kat → de katten', de: 'die Katze → die Katzen' },
+    { nl: 'het huis → de huizen', de: 'das Haus → die Häuser' },
+    { nl: 'de appel → de appels', de: 'der Apfel → die Äpfel' },
+    { nl: 'het broodje → de broodjes', de: 'das Brötchen → die Brötchen' },
+    { nl: 'de stad → de steden', de: 'die Stadt → die Städte' },
+  ],
+  bijvoeglijk: [
+    { nl: 'een oude kaas', de: 'ein alter Käse' },
+    { nl: 'het grote huis', de: 'das große Haus' },
+    { nl: 'een lekker broodje', de: 'ein leckeres Brötchen' },
+    { nl: 'de mooie stad', de: 'die schöne Stadt' },
+  ],
+  graag: [
+    { nl: 'Ik drink graag koffie.', de: 'Ich trinke gern Kaffee.' },
+    { nl: 'Ik eet liever vis.', de: 'Ich esse lieber Fisch.' },
+    { nl: 'Het liefst blijf ik thuis.', de: 'Am liebsten bleibe ich zu Hause.' },
+    { nl: 'Zij fietst graag.', de: 'Sie fährt gern Rad.' },
+  ],
+  bezit: [
+    { nl: 'mijn kat', de: 'meine Katze' },
+    { nl: 'jouw huis', de: 'dein Haus' },
+    { nl: 'onze buurt', de: 'unser Viertel' },
+    { nl: 'hun auto', de: 'ihr Auto' },
+  ],
+  voegwoorden: [
+    { nl: 'Ik blijf thuis, want het regent.', de: 'Ich bleibe zu Hause, denn es regnet.' },
+    { nl: 'Hij komt, maar hij is laat.', de: 'Er kommt, aber er ist spät.' },
+    { nl: 'koffie en thee', de: 'Kaffee und Tee' },
+    { nl: 'Ik weet dat het klopt.', de: 'Ich weiß, dass es stimmt.' },
+  ],
+  vraagwoorden: [
+    { nl: 'Wat is dat?', de: 'Was ist das?' },
+    { nl: 'Waar woon je?', de: 'Wo wohnst du?' },
+    { nl: 'Wie is dat?', de: 'Wer ist das?' },
+    { nl: 'Hoeveel kost het?', de: 'Wie viel kostet es?' },
+    { nl: 'Waarom lach je?', de: 'Warum lachst du?' },
+  ],
+  perfectum: [
+    { nl: 'Ik heb gegeten.', de: 'Ich habe gegessen.' },
+    { nl: 'We hebben gewerkt.', de: 'Wir haben gearbeitet.' },
+    { nl: 'Zij is naar huis gegaan.', de: 'Sie ist nach Hause gegangen.' },
+    { nl: 'Hij is gekomen.', de: 'Er ist gekommen.' },
+  ],
+  imperfectum: [
+    { nl: 'Hij woonde in Leiden.', de: 'Er wohnte in Leiden.' },
+    { nl: 'Zij werkte hard.', de: 'Sie arbeitete hart.' },
+    { nl: 'Het regende de hele dag.', de: 'Es regnete den ganzen Tag.' },
+  ],
+  passief: [
+    { nl: 'Het boek wordt gelezen.', de: 'Das Buch wird gelesen.' },
+    { nl: 'De wet werd aangenomen.', de: 'Das Gesetz wurde verabschiedet.' },
+    { nl: 'De prijs is uitgereikt.', de: 'Der Preis wurde verliehen.' },
+  ],
+  betrekkelijk: [
+    { nl: 'de man die daar staat', de: 'der Mann, der dort steht' },
+    { nl: 'het huis dat wij kopen', de: 'das Haus, das wir kaufen' },
+    { nl: 'de stad waar ik woon', de: 'die Stadt, in der ich wohne' },
+  ],
+  bijzin: [
+    { nl: 'Ik weet dat hij komt.', de: 'Ich weiß, dass er kommt.' },
+    { nl: 'Omdat het regent, blijf ik thuis.', de: 'Weil es regnet, bleibe ich zu Hause.' },
+    { nl: 'Hij zegt dat hij moe is.', de: 'Er sagt, dass er müde ist.' },
+  ],
+  conditionalis: [
+    { nl: 'Ik zou graag komen.', de: 'Ich würde gern kommen.' },
+    { nl: 'Als ik tijd had, zou ik reizen.', de: 'Wenn ich Zeit hätte, würde ich reisen.' },
+    { nl: 'Dat zou mooi zijn.', de: 'Das wäre schön.' },
+  ],
+  deelwoord: [
+    { nl: 'de draaiende motor', de: 'der drehende Motor' },
+    { nl: 'een gebroken glas', de: 'ein zerbrochenes Glas' },
+    { nl: 'het gekookte ei', de: 'das gekochte Ei' },
+  ],
+  nominalisatie: [
+    { nl: 'de ontwikkeling', de: 'die Entwicklung' },
+    { nl: 'de vrijheid', de: 'die Freiheit' },
+    { nl: 'de organisatie', de: 'die Organisation' },
+  ],
+  wetenschapstaal: [
+    { nl: 'Men neemt aan dat het klopt.', de: 'Man nimmt an, dass es stimmt.' },
+    { nl: 'Dit is namelijk belangrijk.', de: 'Dies ist nämlich wichtig.' },
+    { nl: 'Het licht buigt af, dus zien we kleuren.', de: 'Das Licht wird gebrochen, also sehen wir Farben.' },
+  ],
+};
+
 export const LESSONS = [
   {
     id: 'aankomst', order: 1, icon: '📦',
