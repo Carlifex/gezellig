@@ -53,7 +53,7 @@ function fresh() {
   return {
     xp: 0, streak: 0, maxStreak: 0, freezes: 1, lastGoalDate: null,
     settings: { tts: true, rate: 0.92, theme: 'auto', dailyGoal: 'normaal', dailyNew: 8, aiEndpoint: '' },
-    cards: {}, lessons: {}, milestones: {}, exams: {}, history: {},
+    cards: {}, lessons: {}, milestones: {}, exams: {}, checkpoints: {}, history: {},
     daily: null,
     totals: { reviews: 0, wordsLearned: 0, speakOk: 0, chats: 0, lessonsDone: 0, lessonsMastered: 0, sessions: 0, answers: 0, answersOk: 0 },
   };
@@ -240,6 +240,9 @@ export function trackVocabReady(key) {
   return { ready, total: vs.length, pct: vs.length ? Math.round(ready / vs.length * 100) : 0 };
 }
 export function dailyNewLimit() { return state.settings.dailyNew || 8; }
+// Zwischen-Checkpoint pro Kapitel (Pflicht-Vokabelcheck zur Kapitelhälfte).
+export function checkpointPassed(key) { return !!(state.checkpoints && state.checkpoints[key]); }
+export function passCheckpoint(key) { state.checkpoints = state.checkpoints || {}; state.checkpoints[key] = Date.now(); save(); }
 
 function recomputeMastery() {
   let mastered = 0;

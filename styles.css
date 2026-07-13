@@ -315,6 +315,10 @@ button{font-family:inherit}
 .examcard .lchip{color:var(--blue-2)}
 .examcard.passed{border-style:solid;border-color:color-mix(in srgb,var(--good) 45%,var(--line))}
 .examcard.locked{opacity:.62}
+/* Zwischen-Check (Kapitel-Mitte) — abgesetzt in Türkis. */
+.examcard.checkpoint{margin-top:8px;border-color:color-mix(in srgb,var(--teal,#22b8b0) 50%,var(--line))}
+.examcard.checkpoint .lchip{color:var(--teal,#22b8b0)}
+.examcard.checkpoint.passed{border-style:solid;border-color:color-mix(in srgb,var(--good) 45%,var(--line))}
 
 /* ---- Start: Nächste-Lektion-CTA + Hero-Badge ---- */
 .learn-cta{display:flex;align-items:center;justify-content:center;gap:10px}
