@@ -55,8 +55,8 @@ Dieses Projekt wird über **zwei** Repositories gepflegt:
 - Deploy = FF-Push Dev→`main` (`git push origin <dev>:main`), Pages zieht in 1–2 Min nach.
 
 ### Karteikarten-System (`cards.js`, NEU)
-- Export `CARDS` (**2336** angereicherte Karten von Ziel ~2937) + `CARD_ART` (Set von IDs
-  mit Illustration, aktuell **49**). Schema je Karte: `lemma, displayNl, pos, genus?, plural?,
+- Export `CARDS` (**2435** angereicherte Karten von Ziel ~2937) + `CARD_ART` (Set von IDs
+  mit Illustration, aktuell **69**). Schema je Karte: `lemma, displayNl, pos, genus?, plural?,
   meanings:[{de,ex,exDe}], conjugation?, usage, notes?, illustratable?`. Kondensiert auf
   **Grundformen** (Verben→Infinitiv, Substantive→Nom.Sg. außer plurale tantum). Umlaut-
   normalisiert, **kein** artPrompt in der ausgelieferten Datei.
@@ -84,10 +84,14 @@ Dieses Projekt wird über **zwei** Repositories gepflegt:
 - Hinweis „↑ Üben schaltet Prüfung frei" wenn `examsNeedingVocab()`; Tab-Pfeil bei Bedarf.
 
 ### Lektions-Vokabeln (Kapitel 1 / verhaal erweitert)
-Alle 19 verhaal-Lektionen von 7–8 auf **11–17 Vokabeln** erweitert (+152 thematische A1–A2-
-Einträge, via 19 Subagenten erzeugt, dedupliziert gegen Bestand). Format je Eintrag
-`{ id, nl, de, ex, exDe }`, ID-Präfix je Lektion (a_/wo_/ra_ …). Neue Wörter ohne `cards.js`-
-Eintrag erscheinen als graue „other"-Pille bis zum Enrichment.
+Alle 19 verhaal-Lektionen von 7–8 auf **11–17 Vokabeln** erweitert (+153 thematische A1–A2-
+Einträge, via Subagenten erzeugt, dedupliziert gegen Bestand). Format je Eintrag
+`{ id, nl, de, ex, exDe }`, ID-Präfix je Lektion (a_/wo_/ra_ …).
+- Von den 153: **87 gab es schon in der Vokabelbank** (→ Lektionseintrag auf bestehende Bank-ID
+  umgebogen; 53 davon hatten bereits eine Karte), **66 waren wirklich neu**.
+- **Enrichment-Sprint**: die 100 kartenlosen (34 Bank-ohne-Karte + 66 neu) via 10 Agenten zu
+  Karten angereichert und in `cards.js` gemergt. → **alle 153 neuen Wörter haben jetzt eine Karte**
+  (mit Wortart-Farbe). Nur noch 4 *ursprüngliche* Wörter ohne Karte (de plant, lekker, de kaas, samen).
 
 ### Neue Lernmodule (6, story-passend eingebaut)
 `stepMatch`, `stepCloze`, `stepSentenceBuild`, `stepDictation`, `stepConjDrill`,
