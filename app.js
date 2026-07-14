@@ -2298,12 +2298,12 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 /* ---------- init ---------- */
 syncTabs();
 render();
-// Ladescreen (Splash) sanft ausblenden, sobald die App bereit ist.
+// Ladescreen (Splash): IMMER mindestens 4 s sichtbar, erst dann sanft ausblenden.
 (function dismissSplash() {
   const s = document.getElementById('splash');
   if (!s) return;
   const hide = () => { s.classList.add('hide'); setTimeout(() => s.remove(), 600); };
-  setTimeout(hide, 900); // kurze, nahtlose Überblendung (nach nativem Launch-Screen)
+  setTimeout(hide, 4000);
 })();
 // Erst-Start-Onboarding: nur für neue Nutzer (kein Fortschritt); sonst still überspringen.
 if (!localStorage.getItem('gezellig.onboarded')) {
