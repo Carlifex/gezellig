@@ -438,6 +438,9 @@ button{font-family:inherit}
   border-radius:14px;padding:14px 15px;box-shadow:var(--shadow);cursor:pointer;text-align:left;width:100%;color:inherit}
 .lesson:active{transform:translateY(1px)}
 .lesson.locked{opacity:.55;filter:grayscale(.55)}
+/* Startseiten-CTA: Lektionszeilen-Look, aber als Haupt-Aktion akzentuiert */
+.lesson-cta{border-color:color-mix(in srgb,var(--orange) 55%,var(--line));
+  box-shadow:0 6px 20px color-mix(in srgb,var(--orange) 22%,transparent)}
 /* Gesperrtes Kapitel (Prüfung des Vorkapitels noch offen): leicht ausgegraut + Schloss mittig. */
 .heroslide.locked img,.chaphero.locked img{filter:grayscale(.85) brightness(.62)}
 .heroslide.locked,.chaphero.locked{cursor:not-allowed}

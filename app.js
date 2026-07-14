@@ -71,7 +71,7 @@ function render() {
 // 1) nächste freie Lektion  2) fällige/nötige Prüfung  3) Vokabeltraining  4) Weiterlernen.
 function homeCTA() {
   const nl = LESSONS.find(l => lessonStatus(l.id) === 'neu' && lessonUnlocked(l));
-  if (nl) return { kind: 'lesson', label: 'Nächste Lektion starten', icon: lemIcon(nl), run: () => openLesson(nl.id) };
+  if (nl) return { kind: 'lesson', lesson: nl, label: 'Nächste Lektion starten', icon: lemIcon(nl), run: () => openLesson(nl.id) };
   // Alle freien Lektionen durch → wartet eine Prüfung, die schon bereit ist?
   const exReady = TRACKS.find(t => trackLessons(t.key).length && examUnlocked(t.key) && !examPassed(t.key));
   if (exReady) return { kind: 'exam', label: `Prüfung: ${exReady.label}`, icon: '📝', run: () => go('lessons', exReady.key) };
@@ -81,8 +81,16 @@ function homeCTA() {
   }
   // Sonst: noch nicht gemeisterte Lektion wiederholen, sonst Kapitelübersicht.
   const rl = LESSONS.find(l => lessonStatus(l.id) !== 'gemeistert' && lessonUnlocked(l));
-  if (rl) return { kind: 'lesson', label: 'Weiterlernen', icon: lemIcon(rl), run: () => openLesson(rl.id) };
+  if (rl) return { kind: 'lesson', lesson: rl, label: 'Weiterlernen', icon: lemIcon(rl), run: () => openLesson(rl.id) };
   return { kind: 'browse', label: 'Zur Kapitelübersicht', icon: '📚', run: () => go('lessons') };
+}
+// Startseiten-CTA im Look einer Lektionslisten-Zeile (Thumbnail · LEKTION N · Titel · Situation · Status).
+function lessonCTA(l) {
+  const n = lessonIndex(l) + 1;
+  return `<button class="lesson lesson-cta" id="learn" data-id="${esc(l.id)}">
+    <span class="lem">${lemIcon(l)}</span>
+    <span class="lmain"><span class="lchip">LEKTION ${n}</span><b>${esc(l.title)}</b><span>${esc(l.situation)}</span></span>
+    ${statusBadge(lessonStatus(l.id))}</button>`;
 }
 function renderToday() {
   const L = levelInfo();
@@ -113,7 +121,7 @@ function renderToday() {
       <div class="herocar" id="herocar">${heroTracks.map(heroSlide).join('')}</div>
       <div class="cardots" id="cardots">${heroTracks.map((_, i) => `<button class="dot ${i === curIdx ? 'on' : ''}" data-i="${i}" aria-label="Cover ${i + 1}"></button>`).join('')}</div>
 
-      <button class="btn learn-cta" id="learn"><span class="learn-ic">${cta.icon}</span><span>${esc(cta.label)}</span></button>
+      ${cta.kind === 'lesson' && cta.lesson ? lessonCTA(cta.lesson) : `<button class="btn learn-cta" id="learn"><span class="learn-ic">${cta.icon}</span><span>${esc(cta.label)}</span></button>`}
       ${due && cta.kind !== 'train' ? `<button class="btn secondary" id="review">🔁 ${due} Wörter wiederholen</button>` : ''}
 
       <div class="card daycard">
