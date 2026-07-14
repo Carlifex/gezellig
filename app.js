@@ -564,9 +564,17 @@ function renderVocab() {
     : !quota ? `Tageslimit erreicht: ${EXTRA_DAILY_MAX} neue Vokabeln außerhalb von Lektionen pro Tag.`
     : !extraAvail ? 'Alle freien Wörter sind schon in der Rotation.'
     : `⭐ Jede Abfrage bringt ${reviewXp()} XP — wächst mit deinem Wortschatz · heute noch ${quota}/${EXTRA_DAILY_MAX} frei`;
+  // Rücksprung aus dem Erweitern-Flow: Zähler sichtbar vom alten Stand hochzählen.
+  let animFrom = null;
+  const raw = sessionStorage.getItem('gz.rotAnim');
+  if (raw != null) {
+    sessionStorage.removeItem('gz.rotAnim');
+    const n = parseInt(raw, 10);
+    if (Number.isFinite(n) && n >= 0 && n < started) animFrom = n;
+  }
   app.innerHTML = `
     <div class="section-title">Training</div>
-    <div class="trow"><span class="tcount">${started} Vokabel${started === 1 ? '' : 'n'} in Rotation</span>${acc != null ? `<span class="tcount" title="Trefferquote">🎯 ${acc} % Treffer</span>` : ''}</div>
+    <div class="trow"><span class="tcount" id="rotchip"><b id="rotnum">${animFrom ?? started}</b> Vokabel${started === 1 ? '' : 'n'} in Rotation</span>${acc != null ? `<span class="tcount" title="Trefferquote">🎯 ${acc} % Treffer</span>` : ''}</div>
     <div class="section-sub">Übe mit echter Abfrage — Tippen & Wiedererkennen, automatisch bewertet.</div>
 
     <div class="practicehub">
@@ -604,6 +612,24 @@ function renderVocab() {
   app.querySelectorAll('#vf button').forEach(b => b.onclick = () => { vocabFilter = b.dataset.f; renderVocab(); });
   const qi = app.querySelector('#vq');
   qi.oninput = () => { vocabQuery = qi.value; const p = qi.selectionStart; renderVocab(); const n = app.querySelector('#vq'); n.focus(); n.setSelectionRange(p, p); };
+  // Count-up-Animation des Rotations-Zählers (nach dem Erweitern-Flow).
+  if (animFrom != null) {
+    const chip = app.querySelector('#rotchip'), num = app.querySelector('#rotnum');
+    const diff = started - animFrom, dur = 1100;
+    chip.classList.add('bump');
+    const float = document.createElement('span');
+    float.className = 'plusfloat'; float.textContent = `+${diff}`;
+    chip.appendChild(float);
+    let t0 = null;
+    const tick = (t) => {
+      if (t0 == null) t0 = t;
+      const p = Math.min(1, (t - t0) / dur);
+      num.textContent = Math.round(animFrom + diff * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) requestAnimationFrame(tick);
+      else setTimeout(() => { chip.classList.remove('bump'); float.remove(); }, 400);
+    };
+    requestAnimationFrame(tick);
+  }
 }
 
 /* ---------- ZAHLEN LERNEN (Getallen) — eigenes Spezial-Modul ---------- */
@@ -719,8 +745,12 @@ function openLearnNew(n = null) {
   if (!quota) { toast(`Tageslimit erreicht — morgen wieder ${EXTRA_DAILY_MAX} frei.`, '⏳'); return; }
   const pool = extraVocab(Math.min(n || dailyNewLimit(), quota));
   if (!pool.length) { toast('Alle freien Wörter sind schon im Training! 🎉', '➕'); return; }
-  openFlow([stepIntro(pool), ...practiceModules(pool)], (fe) =>
-    finishScreen(fe, '➕', `${pool.length} neue ${pool.length === 1 ? 'Wort' : 'Wörter'}`, 'Mit Abfrage eingeführt — jetzt im Fundus.', 'vocab'));
+  // Zählerstand VOR dem Flow merken → beim Rücksprung zählt der Chip sichtbar hoch.
+  const before = ALL_VOCAB.reduce((a, v) => a + (state.cards[v.id] && state.cards[v.id].reps ? 1 : 0), 0);
+  openFlow([stepIntro(pool), ...practiceModules(pool)], (fe) => {
+    sessionStorage.setItem('gz.rotAnim', String(before));
+    finishScreen(fe, '➕', `${pool.length} neue ${pool.length === 1 ? 'Wort' : 'Wörter'}`, 'Mit Abfrage eingeführt — jetzt im Fundus.', 'vocab');
+  });
 }
 
 // Nur bereits bekannte (gestartete) Vokabeln üben: fällige zuerst,
