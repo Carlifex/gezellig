@@ -10,6 +10,7 @@ import {
   chatTurn, speakResult, setSetting, resetAll, lessonStatus, milestoneState, takeUnlocks,
   todayXp, dailyGoalXp, goalMetToday, cardOf, ALL_VOCAB, gainXp, weakVocab, startedVocab,
   recordAnswer, historyLast, stats, unstartedVocab, unstartedCount, learnWords,
+  extraVocab, extraVocabCount,
   recordExam, examState, examPassed,
   introWord, trackVocab, trackVocabReady, dailyNewLimit,
   checkpointPassed, passCheckpoint,
@@ -494,32 +495,67 @@ function renderVocab() {
   const q = normalize(vocabQuery);
   const weakIds = new Set(weakVocab(999).map(v => v.id));
   const isMast = (c) => c && c.S >= 8 && (c.prod || 0) >= 1;
-  const match = (v) => {
+  // Dasselbe NL-Wort kann unter mehreren IDs existieren (Lektions-Varianten).
+  // Fürs Anzeigen/Filtern zählt die Variante, die tatsächlich im Training ist.
+  const nk = (v) => normalize(v.nl);
+  const cardIdByNl = {};
+  ALL_VOCAB.forEach(v => {
     const c = state.cards[v.id];
-    if (q && !(normalize(v.nl).includes(q) || normalize(v.de).includes(q))) return false;
+    if (c && c.reps && !cardIdByNl[nk(v)]) cardIdByNl[nk(v)] = v.id;
+  });
+  const matchQ = (v) => !q || normalize(v.nl).includes(q) || normalize(v.de).includes(q);
+  const matchLearned = (v) => {
+    const cid = cardIdByNl[nk(v)];
+    if (!cid) return false;
+    const c = state.cards[cid];
+    if (!matchQ(v)) return false;
     switch (vocabFilter) {
-      case 'due':        return !!(c && c.reps && c.due <= now);
-      case 'neu':        return !c || !c.reps;
-      case 'gelernt':    return !!(c && c.reps && !isMast(c));
+      case 'due':        return c.due <= now;
+      case 'gelernt':    return !isMast(c);
       case 'gemeistert': return isMast(c);
-      case 'schwierig':  return weakIds.has(v.id);
+      case 'schwierig':  return weakIds.has(cid);
       default:           return true;
     }
   };
   const filters = [['alle', 'Alle'], ['due', 'Fällig'], ['gelernt', 'Gelernt'], ['gemeistert', 'Gemeistert'], ['schwierig', 'Schwierig']];
-  // NUR bereits gelernte (gestartete) Vokabeln — nicht der gesamte App-Bestand.
-  const learned = ALL_VOCAB.filter(v => { const c = state.cards[v.id]; return c && c.reps; });
-  const list = learned.filter(match);
-  const posOf = (v) => { const c = CARDS[v.id]; return (c && c.pos) || 'other'; };
-  const pills = list.map(v => {
-    const disp = (CARDS[v.id] && CARDS[v.id].displayNl) || v.nl;
-    return `<button class="vpill pos-${posOf(v)}" data-card="${esc(v.id)}">${esc(disp)}</button>`;
-  }).join('') || '<div class="muted" style="padding:14px;text-align:center;width:100%">Noch keine Wörter gelernt — starte mit „Üben".</div>';
+  const pillHtml = (v) => {
+    const cid = cardIdByNl[nk(v)];
+    const id = cid || v.id;
+    const pos = (CARDS[id] && CARDS[id].pos) || 'other';
+    const disp = (CARDS[id] && CARDS[id].displayNl) || v.nl;
+    return `<button class="vpill ${cid ? `pos-${pos}` : 'prev'}" data-card="${esc(id)}">${esc(disp)}</button>`;
+  };
+  // Kapitel-Gruppen: gelernte Pillen farbig, ungelernte ausgegraut (Preview) —
+  // auch für kommende Kapitel. Graue Pillen nur im Filter „Alle".
+  let shownLearned = 0, shownPrev = 0;
+  const groupHtml = (title, icon, vs, sub) => {
+    const seen = new Set();
+    const pills = [];
+    let learnedCnt = 0;
+    for (const v of vs) {
+      if (seen.has(nk(v))) continue; seen.add(nk(v));
+      const learned = !!cardIdByNl[nk(v)];
+      if (learned) learnedCnt++;
+      if (learned ? matchLearned(v) : (vocabFilter === 'alle' && matchQ(v))) {
+        pills.push({ html: pillHtml(v), learned });
+      }
+    }
+    if (!pills.length) return '';
+    shownLearned += pills.filter(p => p.learned).length;
+    shownPrev += pills.filter(p => !p.learned).length;
+    return `<div class="section-sub vgroup-hd" style="margin:16px 0 6px">${icon} ${esc(title)} <span class="tcount">${learnedCnt}/${seen.size}</span>${sub ? ` <span class="muted">· ${esc(sub)}</span>` : ''}</div>
+      <div class="card vpills-card"><div class="vpills">${pills.map(p => p.html).join('')}</div></div>`;
+  };
+  const chapterGroups = TRACKS.filter(t => trackLessons(t.key).length)
+    .map(t => groupHtml(t.label, t.icon, trackVocab(t.key), trackUnlocked(t.key) ? '' : 'Vorschau'))
+    .join('');
+  // Fundus: Wörter ohne Lektion (große Bank) — hier nur bereits gelernte zeigen.
+  const bankLearned = ALL_VOCAB.filter(v => !v.lesson && cardIdByNl[nk(v)] === v.id);
+  const bankGroup = groupHtml('Fundus', '📚', bankLearned, 'freie Wörter außerhalb der Kapitel');
   const started = ALL_VOCAB.filter(v => { const c = state.cards[v.id]; return c && c.reps; }).length;
-  const mastered = ALL_VOCAB.filter(v => isMast(state.cards[v.id])).length;
   const due = dueCount();
-  const newAvail = unstartedCount();
-  const weak = weakIds.size;
+  const extraAvail = extraVocabCount();
+  const nNew = Math.min(extraAvail, dailyNewLimit());
   app.innerHTML = `
     <div class="section-title">Training <span class="tcount">${started}/${ALL_VOCAB.length} Wörter</span></div>
     <div class="section-sub">Übe mit echter Abfrage — Tippen & Wiedererkennen, automatisch bewertet.</div>
@@ -534,16 +570,8 @@ function renderVocab() {
         }).join('');
         return `<div class="ph-unlock"><span class="ph-unlock-hd">↑ Üben schaltet ${need.length === 1 ? 'diese Prüfung' : 'diese Prüfungen'} frei:</span><ul>${items}</ul></div>`;
       })()}
-      <div class="ph-stats">
-        <div><b style="color:var(--orange-ink)">${due}</b><span>fällig</span></div>
-        <div><b>${newAvail}</b><span>neu verfügbar</span></div>
-        <div><b>${mastered}</b><span>gemeistert</span></div>
-      </div>
-      <button class="btn ${examsNeedingVocab().length ? 'unlocks' : ''}" id="practice">💪 Üben${due || newAvail ? ` · ${due} + ${Math.min(newAvail, dailyNewLimit())} neu` : ''}${examsNeedingVocab().length ? ' <span class="btn-up" title="schaltet die Prüfung frei">↑</span>' : ''}</button>
-      ${due || weak ? `<div class="ph-sub">
-        ${due ? `<button class="btn ghost" id="review">🔁 Nur wiederholen</button>` : ''}
-        ${weak ? `<button class="btn ghost" id="weak">🎯 Wiederholung (Schwachstellen)</button>` : ''}
-      </div>` : ''}
+      <button class="btn" id="learnnew" ${extraAvail ? '' : 'disabled'}>➕ ${nNew || 8} neue Wörter lernen</button>
+      <button class="btn ghost ${examsNeedingVocab().length ? 'unlocks' : ''}" id="practice-known">🔁 Bekannte Wörter üben${due ? ` · ${due} fällig` : ''}${examsNeedingVocab().length ? ' <span class="btn-up" title="schaltet die Prüfung frei">↑</span>' : ''}</button>
     </div>
 
     <div class="section-sub" style="margin:20px 0 8px">Spezial-Training</div>
@@ -553,16 +581,15 @@ function renderVocab() {
       <span class="sc-go">›</span>
     </button>
 
-    <div class="section-sub" style="margin:20px 0 8px">Gelernte Wörter · tippe eine Pille für die Karte</div>
+    <div class="section-sub" style="margin:20px 0 8px">Wörter nach Kapiteln · tippe eine Pille für die Karte</div>
     <div class="field" style="margin:2px 0 10px"><input id="vq" placeholder="🔎 Suchen (niederländisch oder deutsch)…" value="${esc(vocabQuery)}" autocomplete="off"/></div>
     <div class="seg wrap" id="vf">${filters.map(([k, l]) => `<button data-f="${k}" class="${vocabFilter === k ? 'on' : ''}">${l}</button>`).join('')}</div>
-    <div class="vpleg">${VP_LEGEND.map(([k, lb]) => `<span class="vpleg-i pos-${k}">${lb}</span>`).join('')}</div>
-    <div class="section-sub" style="margin:12px 0 6px">${list.length} ${list.length === 1 ? 'Wort' : 'Wörter'}</div>
-    <div class="card vpills-card"><div class="vpills">${pills}</div></div>`;
+    <div class="vpleg">${VP_LEGEND.map(([k, lb]) => `<span class="vpleg-i pos-${k}">${lb}</span>`).join('')}<span class="vpleg-i prev">noch nicht gelernt</span></div>
+    ${chapterGroups + bankGroup || '<div class="muted" style="padding:14px;text-align:center">Nichts gefunden.</div>'}
+    ${chapterGroups + bankGroup ? `<div class="section-sub muted" style="margin:10px 0 0">${shownLearned} gelernt${shownPrev ? ` · ${shownPrev} Vorschau` : ''}</div>` : ''}`;
   app.querySelectorAll('.vpill[data-card]').forEach(r => r.onclick = () => openCard(r.dataset.card));
-  const pr = app.querySelector('#practice'); if (pr) pr.onclick = () => openPractice();
-  const rv = app.querySelector('#review'); if (rv) rv.onclick = () => openReview();
-  const wk = app.querySelector('#weak'); if (wk) wk.onclick = () => openWeak();
+  const ln = app.querySelector('#learnnew'); if (ln) ln.onclick = () => openLearnNew();
+  const pk = app.querySelector('#practice-known'); if (pk) pk.onclick = () => openPracticeKnown();
   const nm = app.querySelector('#numbers'); if (nm) nm.onclick = () => { vocabSub = 'numbers'; renderVocab(); };
   app.querySelectorAll('#vf button').forEach(b => b.onclick = () => { vocabFilter = b.dataset.f; renderVocab(); });
   const qi = app.querySelector('#vq');
@@ -672,12 +699,24 @@ function numDrillStep(question, num, total, score) {
   }};
 }
 
-// Neue Wörter aus der großen Vokabelbank ins Training holen (Reihenfolge: A1→A2→B1).
+// Neue Wörter in den Fundus holen: nur Begriffe, die NICHT in einer noch
+// kommenden Lektion vorkommen (kein Spoiler) — Bank + abgeschlossene Lektionen.
 function openLearnNew(n = null) {
-  const pool = unstartedVocab(n || dailyNewLimit());
-  if (!pool.length) { toast('Alle Wörter sind schon im Training! 🎉', '➕'); return; }
+  const pool = extraVocab(n || dailyNewLimit());
+  if (!pool.length) { toast('Alle freien Wörter sind schon im Training! 🎉', '➕'); return; }
   openFlow([stepIntro(pool), ...practiceModules(pool)], (fe) =>
-    finishScreen(fe, '➕', `${pool.length} neue ${pool.length === 1 ? 'Wort' : 'Wörter'}`, 'Mit Abfrage eingeführt — jetzt im Training.', 'vocab'));
+    finishScreen(fe, '➕', `${pool.length} neue ${pool.length === 1 ? 'Wort' : 'Wörter'}`, 'Mit Abfrage eingeführt — jetzt im Fundus.', 'vocab'));
+}
+
+// Nur bereits bekannte (gestartete) Vokabeln üben: fällige zuerst,
+// sonst eine gemischte Runde aus dem gesamten Fundus.
+function openPracticeKnown() {
+  const due = dueVocab();
+  const pool = due.length ? due : shuffle(startedVocab().slice()).slice(0, 12);
+  runReview(pool, {
+    label: due.length ? 'Wiederholen' : 'Bekannte üben', emoji: '🔁', title: 'Geübt!',
+    empty: 'Noch keine bekannten Wörter — hol dir erst neue!', returnTab: 'vocab',
+  });
 }
 
 /* ============================ PROFIL ============================ */

@@ -280,6 +280,11 @@ button{font-family:inherit}
 .pos-tussenwerpsel{--c:255,122,156}   /* Interjektion — Rosa */
 .pos-uitdrukking{--c:154,160,255}     /* Ausdruck — Indigo */
 .pos-other{--c:154,164,178}           /* ohne Wortart — Grau */
+/* Noch nicht gelernt — ausgegraute Vorschau-Pille (klickbar für die Karte) */
+.vpill.prev{--c:128,136,150;opacity:.42;border-style:dashed}
+.vpleg-i.prev{--c:128,136,150;opacity:.6}
+.vpleg-i.prev::before{background:transparent;border:1.4px dashed rgb(var(--c));box-sizing:border-box}
+.vgroup-hd .tcount{font-size:12px;opacity:.75;font-weight:700}
 
 /* ---- Vokabelkarte (Detailansicht) ---- */
 .cardflow .flow-body{padding-top:8px}

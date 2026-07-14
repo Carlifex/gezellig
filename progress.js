@@ -64,6 +64,36 @@ export function unstartedCount() {
   }
   return c;
 }
+// „Fundus"-Wörter: noch nicht gestartet UND in KEINER noch offenen Lektion —
+// neue Begriffe fürs freie Training, ohne kommende Lektionen zu spoilern.
+// (Bank-Wörter + Vokabeln bereits abgeschlossener Lektionen.)
+function inUpcomingLesson(v) {
+  const ids = nlIndex[nlKey(v)] || [v.id];
+  return ids.some(id => {
+    const lv = vocabById[id];
+    return lv && lv.lesson && lessonStatus(lv.lesson) === 'neu';
+  });
+}
+export function extraVocab(n = 8) {
+  const out = [], seen = new Set();
+  for (const v of LEARN_SEQ) {
+    if (out.length >= n) break;
+    const k = nlKey(v);
+    if (seen.has(k) || !notStarted(v) || inUpcomingLesson(v)) continue;
+    seen.add(k); out.push(v);
+  }
+  return out;
+}
+export function extraVocabCount() {
+  const seen = new Set(); let c = 0;
+  for (const v of LEARN_SEQ) {
+    const k = nlKey(v);
+    if (seen.has(k) || !notStarted(v) || inUpcomingLesson(v)) continue;
+    seen.add(k); c++;
+  }
+  return c;
+}
+
 // Nimmt Wörter aktiv ins SRS-Training auf (aus dem „Neue Wörter"-Trainer).
 export function learnWords(list) {
   let added = 0;
