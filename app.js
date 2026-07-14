@@ -1725,6 +1725,11 @@ function openCard(id) {
 
 // Neues Wort einführen: Karte (kodieren) → Wiedererkennen/Abruf (interleaved, wechselnde Formate).
 // Erst nach echtem Abruf kommt es MIT echtem Grade ins SRS (introWord). Nur NEUE Wörter.
+// Kompaktes Frage-Artwork (nur wenn eine Illustration existiert) — für MC/Audio-Schritte.
+function cardArtHTML(v) {
+  if (!v || !CARD_ART.has(v.id)) return '';
+  return `<div class="q-art"><img src="illustrations/vocab/${esc(v.id)}.webp" alt="" loading="lazy" onerror="this.closest('.q-art').remove()"></div>`;
+}
 function stepIntro(vocab) {
   const pool = vocab.slice();
   return { render(body, foot, done) {
@@ -1752,10 +1757,10 @@ function stepIntro(vocab) {
     };
 
     // ---- Abruf (Format wechselt) ----
-    const optionStep = (v, prompt, keyField, doSpeak) => {
+    const optionStep = (v, prompt, keyField, doSpeak, showArt) => {
       const opts = mcChoices(v, pool.length >= 4 ? pool : ALL_VOCAB);
       body.innerHTML = `<div class="step-label">Abruf · ${i + 1}/${total}</div>
-        <div class="step-title">${prompt}</div>${doSpeak ? audioBtn() : ''}
+        <div class="step-title">${prompt}</div>${showArt ? cardArtHTML(v) : ''}${doSpeak ? audioBtn() : ''}
         <div class="choices">${opts.map(o => `<button class="choice" data-id="${o.id}">${esc(o[keyField])}</button>`).join('')}</div>`;
       if (doSpeak) { speak(v.nl); const rp = body.querySelector('#rep'); if (rp) rp.onclick = () => speak(v.nl); }
       let answered = false;
@@ -1769,10 +1774,10 @@ function stepIntro(vocab) {
       });
       foot.innerHTML = '';
     };
-    const inputStep = (v, prompt, doSpeak) => {
+    const inputStep = (v, prompt, doSpeak, showArt) => {
       const hint = stripArt(normalize(v.nl))[0] || '';
       body.innerHTML = `<div class="step-label">Abruf · ${i + 1}/${total}</div>
-        <div class="step-title">${prompt}</div>${doSpeak ? audioBtn() : ''}
+        <div class="step-title">${prompt}</div>${showArt ? cardArtHTML(v) : ''}${doSpeak ? audioBtn() : ''}
         <div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${doSpeak ? 'auf Niederländisch…' : 'beginnt mit „' + esc(hint) + '…“'}"></div>
         <div id="fb" class="afb"></div>`;
       if (doSpeak) { speak(v.nl); const rp = body.querySelector('#rep'); if (rp) rp.onclick = () => speak(v.nl); }
@@ -1789,11 +1794,11 @@ function stepIntro(vocab) {
       inp.onkeydown = (e) => { if (e.key === 'Enter') check(); };
     };
     const drawRetrieve = (v, fmt) => {
-      if (fmt === 'mcRev') optionStep(v, `Was bedeutet „${esc(v.nl)}"?`, 'de', false);
-      else if (fmt === 'audio') optionStep(v, `Welches Wort hörst du?`, 'nl', true);
-      else if (fmt === 'listenType') inputStep(v, `Hör zu und tippe, was du hörst:`, true);
-      else if (fmt === 'type') inputStep(v, `Tippe auf Niederländisch: „${esc(v.de)}"`, false);
-      else optionStep(v, `Was heißt „${esc(v.de)}"?`, 'nl', false);
+      if (fmt === 'mcRev') optionStep(v, `Was bedeutet „${esc(v.nl)}"?`, 'de', false, false);
+      else if (fmt === 'audio') optionStep(v, `Welches Wort hörst du?`, 'nl', true, true);
+      else if (fmt === 'listenType') inputStep(v, `Hör zu und tippe, was du hörst:`, true, true);
+      else if (fmt === 'type') inputStep(v, `Tippe auf Niederländisch: „${esc(v.de)}"`, false, false);
+      else optionStep(v, `Was heißt „${esc(v.de)}"?`, 'nl', false, true);
     };
 
     const draw = () => stage === 'encode' ? drawEncode(encode[i]) : drawRetrieve(retrieve[i], FMT[i % FMT.length]);
@@ -1981,7 +1986,7 @@ function reviewStep(queue, label) {
       };
       if (fmt === 'mc') {
         const opts = mcChoices(v, ALL_VOCAB);
-        body.innerHTML = `${head}<div class="step-title">Was heißt „${esc(v.de)}"?</div>
+        body.innerHTML = `${head}<div class="step-title">Was heißt „${esc(v.de)}"?</div>${cardArtHTML(v)}
           <div class="choices">${opts.map(o => `<button class="choice" data-id="${o.id}">${esc(o.nl)}</button>`).join('')}</div><div id="fb" class="afb"></div>`;
         let answered = false;
         body.querySelectorAll('.choice').forEach(btn => btn.onclick = () => {
@@ -1998,7 +2003,7 @@ function reviewStep(queue, label) {
       } else {
         const prod = fmt === 'prod';
         const hint = stripArt(normalize(v.nl))[0] || '';
-        body.innerHTML = `${head}<div class="step-title">Tippe auf Niederländisch: „${esc(v.de)}"</div>
+        body.innerHTML = `${head}<div class="step-title">Tippe auf Niederländisch: „${esc(v.de)}"</div>${cardArtHTML(v)}
           <div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${prod ? 'auf Niederländisch…' : `beginnt mit „${esc(hint)}…"`}"></div>
           <div id="fb" class="afb"></div>`;
         const inp = body.querySelector('#ans'); inp.focus();
