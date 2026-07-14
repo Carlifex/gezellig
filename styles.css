@@ -285,6 +285,9 @@ button{font-family:inherit}
 .vpleg-i.prev{--c:128,136,150;opacity:.6}
 .vpleg-i.prev::before{background:transparent;border:1.4px dashed rgb(var(--c));box-sizing:border-box}
 .vgroup-hd .tcount{font-size:12px;opacity:.75;font-weight:700}
+/* Kennzahlen-Zeile unter dem Trainings-Titel: beide Chips in EINER Zeile */
+.trow{display:flex;gap:8px;margin:8px 0 6px;flex-wrap:nowrap}
+.trow .tcount{margin-left:0}
 
 /* ---- Vokabelkarte (Detailansicht) ---- */
 .cardflow .flow-body{padding-top:8px}
