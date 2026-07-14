@@ -39,8 +39,25 @@ Dieses Projekt wird über **zwei** Repositories gepflegt:
 
 ## Projekt-Stand / Fortschritt (Snapshot: 2026-07-14)
 
-> Lebendes Protokoll. Bei jedem größeren Baustein aktualisieren. Service Worker `gezellig-v100`,
+> Lebendes Protokoll. Bei jedem größeren Baustein aktualisieren. Service Worker `gezellig-v115`,
 > Dev-Branch `claude/gezellig-app-dev-uuc809`.
+
+### Release-Sprint (2026-07-14): UX-Test + Finishline-Fixes
+- **Voller UI-Test als Anfänger-Simulation** (Playwright, 7 Lektionen + Training, 0 JS-Fehler).
+  Bericht/Leitfaden beim Nutzer. Danach Finishline-Fixes umgesetzt:
+- **P0**: MC-Distraktoren level-/themengebunden (`vocabLvl` in mcChoices — nie mehr C1-Physik
+  bei A1-Wörtern); Hör-Ausweich überall („🔇 Ich kann gerade nicht hören" wandelt Audio-Aufgabe
+  in Sicht-Format um; Diktat: „👁 kurz zeigen"; Zahlen-Hören → Zahlwort zeigen).
+- **UX**: Toasts oben statt über Inhalt; „Lektion geschafft" mit Artwork + klickbaren Wortpillen
+  + „Streak startet morgen" + Pacing-Hinweis ab 3 Lektionen/Tag; Grammatik-Check zeigt nach
+  Fehlversuch die Regel (.gc-hint); Sperrgrund direkt am „Wortschatz erweitern"-Button (🔒);
+  Tagesziel-Dial zeigt >100 %; Fortschrittsbalken füllt anteilig innerhalb der Wortphase
+  (`flowSubProgress`); Onboarding-✕ = überspringen mit Defaults; Memory ohne NL=DE-Paare.
+- **Fix v114**: Tagesaufgabe „1 Gespräch führen" entfernt (chatTurn nur in geparktem alpha/ —
+  war unerfüllbar). Kapitel-1-Prüfungsgating (80 % von 281 Wörtern ≥2 Reps) bewusst belassen.
+- **Vokabel-Ausbau Kapitel 2–6**: +319 Bank-Wörter thematisch in dünne Lektionen (personen Ø11.9,
+  mythen Ø11.6, ade Ø10.8, feest Ø8.6, natuurkunde Ø9.5); 0 Dopplungen im ganzen Kurs (991 unique).
+- **Art-Prompts komplett entgraftet**: privates Inventar 1432 Prompts, Gracht nur noch 15 (1 %).
 
 ### Deployment & Frische
 - **Auto-Update aktiv** (`index.html`): registriert SW, ruft `reg.update()` bei Start +

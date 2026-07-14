@@ -96,7 +96,8 @@ function renderToday() {
   const L = levelInfo();
   const due = dueCount();
   const goalXp = dailyGoalXp(), tXp = todayXp();
-  const gpct = Math.min(100, Math.round(tXp / goalXp * 100));
+  const gpctRaw = Math.round(tXp / goalXp * 100);
+  const gpct = Math.min(100, gpctRaw);
   const hour = new Date().getHours();
   const greet = hour < 11 ? 'Guten Morgen!' : hour < 18 ? 'Guten Tag!' : 'Guten Abend!';
   const heroTracks = TRACKS.filter(x => trackLessons(x.key).length);
@@ -126,8 +127,8 @@ function renderToday() {
 
       <div class="card daycard">
         <div class="daytop">
-          <div class="dial" style="--p:${gpct}%"><i>${gpct}%</i></div>
-          <div class="txt"><b>Tagesziel</b><div>${tXp} / ${goalXp} XP heute</div></div>
+          <div class="dial" style="--p:${gpct}%"><i>${gpctRaw > 100 ? gpctRaw + '%' : gpct + '%'}</i></div>
+          <div class="txt"><b>Tagesziel${gpctRaw >= 200 ? ' 🚀' : ''}</b><div>${tXp} / ${goalXp} XP heute</div></div>
           <div class="streak"><b>🔥 ${state.streak}</b><span>STREAK</span></div>
         </div>
         <div class="daytasks">${dailyTasks().map(taskRow).join('')}</div>
@@ -595,9 +596,9 @@ function renderVocab() {
         }).join('');
         return `<div class="ph-unlock"><span class="ph-unlock-hd">↑ Üben schaltet ${need.length === 1 ? 'diese Prüfung' : 'diese Prüfungen'} frei:</span><ul>${items}</ul></div>`;
       })()}
-      <button class="btn" id="learnnew" ${growLocked ? 'disabled' : ''}>➕ Wortschatz um ${nNew || 8} Vokabeln erweitern</button>
+      <button class="btn" id="learnnew" ${growLocked ? 'disabled' : ''}>${growLocked ? '🔒' : '➕'} Wortschatz um ${nNew || 8} Vokabeln erweitern</button>
+      <div class="muted" style="font-size:12px;text-align:center;margin-top:-4px">${growHint}</div>
       <button class="btn ghost ${examsNeedingVocab().length ? 'unlocks' : ''}" id="practice-known">🔁 Vokabeltraining${due ? ` · ${due} fällig` : ''}${examsNeedingVocab().length ? ' <span class="btn-up" title="schaltet die Prüfung frei">↑</span>' : ''}</button>
-      <div class="muted" style="font-size:12px;text-align:center">${growHint}</div>
     </div>
 
     <div class="section-sub" style="margin:20px 0 8px">Spezial-Training</div>
@@ -727,10 +728,16 @@ function numDrillStep(question, num, total, score) {
       foot.innerHTML = '';
     } else if (question.kind === 'listen') {
       body.innerHTML = `${head}<div class="step-title">Hör zu und tippe die Zahl (Ziffern):</div>
-        <div style="text-align:center;margin:12px 0"><button class="iconbtn" id="rep" style="width:64px;height:64px;font-size:28px">🔊</button></div>
+        <div style="text-align:center;margin:12px 0"><button class="iconbtn" id="rep" style="width:64px;height:64px;font-size:28px">🔊</button>
+          <div><button class="linklike" id="noaudio">🔇 Ich kann gerade nicht hören</button></div></div>
         <div class="answer"><input id="ans" inputmode="numeric" autocomplete="off" placeholder="z. B. 42"></div><div id="fb" class="afb"></div>`;
       speak(word);
       body.querySelector('#rep').onclick = () => speak(word);
+      // Hör-Ausweich: Zahlwort zeigen -> aus Hör-Verstehen wird Lese-Verstehen.
+      body.querySelector('#noaudio').onclick = () => {
+        body.querySelector('.step-title').textContent = `Welche Zahl ist „${word}"? (Ziffern)`;
+        body.querySelector('#noaudio').remove();
+      };
       const inp = body.querySelector('#ans'); inp.focus();
       foot.innerHTML = `<button class="btn" id="chk">Prüfen</button>`;
       const check = () => {
@@ -878,6 +885,7 @@ function renderProfile() {
 
 /* ============================ FLOW-Engine ============================ */
 let flowEl = null;
+let flowSubProgress = () => {};
 function openFlow(steps, onFinish) {
   let idx = 0;
   flowEl = document.createElement('div'); flowEl.className = 'flow'; document.body.appendChild(flowEl);
@@ -890,6 +898,12 @@ function openFlow(steps, onFinish) {
         <span class="muted" style="font-size:12px;font-weight:700">${idx + 1}/${total}</span></div>
       <div class="flow-body" id="body"></div><div class="flow-foot" id="foot"></div>`;
     flowEl.querySelector('#close').onclick = closeFlow;
+    // Lange Schritte (z. B. Wortphase) melden ihren inneren Fortschritt anteilig —
+    // der Balken kriecht dann innerhalb des Segments weiter statt zu "kleben".
+    flowSubProgress = (frac) => {
+      const bar = flowEl && flowEl.querySelector('.progress i');
+      if (bar) bar.style.width = Math.round((idx + Math.max(0, Math.min(1, frac))) / total * 100) + '%';
+    };
     steps[idx].render(flowEl.querySelector('#body'), flowEl.querySelector('#foot'), next);
   }
   function next() { idx++; if (idx >= total) return onFinish(flowEl); show(); }
@@ -920,10 +934,13 @@ function stepMatch(l) {
     return s && s.split(/\s+/).length <= 2 && s.length <= 16 && String(v.de || '').trim();
   };
   // Dedupe nach deutscher Uebersetzung: verhindert zwei optisch identische DE-Zellen.
+  // Ausserdem raus: Woerter, die in NL und DE identisch sind (hallo/hallo) —
+  // die Zuordnung waere trivial und sieht wie ein Fehler aus.
   const seenDe = new Set();
   const uniq = (l.vocab || []).filter(v => {
     if (!short(v)) return false;
     const key = normalize(String(v.de || ''));
+    if (normalize(String(v.nl || '')) === key) return false;
     if (seenDe.has(key)) return false;
     seenDe.add(key); return true;
   });
@@ -1208,6 +1225,7 @@ function stepDictation(l) {
         <div class="dict-play">
           <button class="iconbtn dict-rep" id="rep" style="width:64px;height:64px;font-size:28px">${supported ? '🔊' : '👁'}</button>
           <span class="muted dict-hint" id="hint">${supported ? 'Tippen zum Wiederholen' : 'Tippen: Satz kurz zeigen'}</span>
+          ${supported ? '<button class="linklike" id="peek">👁 kurz zeigen</button>' : ''}
         </div>
         <div class="dict-show" id="show" aria-hidden="true"></div>
         <div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="auf Niederländisch…"></div>
@@ -1224,6 +1242,12 @@ function stepDictation(l) {
         }
       };
       body.querySelector('#rep').onclick = present;
+      const peek = body.querySelector('#peek');
+      if (peek) peek.onclick = () => {           // Hör-Ausweich: Satz 2 s einblenden
+        show.textContent = it.nl; show.classList.add('on');
+        clearTimeout(timer);
+        timer = setTimeout(() => { show.classList.remove('on'); }, 2000);
+      };
       present();
       inp.focus();
       foot.innerHTML = `<button class="btn" id="chk">Prüfen</button>`;
@@ -1523,12 +1547,22 @@ function openLesson(lessonId) {
     const key = l.track || 'verhaal';
     const tls = trackLessons(key);
     const next = tls[tls.findIndex(x => x.id === lessonId) + 1];
+    const art = l.images && l.images.story;
+    const pills = (l.vocab || []).slice(0, 24).map(v => {
+      const pos = (CARDS[v.id] && CARDS[v.id].pos) || '';
+      return `<button class="vpill pos-${esc(pos)}" data-card="${esc(v.id)}">${esc(v.nl)}</button>`;
+    }).join('');
+    const streakLine = state.streak > 0 ? `🔥 Streak: ${state.streak}` : '🔥 Dein Streak startet morgen';
     fe.innerHTML = `<div class="flow-body"><div class="done">
-      <div class="big">🎉</div><h2>Lektion geschafft!</h2>
+      ${art ? `<div class="done-art"><img src="${esc(art)}" alt="" onerror="this.closest('.done-art').remove()"></div>` : `<div class="big">🎉</div>`}
+      <h2>Lektion geschafft!</h2>
       <p class="muted">${res && res.first ? `+${20 + (res.newWords || 0)} XP · ${res.newWords} Wörter im Training` : 'Wiederholt — gut gemacht!'}</p>
-      <p class="muted">🔥 Streak: ${state.streak} · Level-XP: ${state.xp}</p>
-      ${next ? `<button class="btn" id="next" style="max-width:280px;margin-top:12px">Weiter → nächste Lektion</button>` : `<button class="btn" id="exam" style="max-width:280px;margin-top:12px">Zur Abschlussprüfung</button>`}
+      <p class="muted">${streakLine} · Level-XP: ${state.xp}</p>
+      ${pills ? `<div class="done-words"><div class="done-words-h">Deine Wörter — tippe für die Karte</div><div class="done-pills">${pills}</div></div>` : ''}
+      ${(state.daily.counters.lessonsDone || 0) >= 3 ? `<p class="muted" style="font-size:13px">💡 Starkes Pensum heute! Die Wiederholung <b>morgen</b> festigt die Wörter am besten — das Gedächtnis liebt Abstände.</p>` : ''}
+      ${next ? `<button class="btn" id="next" style="max-width:280px;margin-top:14px">Weiter → nächste Lektion</button>` : `<button class="btn" id="exam" style="max-width:280px;margin-top:14px">Zur Abschlussprüfung</button>`}
       <button class="btn ghost" id="fin" style="max-width:280px;margin-top:8px">Zurück zum Kapitel</button></div></div>`;
+    fe.querySelectorAll('.vpill[data-card]').forEach(p => p.onclick = () => openCard(p.dataset.card));
     const nb = fe.querySelector('#next'); if (nb) nb.onclick = () => { closeFlow(); openLesson(next.id); };
     const eb = fe.querySelector('#exam'); if (eb) eb.onclick = () => { closeFlow(); go('lessons', key); setTimeout(() => openExam(key), 60); };
     fe.querySelector('#fin').onclick = () => { closeFlow(); go('lessons', key); };
@@ -1783,12 +1817,31 @@ function pluralQuestions(count) {
     ({ type: 'type', q: `Wie heißt die Mehrzahl von „${p.sg}"?`, answer: p.pl }));
 }
 
+// Niveau je Vokabel (A1..C1): Bank-Wörter tragen lvl, Lektionswörter erben das
+// Level ihres Kapitels. Distraktoren bleiben so im Sprachniveau des Lerners —
+// keine C1-Physikbegriffe als Optionen zu einem A1-Wort.
+const LVL_NUM = { A1: 1, A2: 2, B1: 3, C1: 4 };
+const LESSON_LVL = {};
+LESSONS.forEach(l => { const t = TRACKS.find(x => x.key === (l.track || 'verhaal')); LESSON_LVL[l.id] = t ? t.level : 'A1'; });
+const vocabLvl = (x) => LVL_NUM[x.lvl || LESSON_LVL[x.lesson]] || 2;
+
 function mcChoices(v, pool, n = 3) {
   const shape = (s) => { s = String(s).trim(); return { q: /\?$/.test(s), words: s.split(/\s+/).length, art: /^(de|het|een)\s/i.test(s) }; };
   const sv = shape(v.nl);
-  const score = (x) => { const sx = shape(x.nl); return (sx.q === sv.q ? 5 : 0) + (Math.abs(sx.words - sv.words) <= 1 ? 2 : 0) + (sx.art === sv.art ? 1 : 0); };
-  const others = shuffle(pool.filter(x => x.id !== v.id && x.nl !== v.nl))
-    .sort((a, b) => score(b) - score(a)).slice(0, n);
+  const pv = CARDS[v.id] && CARDS[v.id].pos;
+  const score = (x) => {
+    const sx = shape(x.nl);
+    return (sx.q === sv.q ? 5 : 0) + (Math.abs(sx.words - sv.words) <= 1 ? 2 : 0) + (sx.art === sv.art ? 1 : 0)
+      + (pv && CARDS[x.id] && CARDS[x.id].pos === pv ? 3 : 0)       // gleiche Wortart
+      + (v.lesson && x.lesson === v.lesson ? 2 : 0);                 // gleiche Lektion (Themennähe)
+  };
+  let cand = pool.filter(x => x.id !== v.id && x.nl !== v.nl);
+  // Level-Vorfilter: exakt gleiches Niveau, sonst ±1 Stufe — nur aufweichen, wenn zu wenig Material.
+  const lv = vocabLvl(v);
+  const same = cand.filter(x => vocabLvl(x) === lv);
+  const near = cand.filter(x => Math.abs(vocabLvl(x) - lv) <= 1);
+  if (same.length >= n * 3) cand = same; else if (near.length >= n * 2) cand = near;
+  const others = shuffle(cand).sort((a, b) => score(b) - score(a)).slice(0, n);
   return shuffle([v, ...others]);
 }
 
@@ -1864,7 +1917,8 @@ function stepIntro(vocab) {
     const grade = (v, ok, typo) => { recordAnswer(ok); introWord(v.id, (ok && !typo) ? 'good' : 'hard'); flushUnlocks(); };
     const nextBtn = (fn) => { foot.innerHTML = `<button class="btn" id="n">${i === total - 1 ? 'Fertig' : 'Weiter'}</button>`; foot.querySelector('#n').onclick = fn; };
     const advance = () => { i++; if (i >= retrieve.length) return done(); draw(); };
-    const audioBtn = () => `<div style="text-align:center;margin:4px 0 12px"><button class="iconbtn" id="rep" style="width:60px;height:60px;font-size:26px">🔊</button></div>`;
+    const audioBtn = () => `<div style="text-align:center;margin:4px 0 12px"><button class="iconbtn" id="rep" style="width:60px;height:60px;font-size:26px">🔊</button>
+      <div><button class="linklike" id="noaudio">🔇 Ich kann gerade nicht hören</button></div></div>`;
 
     // ---- Kennenlernen ----
     const drawEncode = (v) => {
@@ -1917,9 +1971,16 @@ function stepIntro(vocab) {
       else if (fmt === 'listenType') inputStep(v, `Hör zu und tippe, was du hörst:`, true, true);
       else if (fmt === 'type') inputStep(v, `Tippe auf Niederländisch: „${esc(v.de)}"`, false, false);
       else optionStep(v, `Was heißt „${esc(v.de)}"?`, 'nl', false, true);
+      // Hör-Ausweich: wer gerade nicht hören kann, bekommt dieselbe Vokabel als Sicht-Aufgabe.
+      const na = body.querySelector('#noaudio');
+      if (na) na.onclick = () => drawRetrieve(v, fmt === 'listenType' ? 'type' : 'mcStd');
     };
 
-    const draw = () => stage === 'encode' ? drawEncode(encode[i]) : drawRetrieve(retrieve[i], FMT[i % FMT.length]);
+    const draw = () => {
+      const doneN = stage === 'encode' ? i : encode.length + i;
+      flowSubProgress(doneN / Math.max(1, encode.length + retrieve.length));
+      return stage === 'encode' ? drawEncode(encode[i]) : drawRetrieve(retrieve[i], FMT[i % FMT.length]);
+    };
     draw();
   }};
 }
@@ -2038,6 +2099,16 @@ function stepGrammarCheck(gid) {
         const ok = +b.dataset.o === checks[ci].answer;
         b.style.borderColor = ok ? 'var(--good)' : 'var(--bad)'; b.style.color = ok ? 'var(--good)' : 'var(--bad)';
         if (ok) { ci++; setTimeout(() => (ci >= checks.length ? done() : draw()), 380); }
+        else {
+          // Nicht raten lassen: nach dem Fehlversuch die Regel dazu einblenden.
+          const card = b.closest('.card');
+          if (card && !card.querySelector('.gc-hint') && GRAMMAR[gid] && GRAMMAR[gid].rule) {
+            const h = document.createElement('div');
+            h.className = 'gc-hint';
+            h.innerHTML = `💡 ${GRAMMAR[gid].rule}`;
+            card.appendChild(h);
+          }
+        }
       });
     };
     draw();
@@ -2212,6 +2283,13 @@ function runOnboarding() {
     }},
   ];
   openFlow(steps, () => { localStorage.setItem('gezellig.onboarded', '1'); closeFlow(); go('today'); });
+  // ✕ im Onboarding = überspringen mit Defaults (statt beim nächsten Start wieder von vorn).
+  const x = flowEl && flowEl.querySelector('#close');
+  if (x) x.onclick = () => {
+    localStorage.setItem('gezellig.onboarded', '1');
+    closeFlow(); go('today');
+    toast('Übersprungen — alle Einstellungen findest du im Reise-Tab.', '⚙️');
+  };
 }
 
 /* ---------- utils ---------- */
