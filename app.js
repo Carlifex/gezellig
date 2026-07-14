@@ -565,7 +565,8 @@ function renderVocab() {
     : !extraAvail ? 'Alle freien Wörter sind schon in der Rotation.'
     : `⭐ Jede Abfrage bringt ${reviewXp()} XP — wächst mit deinem Wortschatz · heute noch ${quota}/${EXTRA_DAILY_MAX} frei`;
   app.innerHTML = `
-    <div class="section-title">Training <span class="tcount">${started} Vokabel${started === 1 ? '' : 'n'} in der Rotation</span>${acc != null ? ` <span class="tcount">🎯 ${acc} % Treffer</span>` : ''}</div>
+    <div class="section-title">Training</div>
+    <div class="trow"><span class="tcount">${started} Vokabel${started === 1 ? '' : 'n'} in Rotation</span>${acc != null ? `<span class="tcount" title="Trefferquote">🎯 ${acc} % Treffer</span>` : ''}</div>
     <div class="section-sub">Übe mit echter Abfrage — Tippen & Wiedererkennen, automatisch bewertet.</div>
 
     <div class="practicehub">
