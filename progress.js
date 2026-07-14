@@ -12,7 +12,6 @@ const KEY = 'gezellig.v2';
 const DAYMS = 864e5;
 const todayStr = () => new Date().toISOString().slice(0, 10);
 const yestStr  = () => new Date(Date.now() - DAYMS).toISOString().slice(0, 10);
-const dayIndex = () => Math.floor(Date.now() / DAYMS);
 
 const vocabById = {};
 LESSONS.forEach(l => l.vocab.forEach(v => { vocabById[v.id] = { ...v, lesson: l.id }; }));
@@ -149,9 +148,9 @@ function pickTasks(goalKey) {
     { id: 'review', label: `${scale} Wörter wiederholen`, metric: 'reviews', target: scale },
     { id: 'lesson', label: '1 Lektion machen', metric: 'lessonsDone', target: 1 },
   ];
-  // Dritte Aufgabe rotiert täglich (Abwechslung).
-  if (dayIndex() % 2 === 0) tasks.push({ id: 'chat', label: '1 Gespräch führen', metric: 'chats', target: 1 });
-  else tasks.push({ id: 'speak', label: `${speakN} Sätze sprechen`, metric: 'speakOk', target: speakN });
+  // Dritte Aufgabe: Sprechen. (Der Chat-Task ist deaktiviert, solange der
+  // KI-Chat in alpha/ geparkt ist — sonst wäre die Aufgabe unerfüllbar.)
+  tasks.push({ id: 'speak', label: `${speakN} Sätze sprechen`, metric: 'speakOk', target: speakN });
   return tasks.map(t => ({ ...t, done: false, rewarded: false }));
 }
 
