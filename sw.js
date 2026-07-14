@@ -13,7 +13,7 @@
 // werden automatisch nachgezogen. (CACHE-Version nur bumpen, wenn man alle
 // Caches hart leeren will.)
 
-const CACHE = 'gezellig-v103';
+const CACHE = 'gezellig-v104';
 const ASSETS = [
   './',
   './index.html',
