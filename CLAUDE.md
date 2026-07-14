@@ -55,8 +55,8 @@ Dieses Projekt wird über **zwei** Repositories gepflegt:
 - Deploy = FF-Push Dev→`main` (`git push origin <dev>:main`), Pages zieht in 1–2 Min nach.
 
 ### Karteikarten-System (`cards.js`, NEU)
-- Export `CARDS` (**2435** angereicherte Karten von Ziel ~2937) + `CARD_ART` (Set von IDs
-  mit Illustration, aktuell **69**). Schema je Karte: `lemma, displayNl, pos, genus?, plural?,
+- Export `CARDS` (**alle 3003 App-Vokabeln angereichert — 0 ohne Karte**) + `CARD_ART` (Set von IDs
+  mit Illustration). Enrichment-Rest via Sonnet-5-Enrich → Opus-4.8-Verify (Workflow) abgeschlossen. Schema je Karte: `lemma, displayNl, pos, genus?, plural?,
   meanings:[{de,ex,exDe}], conjugation?, usage, notes?, illustratable?`. Kondensiert auf
   **Grundformen** (Verben→Infinitiv, Substantive→Nom.Sg. außer plurale tantum). Umlaut-
   normalisiert, **kein** artPrompt in der ausgelieferten Datei.
