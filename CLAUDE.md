@@ -54,7 +54,8 @@ Dieses Projekt wird über **zwei** Repositories gepflegt:
   Tagesziel-Dial zeigt >100 %; Fortschrittsbalken füllt anteilig innerhalb der Wortphase
   (`flowSubProgress`); Onboarding-✕ = überspringen mit Defaults; Memory ohne NL=DE-Paare.
 - **Fix v114**: Tagesaufgabe „1 Gespräch führen" entfernt (chatTurn nur in geparktem alpha/ —
-  war unerfüllbar). Kapitel-1-Prüfungsgating (80 % von 281 Wörtern ≥2 Reps) bewusst belassen.
+  war unerfüllbar). **Prüfungs-Gating v117: EXAM_VOCAB_PCT 80 → 50 %** (bei ~280 Wörtern/Kapitel
+  hätten sonst ~225 Pflicht-Reviews vor der Prüfung gestanden — kaum Progress).
 - **Vokabel-Ausbau Kapitel 2–6**: +319 Bank-Wörter thematisch in dünne Lektionen (personen Ø11.9,
   mythen Ø11.6, ade Ø10.8, feest Ø8.6, natuurkunde Ø9.5); 0 Dopplungen im ganzen Kurs (991 unique).
 - **Art-Prompts komplett entgraftet**: privates Inventar 1432 Prompts, Gracht nur noch 15 (1 %).

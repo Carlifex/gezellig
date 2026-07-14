@@ -421,8 +421,10 @@ function bindTextToggle(btn) {
 // Abschlussprüfung eines Kapitels: erscheint am Ende der Lektionsliste.
 // Freigeschaltet, wenn alle Lektionen des Kapitels durchgearbeitet sind;
 // bestanden ab 80 % richtiger Antworten.
-// Prüfung freigeschaltet: alle Lektionen durch UND Vokabeln trainiert (Reife ≥ 80 %).
-const EXAM_VOCAB_PCT = 80;
+// Prüfung freigeschaltet: alle Lektionen durch UND Vokabeln trainiert (Reife ≥ 50 %).
+// (War 80 % — bei ~280 Wörtern je Kapitel hieße das ~225 Pflicht-Reviews vor der
+// Prüfung; das würgte den Fortschritt ab. 50 % hält den Trainings-Anreiz, ohne zu blocken.)
+const EXAM_VOCAB_PCT = 50;
 function lessonsAllDone(ls) { return ls.length > 0 && ls.every(l => lessonStatus(l.id) !== 'neu'); }
 function examUnlocked(key) {
   const ls = trackLessons(key);
