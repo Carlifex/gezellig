@@ -37,6 +37,75 @@ Dieses Projekt wird über **zwei** Repositories gepflegt:
   verdrahtet; Reaktivierung siehe `alpha/BACKLOG.md`.
 - Offenes Backlog & Feature-Ideen: `BACKLOG.md`.
 
+## Projekt-Stand / Fortschritt (Snapshot: 2026-07-14)
+
+> Lebendes Protokoll. Bei jedem größeren Baustein aktualisieren. `main`-HEAD zuletzt:
+> `885b35f`, Service Worker `gezellig-v98`, Dev-Branch `claude/gezellig-app-dev-uuc809`.
+
+### Deployment & Frische
+- **Auto-Update aktiv** (`index.html`): registriert SW, ruft `reg.update()` bei Start +
+  minütlich; bei `controllerchange` **einmaliger** `location.reload()` (Guard `hadController`,
+  damit Erstinstallation nicht neu lädt). → App hält sich selbst aktuell, **kein manuelles
+  Cache-Leeren** mehr. Achtung Android-PWA: „aus Recents fortsetzen" ≠ Reload; für den
+  Umstieg auf eine neue index.html einmal **kaltstarten** (aus Recents wegwischen) oder
+  Pull-to-refresh.
+- **SW-Strategie** (`sw.js`): Navigation + Code (js/css/json/html) **network-first**
+  (online immer frisch, Cache nur Offline-Reserve); Bilder/Medien **cache-first +
+  Hintergrund-Refresh**. **CACHE-Version bei jeder App-Änderung bumpen** (aktuell v98).
+- Deploy = FF-Push Dev→`main` (`git push origin <dev>:main`), Pages zieht in 1–2 Min nach.
+
+### Karteikarten-System (`cards.js`, NEU)
+- Export `CARDS` (**2336** angereicherte Karten von Ziel ~2937) + `CARD_ART` (Set von IDs
+  mit Illustration, aktuell **49**). Schema je Karte: `lemma, displayNl, pos, genus?, plural?,
+  meanings:[{de,ex,exDe}], conjugation?, usage, notes?, illustratable?`. Kondensiert auf
+  **Grundformen** (Verben→Infinitiv, Substantive→Nom.Sg. außer plurale tantum). Umlaut-
+  normalisiert, **kein** artPrompt in der ausgelieferten Datei.
+- **Kartenansicht** (`openCard(id)` in `app.js`): Overlay mit Artwork, POS-Chips,
+  Bedeutungen (Polysemie), Konjugationstabelle (Verben) bzw. Deklination (Substantive),
+  Usage, Notes. Wird in **Training** UND in **Lektionen** (Encode-Schritt) zur Einführung genutzt.
+- **Enrichment-Rest: ~601 Karten offen** (Session-Limit gestoppt). Pipeline liegt in
+  `scratchpad/enrich-wf.js` (Batches à 8, Enrich→adversariale Verify, `general-purpose`,
+  effort high). Roh-Inputs `scratchpad/vb/b*.json` (368 Dateien) bzw. `inputs-all.json`
+  (2937 deduped). Resultate aus `tasks/*.output` (`p.result.cards`) konsolidieren, NICHT aus
+  Journalen. Bei Fortsetzung: cards.js neu erzeugen und mergen.
+
+### Trainingsseite (umgebaut)
+- Vokabelliste = **nur bereits gelernte** Wörter (`state.cards[id].reps`), nicht der
+  Gesamtbestand. Überschrift „Gelernte Wörter · N · tippe für die Karte". Zeilen zeigen
+  Thumbnail (`illustrations/vocab/<id>.webp`) oder 🃏-Platzhalter; **Klick öffnet die Karte**.
+- **Zahlen-Lernseite** (`vocabSub='numbers'`, `renderNumbers`): getallen 0–1000 hören/tippen.
+- Hinweis „↑ Üben schaltet Prüfung frei" wenn `examsNeedingVocab()`; Tab-Pfeil bei Bedarf.
+
+### Neue Lernmodule (6, story-passend eingebaut)
+`stepMatch`, `stepCloze`, `stepSentenceBuild`, `stepDictation`, `stepConjDrill`,
+`stepBranchDialogue`. Progression über `lessonStufe(l)` (1–6) + `pickUebung()` (Getallen→
+Zahl, meervoud→Plural, CONJ/ORDER-Grammatik-abhängig, Stufe-/Index-Alternation). Vokabel-
+Einführung `stepIntro` = Kennenlernen (cardHTML) + interleaved Abruf (FMT-Rotation).
+Zweisprachiges **Color-Coding** NL↔DE (`ccApply`/`CC_FUNC`).
+
+### Artwork-Fortschritt (Vokabel-Illustrationen)
+- **49 Karten bebildert** in `illustrations/vocab/<id>.webp` (Wörter 1–50 des Katalogs
+  komplett + `de rok`/`bk_255`). Ablage-Konvention: Querformat 1024px, WebP ~Q82, **<200 KB**;
+  ID = CARDS-Key (String, z. B. `on_koffie`), NICHT numerisch.
+- **Prompt-Vorrat**: `scratchpad/prompts50.json` (erste 50) bzw. privat
+  `gezellig-produktion/docs/vokabel-artprompts.json` (~1050). Wichtig: **Upload-Reihenfolge
+  ist geshuffelt** → jedes gelieferte Bild per **Inhalt** zuordnen (Thumbnail-Grid ansehen),
+  nicht per Position.
+- **Nächster Prompt-Block: ab #51** (av_avond/kom sind bereits vergeben & bebildert).
+
+### Erledigte Meilensteine (Tasks #1–#12, ohne #11)
+Content-Fixes, Profil-Tab, Icons, Wiederholung+Prüfungskopplung, Startseite (Kapitel/Badge/
+Button), sequenzielle Freischaltung, „Lektion geschafft"-Screen, formgleiche MC-Distraktoren,
+Color-Coding, mehr Grammatik-Beispiele, knackigeres Prüfungsformat, Kapitel-Gating
+(neues Kapitel erst nach bestandener Vorprüfung), Vokabel-Dedup (nl-equivalence).
+
+### Offene Punkte
+- **#11** Vokabeltraining vertiefen (Progression/Umfang/verbindliche Checks) — teils erledigt.
+- **#13** Kapitel 2: Carlsson/Eni einbauen, chronologisch sortieren.
+- **#14** Dialog-Avatare für Charaktere.
+- **#15** mehr Wort-/Lektions-Illustrationen (läuft: 49 da, Rest offen).
+- **Enrichment-Rest ~601 Karten** (s. o.).
+
 ## Artwork-Prompts erstellen (Verfahren)
 
 **Ich (Claude) erzeuge KEINE Pixel** — ich liefere **fertige, präzise Prompts**.
