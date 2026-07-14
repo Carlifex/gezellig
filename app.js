@@ -932,68 +932,98 @@ function stepMatch(l) {
   if (pairs.length < 2) return { render(body, foot, done) { done(); } }; // NO-OP: zu wenig Material
 
   return { render(body, foot, done) {
-    const left = shuffle(pairs.slice());   // NL-Reihenfolge
-    const right = shuffle(pairs.slice());  // DE-Reihenfolge (unabhaengig gemischt)
+    // „Auswahl" (DE) LINKS, „Karten" (NL) RECHTS — Plätze getauscht.
+    // Ablauf: erst ALLE Zuordnungen treffen (farblich gepaart), dann abschicken, dann prüfen.
+    const leftItems = shuffle(pairs.slice());   // DE = Auswahl (links)
+    const rightItems = shuffle(pairs.slice());  // NL = Karten (rechts)
     const total = pairs.length;
-    let matched = 0, selNl = null, locked = false;
+    const PAL = ['#06b6d4', '#f59e0b', '#a855f7', '#10b981', '#f43f5e']; // cyan, amber, violett, grün, rosa
 
     const head = `<div class="step-label">Paare · Wörter verbinden</div>
-      <div class="step-title">Tippe ein niederländisches Wort, dann seine Übersetzung</div>`;
+      <div class="step-title">Ordne jeder Karte ihre Übersetzung zu — erst alle, dann abschicken</div>`;
     body.innerHTML = head +
       `<div class="mtch-grid">
-        <div class="mtch-col" id="mtchL">${left.map(v =>
-          `<button class="mtch-cell" data-k="${esc(v.k)}" data-side="nl">${esc(v.nl)}</button>`).join('')}</div>
-        <div class="mtch-col" id="mtchR">${right.map(v =>
-          `<button class="mtch-cell" data-k="${esc(v.k)}" data-side="de">${esc(v.de)}</button>`).join('')}</div>
+        <div class="mtch-col" id="mtchL">${leftItems.map(v =>
+          `<button class="mtch-cell" data-k="${esc(v.k)}" data-side="de"><span class="mtch-dot"></span><span class="mtch-tx">${esc(v.de)}</span></button>`).join('')}</div>
+        <div class="mtch-col" id="mtchR">${rightItems.map(v =>
+          `<button class="mtch-cell" data-k="${esc(v.k)}" data-side="nl"><span class="mtch-dot"></span><span class="mtch-tx">${esc(v.nl)}</span></button>`).join('')}</div>
       </div>
-      <div class="mtch-prog" id="mtchProg">0/${total}</div>`;
-    foot.innerHTML = '';
+      <div class="mtch-prog" id="mtchProg">0/${total} zugeordnet</div>`;
+    foot.innerHTML = '<button class="btn" id="mtchGo" disabled>Abschicken</button>';
 
-    // Keys sind reine Zahlen-Strings -> sicher im Attribut-Selektor (kein CSS.escape noetig).
-    const cellByK = (side, k) =>
-      body.querySelector('.mtch-cell[data-side="' + side + '"][data-k="' + k + '"]');
-    const clearSel = () => body.querySelectorAll('.mtch-cell.mtch-sel').forEach(b => b.classList.remove('mtch-sel'));
+    const links = new Map();   // Zelle -> { partner: Zelle, ci: Farbindex }
+    let sel = null, locked = false;
 
-    const finish = () => {
-      body.querySelector('#mtchProg').textContent = 'Alle Paare gefunden ✓';
+    const paint = (cell, ci) => {
+      const c = PAL[ci % PAL.length];
+      cell.style.borderColor = c;
+      cell.style.background = 'color-mix(in srgb, ' + c + ' 16%, transparent)';
+      const dot = cell.querySelector('.mtch-dot'); if (dot) dot.style.background = c;
+      cell.classList.add('linked'); cell.classList.remove('mtch-sel');
+    };
+    const strip = (cell) => {
+      cell.style.borderColor = ''; cell.style.background = '';
+      const dot = cell.querySelector('.mtch-dot'); if (dot) dot.style.background = '';
+      cell.classList.remove('linked', 'mtch-sel');
+    };
+    const freeColor = () => {
+      const used = new Set([...links.values()].map(x => x.ci));
+      for (let i = 0; i < PAL.length; i++) if (!used.has(i)) return i;
+      return links.size;
+    };
+    const linkedCount = () => links.size / 2;
+    const clearSel = () => { if (sel) { sel.classList.remove('mtch-sel'); sel = null; } };
+    const updateProg = () => {
+      const n = linkedCount();
+      body.querySelector('#mtchProg').textContent = n + '/' + total + ' zugeordnet';
+      const go = foot.querySelector('#mtchGo'); if (go) go.disabled = n < total;
+    };
+    const unlink = (cell) => {
+      const rec = links.get(cell); if (!rec) return;
+      links.delete(cell); links.delete(rec.partner);
+      strip(cell); strip(rec.partner);
+    };
+
+    const onTap = (cell) => {
+      if (locked) return;
+      if (links.has(cell)) { unlink(cell); clearSel(); updateProg(); return; } // Verknüpfung lösen
+      if (cell.dataset.side === 'nl' && ttsSupported()) {
+        const v = pairs.find(p => p.k === cell.dataset.k); if (v) speak(v.nl);
+      }
+      if (!sel) { sel = cell; cell.classList.add('mtch-sel'); return; }
+      if (sel === cell) { clearSel(); return; }
+      if (sel.dataset.side === cell.dataset.side) { // gleiche Seite -> Auswahl umsetzen
+        sel.classList.remove('mtch-sel'); sel = cell; cell.classList.add('mtch-sel'); return;
+      }
+      const ci = freeColor();                       // andere Seite -> verknüpfen
+      links.set(sel, { partner: cell, ci }); links.set(cell, { partner: sel, ci });
+      paint(sel, ci); paint(cell, ci);
+      sel = null; updateProg();
+    };
+
+    body.querySelectorAll('.mtch-cell').forEach(btn => { btn.onclick = () => onTap(btn); });
+
+    const submit = () => {
+      if (locked || linkedCount() < total) return;
+      locked = true; clearSel();
+      let correct = 0;
+      body.querySelectorAll('.mtch-cell').forEach(cell => {
+        const rec = links.get(cell); if (!rec) return;
+        const ok = cell.dataset.k === rec.partner.dataset.k;
+        strip(cell);
+        cell.classList.add('mtch-done', ok ? 'correct' : 'wrong');
+        cell.disabled = true;
+        if (ok && cell.dataset.side === 'nl') correct++; // je Paar nur einmal zählen
+      });
+      for (let i = 0; i < total; i++) recordAnswer(i < correct);
+      body.querySelector('#mtchProg').textContent = correct === total
+        ? 'Alles richtig ✓ (' + correct + '/' + total + ')'
+        : correct + '/' + total + ' richtig';
       foot.innerHTML = '<button class="btn" id="mtchNext">Weiter</button>';
       foot.querySelector('#mtchNext').onclick = done;
     };
 
-    const onNl = (btn) => {
-      if (btn.classList.contains('mtch-done') || locked) return;
-      clearSel(); btn.classList.add('mtch-sel'); selNl = btn.dataset.k;
-      const v = pairs.find(p => p.k === selNl);
-      if (v && ttsSupported()) speak(v.nl);
-    };
-
-    const onDe = (btn) => {
-      if (btn.classList.contains('mtch-done') || locked) return;
-      if (selNl == null) { btn.classList.add('mtch-shake'); setTimeout(() => btn.classList.remove('mtch-shake'), 350); return; }
-      const ok = btn.dataset.k === selNl;
-      recordAnswer(ok);
-      if (ok) {
-        const nlBtn = cellByK('nl', selNl);
-        [nlBtn, btn].forEach(b => { if (b) { b.classList.remove('mtch-sel'); b.classList.add('mtch-done', 'correct'); b.disabled = true; } });
-        selNl = null; matched++;
-        body.querySelector('#mtchProg').textContent = matched + '/' + total;
-        if (matched >= total) finish();
-      } else {
-        locked = true;
-        const nlBtn = cellByK('nl', selNl);
-        btn.classList.add('wrong', 'mtch-shake');
-        if (nlBtn) nlBtn.classList.add('wrong');
-        setTimeout(() => {
-          btn.classList.remove('wrong', 'mtch-shake');
-          if (nlBtn) nlBtn.classList.remove('wrong');
-          clearSel(); selNl = null; locked = false;
-        }, 650);
-      }
-    };
-
-    body.querySelectorAll('.mtch-cell').forEach(btn => {
-      btn.onclick = () => { if (btn.dataset.side === 'nl') onNl(btn); else onDe(btn); };
-    });
+    foot.querySelector('#mtchGo').onclick = submit;
   }};
 }
 
