@@ -571,7 +571,7 @@ function renderVocab() {
         return `<div class="ph-unlock"><span class="ph-unlock-hd">↑ Üben schaltet ${need.length === 1 ? 'diese Prüfung' : 'diese Prüfungen'} frei:</span><ul>${items}</ul></div>`;
       })()}
       <button class="btn" id="learnnew" ${extraAvail ? '' : 'disabled'}>➕ ${nNew || 8} neue Wörter lernen</button>
-      <button class="btn ghost ${examsNeedingVocab().length ? 'unlocks' : ''}" id="practice-known">🔁 Bekannte Wörter üben${due ? ` · ${due} fällig` : ''}${examsNeedingVocab().length ? ' <span class="btn-up" title="schaltet die Prüfung frei">↑</span>' : ''}</button>
+      <button class="btn ghost ${examsNeedingVocab().length ? 'unlocks' : ''}" id="practice-known">🔁 Vokabeltraining${due ? ` · ${due} fällig` : ''}${examsNeedingVocab().length ? ' <span class="btn-up" title="schaltet die Prüfung frei">↑</span>' : ''}</button>
     </div>
 
     <div class="section-sub" style="margin:20px 0 8px">Spezial-Training</div>
@@ -714,7 +714,7 @@ function openPracticeKnown() {
   const due = dueVocab();
   const pool = due.length ? due : shuffle(startedVocab().slice()).slice(0, 12);
   runReview(pool, {
-    label: due.length ? 'Wiederholen' : 'Bekannte üben', emoji: '🔁', title: 'Geübt!',
+    label: due.length ? 'Wiederholen' : 'Vokabeltraining', emoji: '🔁', title: 'Geübt!',
     empty: 'Noch keine bekannten Wörter — hol dir erst neue!', returnTab: 'vocab',
   });
 }
