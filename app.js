@@ -2,6 +2,7 @@
 //  Gezellig v2 — App-Steuerung (deutsche UI, Inhalt Niederländisch)
 // ============================================================================
 import { LESSONS, GRAMMAR, GRAMMAR_EXAMPLES, PLURAL_PAIRS, CHAT_SCENARIOS, DAILY_GOALS } from './data.js';
+import { CARDS, CARD_ART } from './cards.js';
 import { statusLabel } from './srs.js';
 import { speak, speakSequence, ttsSupported, setTtsEnabled, setTtsRate, sttSupported, listen, similarity, normalize } from './speech.js';
 import {
@@ -505,14 +506,19 @@ function renderVocab() {
       default:           return true;
     }
   };
-  const filters = [['alle', 'Alle'], ['due', 'Fällig'], ['neu', 'Neu'], ['gelernt', 'Gelernt'], ['gemeistert', 'Gemeistert'], ['schwierig', 'Schwierig']];
-  const list = ALL_VOCAB.filter(match);
+  const filters = [['alle', 'Alle'], ['due', 'Fällig'], ['gelernt', 'Gelernt'], ['gemeistert', 'Gemeistert'], ['schwierig', 'Schwierig']];
+  // NUR bereits gelernte (gestartete) Vokabeln — nicht der gesamte App-Bestand.
+  const learned = ALL_VOCAB.filter(v => { const c = state.cards[v.id]; return c && c.reps; });
+  const list = learned.filter(match);
   const rows = list.map(v => {
     const st = statusLabel(state.cards[v.id], now);
-    return `<div class="vrow"><div><div class="nl">${esc(v.nl)}</div><div class="de">${esc(v.de)}</div></div>
+    const hasArt = CARD_ART.has(v.id);
+    return `<div class="vrow" data-card="${esc(v.id)}">
+      ${hasArt ? `<img class="vrow-thumb" src="illustrations/vocab/${esc(v.id)}.webp" alt="" loading="lazy" onerror="this.remove()">` : '<span class="vrow-thumb ph">🃏</span>'}
+      <div class="vrow-txt"><div class="nl">${esc((CARDS[v.id] && CARDS[v.id].displayNl) || v.nl)}</div><div class="de">${esc((CARDS[v.id] && CARDS[v.id].meanings && CARDS[v.id].meanings[0] && CARDS[v.id].meanings[0].de) || v.de)}</div></div>
       <button class="iconbtn play" data-say="${esc(v.nl)}" aria-label="vorlesen">🔊</button>
       <span class="st ${st.cls}">${st.text}</span></div>`;
-  }).join('') || '<div class="muted" style="padding:16px;text-align:center">Keine Wörter — anderer Filter oder Suchbegriff?</div>';
+  }).join('') || '<div class="muted" style="padding:16px;text-align:center">Noch keine Wörter gelernt — starte mit „Üben".</div>';
   const started = ALL_VOCAB.filter(v => { const c = state.cards[v.id]; return c && c.reps; }).length;
   const mastered = ALL_VOCAB.filter(v => isMast(state.cards[v.id])).length;
   const due = dueCount();
@@ -551,12 +557,13 @@ function renderVocab() {
       <span class="sc-go">›</span>
     </button>
 
-    <div class="section-sub" style="margin:20px 0 8px">Alle Wörter · ${started}/${ALL_VOCAB.length} im Training</div>
+    <div class="section-sub" style="margin:20px 0 8px">Gelernte Wörter · ${started} · tippe für die Karte</div>
     <div class="field" style="margin:2px 0 10px"><input id="vq" placeholder="🔎 Suchen (niederländisch oder deutsch)…" value="${esc(vocabQuery)}" autocomplete="off"/></div>
     <div class="seg wrap" id="vf">${filters.map(([k, l]) => `<button data-f="${k}" class="${vocabFilter === k ? 'on' : ''}">${l}</button>`).join('')}</div>
     <div class="section-sub" style="margin:12px 0 6px">${list.length} ${list.length === 1 ? 'Wort' : 'Wörter'}</div>
     <div class="card" style="padding:6px 16px">${rows}</div>`;
-  app.querySelectorAll('.play').forEach(b => b.onclick = () => speak(b.dataset.say));
+  app.querySelectorAll('.play').forEach(b => b.onclick = (e) => { e.stopPropagation(); speak(b.dataset.say); });
+  app.querySelectorAll('.vrow[data-card]').forEach(r => r.onclick = () => openCard(r.dataset.card));
   const pr = app.querySelector('#practice'); if (pr) pr.onclick = () => openPractice();
   const rv = app.querySelector('#review'); if (rv) rv.onclick = () => openReview();
   const wk = app.querySelector('#weak'); if (wk) wk.onclick = () => openWeak();
@@ -1669,7 +1676,54 @@ function mcChoices(v, pool, n = 3) {
   return shuffle([v, ...others]);
 }
 
-// Neues Wort einführen: kodieren → Wiedererkennen (MC) → gestützter Abruf (Tippen).
+/* ---------- VOKABEL-KARTE (Detailansicht: Wortart, Bedeutungen, Grammatik, Bild) ---------- */
+const POS_LABEL = { substantief: 'Substantiv', werkwoord: 'Verb', adjectief: 'Adjektiv', bijwoord: 'Adverb', voornaamwoord: 'Pronomen', voorzetsel: 'Präposition', telwoord: 'Zahlwort', voegwoord: 'Konjunktion', tussenwerpsel: 'Interjektion', uitdrukking: 'Ausdruck' };
+function cardHTML(v) {
+  const c = CARDS[v.id] || null;
+  const disp = (c && c.displayNl) || v.nl;
+  const genus = c && c.genus;
+  const art = CARD_ART.has(v.id) ? `illustrations/vocab/${v.id}.webp` : '';
+  const meanings = (c && c.meanings && c.meanings.length) ? c.meanings : [{ de: v.de, ex: v.ex, exDe: v.exDe }];
+  const chips = [];
+  if (c && c.pos) chips.push(`<span class="cv-chip pos">${POS_LABEL[c.pos] || c.pos}</span>`);
+  if (genus) chips.push(`<span class="cv-chip ${genus}">${genus}-Wort</span>`);
+  let gram = '';
+  if (c && c.pos === 'werkwoord' && c.conjugation) {
+    const j = c.conjugation;
+    gram = `<div class="cv-sec"><div class="cv-h">Konjugation</div><table class="cv-conj">
+      <tr><td class="t">Präsens</td><td>ik <b>${esc(j.presens.ik)}</b></td><td>jij <b>${esc(j.presens.jij)}</b></td></tr>
+      <tr><td></td><td>hij <b>${esc(j.presens.hij)}</b></td><td>wij <b>${esc(j.presens.wij)}</b></td></tr>
+      <tr><td class="t">Imperfekt</td><td>ik <b>${esc(j.imperfectum.ik)}</b></td><td>wij <b>${esc(j.imperfectum.wij)}</b></td></tr>
+      <tr><td class="t">Perfekt</td><td colspan="2"><b>${esc(j.perfectum.aux)}</b> … <b>${esc(j.perfectum.participle)}</b></td></tr></table></div>`;
+  } else if (c && c.pos === 'substantief') {
+    gram = `<div class="cv-sec"><div class="cv-h">Deklination</div><div class="cv-decl">
+      <div><span>Genus</span><b>${genus === 'het' ? 'het-Wort' : 'de-Wort'}</b></div>
+      <div><span>Singular</span><b>${esc(disp)}</b></div>
+      <div><span>Plural</span><b>${c.plural ? esc((genus ? 'de ' : '') + c.plural) : '—'}</b></div></div></div>`;
+  }
+  return `<div class="cardview">
+    ${art ? `<div class="cv-art"><img src="${art}" alt="" loading="lazy" onerror="this.closest('.cv-art').remove()"></div>` : ''}
+    <div class="cv-head"><div class="cv-word">${esc(disp)}<button class="cv-say iconbtn" data-say="${esc(v.nl)}" aria-label="vorlesen">🔊</button></div>
+      ${chips.length ? `<div class="cv-chips">${chips.join('')}</div>` : ''}</div>
+    <div class="cv-sec"><div class="cv-h">${meanings.length > 1 ? 'Bedeutungen' : 'Bedeutung'}</div>
+      <ol class="cv-mean">${meanings.map(m => `<li><b>${esc(m.de)}</b>${m.ex ? `<div class="cv-ex"><span class="nl">${esc(m.ex)}</span><span class="de">${esc(m.exDe || '')}</span></div>` : ''}</li>`).join('')}</ol></div>
+    ${gram}
+    ${c && c.usage ? `<div class="cv-sec"><div class="cv-h">Verwendung</div><p class="cv-use">${esc(c.usage)}</p></div>` : ''}
+    ${c && c.notes ? `<div class="cv-note">💡 ${esc(c.notes)}</div>` : ''}
+  </div>`;
+}
+function bindCardSay(root) { root.querySelectorAll('.cv-say').forEach(b => b.onclick = () => speak(b.dataset.say)); }
+// Standalone-Overlay (Vokabelliste → Karte antippen).
+function openCard(id) {
+  const v = ALL_VOCAB.find(x => x.id === id); if (!v) return;
+  const el = document.createElement('div'); el.className = 'flow cardflow'; document.body.appendChild(el); tabbar.style.display = 'none';
+  el.innerHTML = `<div class="flow-top"><button class="iconbtn" id="cclose" aria-label="schließen">✕</button><span class="muted" style="font-size:12px;font-weight:700">Vokabelkarte</span></div>
+    <div class="flow-body">${cardHTML(v)}</div>`;
+  bindCardSay(el); speak(v.nl);
+  el.querySelector('#cclose').onclick = () => { el.remove(); tabbar.style.display = ''; };
+}
+
+// Neues Wort einführen: Karte (kodieren) → Wiedererkennen/Abruf (interleaved, wechselnde Formate).
 // Erst nach echtem Abruf kommt es MIT echtem Grade ins SRS (introWord). Nur NEUE Wörter.
 function stepIntro(vocab) {
   const pool = vocab.slice();
@@ -1691,15 +1745,9 @@ function stepIntro(vocab) {
 
     // ---- Kennenlernen ----
     const drawEncode = (v) => {
-      const cx = ccApply(v.ex, v.exDe, [v]);
-      body.innerHTML = `<div class="step-label">Neues Wort · ${i + 1}/${total}</div>
-        <div class="step-title">Neu: „${esc(v.nl)}"</div>
-        <div class="flash"><div class="word">${esc(v.nl)}</div><div class="trans">${esc(v.de)}</div>
-          <div class="ex">${cx.nl} — ${cx.de}</div>
-          ${v.note ? `<div class="ex" style="color:var(--orange-ink)">💡 ${esc(v.note)}</div>` : ''}</div>`;
-      speak(v.nl);
-      foot.innerHTML = `<button class="btn ghost" id="say">🔊 Hören</button><button class="btn" id="n">Verstanden</button>`;
-      foot.querySelector('#say').onclick = () => speak(v.nl);
+      body.innerHTML = `<div class="step-label">Neues Wort · ${i + 1}/${total}</div>${cardHTML(v)}`;
+      bindCardSay(body); speak(v.nl);
+      foot.innerHTML = `<button class="btn" id="n">Verstanden</button>`;
       foot.querySelector('#n').onclick = () => { i++; if (i >= encode.length) { stage = 'retrieve'; i = 0; } draw(); };
     };
 

@@ -240,8 +240,42 @@ button{font-family:inherit}
 .done h2{font-size:26px}
 
 /* ---- vocab list ---- */
-.vrow{display:flex;align-items:center;gap:12px;padding:11px 6px;border-bottom:1px solid var(--line)}
+.vrow{display:flex;align-items:center;gap:12px;padding:11px 6px;border-bottom:1px solid var(--line);cursor:pointer}
+.vrow:active{background:var(--bg-2)}
+.vrow-thumb{width:40px;height:40px;flex:0 0 40px;border-radius:9px;object-fit:cover;background:var(--bg-2);display:grid;place-items:center;font-size:18px}
+.vrow-thumb.ph{opacity:.5}
+.vrow-txt{min-width:0}
 .vrow .nl{font-weight:700}.vrow .de{color:var(--muted);font-size:13.5px}
+
+/* ---- Vokabelkarte (Detailansicht) ---- */
+.cardflow .flow-body{padding-top:8px}
+.cardview{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+.cv-art{margin:-16px -16px 14px;border-radius:16px 16px 0 0;overflow:hidden;aspect-ratio:3/2;background:var(--bg-2)}
+.cv-art img{width:100%;height:100%;object-fit:cover;display:block}
+.cv-head{border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:12px}
+.cv-word{font-size:26px;font-weight:800;font-family:'Unbounded',system-ui,sans-serif;display:flex;align-items:center;gap:10px}
+.cv-word .cv-say{margin-left:auto;width:38px;height:38px;flex:0 0 38px;font-size:17px}
+.cv-chips{display:flex;gap:7px;margin-top:9px;flex-wrap:wrap}
+.cv-chip{font-size:12px;font-weight:800;padding:4px 11px;border-radius:999px;background:var(--bg-2);color:var(--muted)}
+.cv-chip.pos{background:color-mix(in srgb,var(--violet) 20%,transparent);color:var(--violet)}
+.cv-chip.de{background:color-mix(in srgb,var(--cyan) 18%,transparent);color:var(--cyan)}
+.cv-chip.het{background:color-mix(in srgb,var(--orange) 20%,transparent);color:var(--orange-ink)}
+.cv-sec{margin-top:15px}
+.cv-h{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--magenta);margin-bottom:8px}
+.cv-mean{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px}
+.cv-mean li{font-size:15.5px;font-weight:650}
+.cv-ex{margin-top:3px;font-weight:400}
+.cv-ex .nl{display:block;font-size:14px;color:var(--blue-2)}
+.cv-ex .de{display:block;font-size:12.5px;color:var(--muted)}
+.cv-decl{display:flex;flex-direction:column;gap:8px}
+.cv-decl>div{display:flex;justify-content:space-between;background:var(--bg-2);border-radius:10px;padding:9px 13px}
+.cv-decl span{color:var(--muted);font-size:14px}.cv-decl b{font-size:15px}
+.cv-conj{width:100%;border-collapse:collapse}
+.cv-conj td{padding:6px 8px;font-size:14px;border-bottom:1px solid var(--line)}
+.cv-conj td.t{color:var(--muted);font-weight:700;font-size:12px;width:72px}
+.cv-conj b{color:var(--blue-2)}
+.cv-use{font-size:13.5px;line-height:1.5}
+.cv-note{margin-top:13px;font-size:12.5px;color:var(--muted);background:var(--bg-2);border-radius:10px;padding:10px 12px;line-height:1.45}
 .vrow .st{margin-left:auto;font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;background:var(--bg-2);color:var(--muted)}
 .vrow .st.due{background:color-mix(in srgb,var(--orange) 18%,transparent);color:var(--orange-ink)}
 .vrow .st.new{background:color-mix(in srgb,var(--blue-2) 15%,transparent);color:var(--blue-2)}

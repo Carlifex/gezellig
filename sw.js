@@ -20,6 +20,7 @@ const ASSETS = [
   './styles.css',
   './app.js',
   './data.js',
+  './cards.js',
   './srs.js',
   './speech.js',
   './progress.js',
