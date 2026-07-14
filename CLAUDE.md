@@ -39,8 +39,8 @@ Dieses Projekt wird über **zwei** Repositories gepflegt:
 
 ## Projekt-Stand / Fortschritt (Snapshot: 2026-07-14)
 
-> Lebendes Protokoll. Bei jedem größeren Baustein aktualisieren. `main`-HEAD zuletzt:
-> `885b35f`, Service Worker `gezellig-v98`, Dev-Branch `claude/gezellig-app-dev-uuc809`.
+> Lebendes Protokoll. Bei jedem größeren Baustein aktualisieren. Service Worker `gezellig-v100`,
+> Dev-Branch `claude/gezellig-app-dev-uuc809`.
 
 ### Deployment & Frische
 - **Auto-Update aktiv** (`index.html`): registriert SW, ruft `reg.update()` bei Start +
@@ -70,11 +70,24 @@ Dieses Projekt wird über **zwei** Repositories gepflegt:
   Journalen. Bei Fortsetzung: cards.js neu erzeugen und mergen.
 
 ### Trainingsseite (umgebaut)
-- Vokabelliste = **nur bereits gelernte** Wörter (`state.cards[id].reps`), nicht der
-  Gesamtbestand. Überschrift „Gelernte Wörter · N · tippe für die Karte". Zeilen zeigen
-  Thumbnail (`illustrations/vocab/<id>.webp`) oder 🃏-Platzhalter; **Klick öffnet die Karte**.
-- **Zahlen-Lernseite** (`vocabSub='numbers'`, `renderNumbers`): getallen 0–1000 hören/tippen.
+- Vokabelliste = **nur bereits gelernte** Wörter (`state.cards[id].reps`). Darstellung als
+  **kompakte, klickbare Wortart-Pillen** (`.vpill.pos-<pos>`, Farbe je Wortart, Legende
+  `.vpleg`); **Klick öffnet die Karte** (`openCard`). Wortzähler `N/Total` steht oben im
+  **Header** neben „Training" (`.tcount`).
+- **Zusatzmodule im Training** (`practiceModules`): jede Session (openPractice / runReview /
+  openLearnNew) hängt **Zuordnungs-Memory** (stepMatch), **Satzergänzung/Lückentext**
+  (stepCloze) und **Hör-Verstehen** (stepDictation) an — aus dem Sitzungswortschatz, selbst-NO-OP.
+- **Zahlen** (`numberQuestions` in Lektionen, `numberDrillQuestions` im Training): **nie**
+  Schreibweise — nur **Lese-Versteh** (NL-Wort → Ziffer wählen) und **Hör-Versteh** (hören →
+  Ziffer tippen). User trägt immer nur eine Zahl ein.
+- „Abruf" heißt jetzt überall **„Abfrage"**.
 - Hinweis „↑ Üben schaltet Prüfung frei" wenn `examsNeedingVocab()`; Tab-Pfeil bei Bedarf.
+
+### Lektions-Vokabeln (Kapitel 1 / verhaal erweitert)
+Alle 19 verhaal-Lektionen von 7–8 auf **11–17 Vokabeln** erweitert (+152 thematische A1–A2-
+Einträge, via 19 Subagenten erzeugt, dedupliziert gegen Bestand). Format je Eintrag
+`{ id, nl, de, ex, exDe }`, ID-Präfix je Lektion (a_/wo_/ra_ …). Neue Wörter ohne `cards.js`-
+Eintrag erscheinen als graue „other"-Pille bis zum Enrichment.
 
 ### Neue Lernmodule (6, story-passend eingebaut)
 `stepMatch`, `stepCloze`, `stepSentenceBuild`, `stepDictation`, `stepConjDrill`,
