@@ -40,9 +40,23 @@
 
   <script type="module" src="app.js"></script>
   <script>
+    // Service Worker + Auto-Update: immer die neueste Version.
+    // Der SW ist network-first (holt online stets frische Dateien); zusätzlich
+    // prüfen wir aktiv auf eine neue SW-Version und laden die App EINMAL neu,
+    // sobald der neue Worker übernimmt — so ist manuelles Cache-Leeren nie nötig.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
+        const hadController = !!navigator.serviceWorker.controller;
+        let reloaded = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!hadController || reloaded) return; // Erstinstallation nicht neu laden
+          reloaded = true;
+          location.reload();
+        });
+        navigator.serviceWorker.register('sw.js').then((reg) => {
+          reg.update();                                  // sofort auf Updates prüfen
+          setInterval(() => reg.update(), 60 * 1000);    // und regelmäßig, solange offen
+        }).catch(() => {});
       });
     }
   </script>
