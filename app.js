@@ -10,7 +10,7 @@ import {
   chatTurn, speakResult, setSetting, resetAll, lessonStatus, milestoneState, takeUnlocks,
   todayXp, dailyGoalXp, goalMetToday, cardOf, ALL_VOCAB, gainXp, weakVocab, startedVocab,
   recordAnswer, historyLast, stats, unstartedVocab, unstartedCount, learnWords,
-  extraVocab, extraVocabCount,
+  extraVocab, extraVocabCount, extraRemainingToday, EXTRA_DAILY_MAX, reviewXp,
   recordExam, examState, examPassed,
   introWord, trackVocab, trackVocabReady, dailyNewLimit,
   checkpointPassed, passCheckpoint,
@@ -555,12 +555,20 @@ function renderVocab() {
   const started = ALL_VOCAB.filter(v => { const c = state.cards[v.id]; return c && c.reps; }).length;
   const due = dueCount();
   const extraAvail = extraVocabCount();
-  const nNew = Math.min(extraAvail, dailyNewLimit());
+  const quota = extraRemainingToday();
+  const acc = stats().accuracy;                      // Gesamt-Trefferquote (null = noch keine Antworten)
+  const accLow = acc != null && acc < 50;            // unter 50 % → Erweitern gesperrt
+  const nNew = Math.min(extraAvail, quota, dailyNewLimit());
+  const growLocked = !extraAvail || !quota || accLow;
+  const growHint = accLow ? `Trefferquote unter 50 % — erst mit dem Vokabeltraining festigen.`
+    : !quota ? `Tageslimit erreicht: ${EXTRA_DAILY_MAX} neue Vokabeln außerhalb von Lektionen pro Tag.`
+    : !extraAvail ? 'Alle freien Wörter sind schon in der Rotation.'
+    : `⭐ Jede Abfrage bringt ${reviewXp()} XP — wächst mit deinem Wortschatz · heute noch ${quota}/${EXTRA_DAILY_MAX} frei`;
   app.innerHTML = `
-    <div class="section-title">Training <span class="tcount">${started}/${ALL_VOCAB.length} Wörter</span></div>
+    <div class="section-title">Training <span class="tcount">${started} Vokabel${started === 1 ? '' : 'n'} in der Rotation</span>${acc != null ? ` <span class="tcount">🎯 ${acc} % Treffer</span>` : ''}</div>
     <div class="section-sub">Übe mit echter Abfrage — Tippen & Wiedererkennen, automatisch bewertet.</div>
 
-    <div class="card practicehub">
+    <div class="practicehub">
       ${(() => {
         const need = examsNeedingVocab();
         if (!need.length) return '';
@@ -570,8 +578,9 @@ function renderVocab() {
         }).join('');
         return `<div class="ph-unlock"><span class="ph-unlock-hd">↑ Üben schaltet ${need.length === 1 ? 'diese Prüfung' : 'diese Prüfungen'} frei:</span><ul>${items}</ul></div>`;
       })()}
-      <button class="btn" id="learnnew" ${extraAvail ? '' : 'disabled'}>➕ ${nNew || 8} neue Wörter lernen</button>
+      <button class="btn" id="learnnew" ${growLocked ? 'disabled' : ''}>➕ Wortschatz um ${nNew || 8} Vokabeln erweitern</button>
       <button class="btn ghost ${examsNeedingVocab().length ? 'unlocks' : ''}" id="practice-known">🔁 Vokabeltraining${due ? ` · ${due} fällig` : ''}${examsNeedingVocab().length ? ' <span class="btn-up" title="schaltet die Prüfung frei">↑</span>' : ''}</button>
+      <div class="muted" style="font-size:12px;text-align:center">${growHint}</div>
     </div>
 
     <div class="section-sub" style="margin:20px 0 8px">Spezial-Training</div>
@@ -701,8 +710,13 @@ function numDrillStep(question, num, total, score) {
 
 // Neue Wörter in den Fundus holen: nur Begriffe, die NICHT in einer noch
 // kommenden Lektion vorkommen (kein Spoiler) — Bank + abgeschlossene Lektionen.
+// Gates: Trefferquote ≥ 50 % und max. 80 Extra-Vokabeln pro Tag.
 function openLearnNew(n = null) {
-  const pool = extraVocab(n || dailyNewLimit());
+  const acc = stats().accuracy;
+  if (acc != null && acc < 50) { toast('Trefferquote unter 50 % — erst festigen, dann erweitern.', '🎯'); return; }
+  const quota = extraRemainingToday();
+  if (!quota) { toast(`Tageslimit erreicht — morgen wieder ${EXTRA_DAILY_MAX} frei.`, '⏳'); return; }
+  const pool = extraVocab(Math.min(n || dailyNewLimit(), quota));
   if (!pool.length) { toast('Alle freien Wörter sind schon im Training! 🎉', '➕'); return; }
   openFlow([stepIntro(pool), ...practiceModules(pool)], (fe) =>
     finishScreen(fe, '➕', `${pool.length} neue ${pool.length === 1 ? 'Wort' : 'Wörter'}`, 'Mit Abfrage eingeführt — jetzt im Fundus.', 'vocab'));

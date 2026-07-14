@@ -84,6 +84,14 @@ export function extraVocab(n = 8) {
   }
   return out;
 }
+// Tageslimit: maximal 80 Vokabeln außerhalb von Lektionen pro Tag.
+export const EXTRA_DAILY_MAX = 80;
+export function extraAddedToday() {
+  return (state.daily && state.daily.counters && state.daily.counters.extraWords) || 0;
+}
+export function extraRemainingToday() {
+  return Math.max(0, EXTRA_DAILY_MAX - extraAddedToday());
+}
 export function extraVocabCount() {
   const seen = new Set(); let c = 0;
   for (const v of LEARN_SEQ) {
@@ -170,7 +178,7 @@ function ensureDay(s) {
     }
   }
   s.daily = { date: t, tasks: pickTasks(s.settings.dailyGoal),
-              counters: { reviews: 0, lessonsDone: 0, chats: 0, speakOk: 0, newWords: 0, xp: 0 } };
+              counters: { reviews: 0, lessonsDone: 0, chats: 0, speakOk: 0, newWords: 0, extraWords: 0, xp: 0 } };
   s.totals.sessions += 0;
 }
 
@@ -255,6 +263,13 @@ export function dueCount(now = Date.now()) { return dueVocab(now).length; }
 
 // Wiederholung mit OBJEKTIVER Bewertung (grade wird im UI aus der Antwort abgeleitet).
 // prod=true zählt eine erfolgreiche freie Produktion (für „gemeistert").
+// Punktwert einer Abfrage: wächst mit der Rotationsgröße — je umfangreicher der
+// Wortschatz, desto wertvoller jede einzelne Abfrage (Basis 2, +1 je volle
+// 50 Wörter in Rotation, gedeckelt bei 12 XP).
+export function reviewXp() {
+  const n = ALL_VOCAB.reduce((a, v) => a + (state.cards[v.id] && state.cards[v.id].reps ? 1 : 0), 0);
+  return Math.min(12, XP.review + Math.floor(n / 50));
+}
 export function reviewCard(id, grade, prod = false) {
   const c = schedule(cardOf(id), grade, Date.now());
   if (prod && (grade === 'good' || grade === 'easy')) c.prod = (c.prod || 0) + 1;
@@ -263,7 +278,7 @@ export function reviewCard(id, grade, prod = false) {
   state.daily.counters.reviews += 1;
   state.totals.answers = (state.totals.answers || 0) + 1;
   if (grade !== 'again') state.totals.answersOk = (state.totals.answersOk || 0) + 1;
-  addXp(XP.review);
+  addXp(reviewXp());
   recomputeMastery();
   refreshTasks();
   checkMilestones();
@@ -277,6 +292,9 @@ export function introWord(id, grade = 'good') {
   state.cards[id] = schedule(newCard(), grade, Date.now());
   state.totals.wordsLearned += 1;
   state.daily.counters.newWords += 1;
+  // Wörter außerhalb offener Lektionen zählen aufs Extra-Tageslimit (max. 80).
+  const v = vocabById[id];
+  if (v && !inUpcomingLesson(v)) state.daily.counters.extraWords = (state.daily.counters.extraWords || 0) + 1;
   addXp(XP.newWord);
   refreshTasks();
   checkMilestones();
