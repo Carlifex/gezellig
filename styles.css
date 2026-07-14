@@ -288,6 +288,14 @@ button{font-family:inherit}
 /* Kennzahlen-Zeile unter dem Trainings-Titel: beide Chips in EINER Zeile */
 .trow{display:flex;gap:8px;margin:8px 0 6px;flex-wrap:nowrap}
 .trow .tcount{margin-left:0}
+/* Count-up nach dem Erweitern-Flow: Chip pulst, "+8" schwebt nach oben davon */
+.tcount.bump{position:relative;animation:tbump 1.1s ease;
+  border-color:var(--orange-ink,#e8720c);color:var(--orange-ink,#e8720c);
+  background:color-mix(in srgb,var(--orange-ink,#e8720c) 12%,var(--bg-2))}
+@keyframes tbump{0%{transform:scale(1)}18%{transform:scale(1.22)}36%{transform:scale(1.06)}55%{transform:scale(1.14)}100%{transform:scale(1)}}
+.plusfloat{position:absolute;right:-4px;top:-15px;font-weight:800;font-size:13px;
+  color:var(--orange-ink,#e8720c);pointer-events:none;animation:plusfloat 1.5s ease forwards}
+@keyframes plusfloat{0%{opacity:0;transform:translateY(8px)}18%{opacity:1}75%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
 
 /* ---- Vokabelkarte (Detailansicht) ---- */
 .cardflow .flow-body{padding-top:8px}
