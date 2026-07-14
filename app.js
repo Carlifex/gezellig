@@ -510,23 +510,19 @@ function renderVocab() {
   // NUR bereits gelernte (gestartete) Vokabeln — nicht der gesamte App-Bestand.
   const learned = ALL_VOCAB.filter(v => { const c = state.cards[v.id]; return c && c.reps; });
   const list = learned.filter(match);
-  const rows = list.map(v => {
-    const st = statusLabel(state.cards[v.id], now);
-    const hasArt = CARD_ART.has(v.id);
-    return `<div class="vrow" data-card="${esc(v.id)}">
-      ${hasArt ? `<img class="vrow-thumb" src="illustrations/vocab/${esc(v.id)}.webp" alt="" loading="lazy" onerror="this.remove()">` : '<span class="vrow-thumb ph">🃏</span>'}
-      <div class="vrow-txt"><div class="nl">${esc((CARDS[v.id] && CARDS[v.id].displayNl) || v.nl)}</div><div class="de">${esc((CARDS[v.id] && CARDS[v.id].meanings && CARDS[v.id].meanings[0] && CARDS[v.id].meanings[0].de) || v.de)}</div></div>
-      <button class="iconbtn play" data-say="${esc(v.nl)}" aria-label="vorlesen">🔊</button>
-      <span class="st ${st.cls}">${st.text}</span></div>`;
-  }).join('') || '<div class="muted" style="padding:16px;text-align:center">Noch keine Wörter gelernt — starte mit „Üben".</div>';
+  const posOf = (v) => { const c = CARDS[v.id]; return (c && c.pos) || 'other'; };
+  const pills = list.map(v => {
+    const disp = (CARDS[v.id] && CARDS[v.id].displayNl) || v.nl;
+    return `<button class="vpill pos-${posOf(v)}" data-card="${esc(v.id)}">${esc(disp)}</button>`;
+  }).join('') || '<div class="muted" style="padding:14px;text-align:center;width:100%">Noch keine Wörter gelernt — starte mit „Üben".</div>';
   const started = ALL_VOCAB.filter(v => { const c = state.cards[v.id]; return c && c.reps; }).length;
   const mastered = ALL_VOCAB.filter(v => isMast(state.cards[v.id])).length;
   const due = dueCount();
   const newAvail = unstartedCount();
   const weak = weakIds.size;
   app.innerHTML = `
-    <div class="section-title">Training</div>
-    <div class="section-sub">Übe mit echtem Abruf — Tippen & Wiedererkennen, automatisch bewertet.</div>
+    <div class="section-title">Training <span class="tcount">${started}/${ALL_VOCAB.length} Wörter</span></div>
+    <div class="section-sub">Übe mit echter Abfrage — Tippen & Wiedererkennen, automatisch bewertet.</div>
 
     <div class="card practicehub">
       ${(() => {
@@ -557,13 +553,13 @@ function renderVocab() {
       <span class="sc-go">›</span>
     </button>
 
-    <div class="section-sub" style="margin:20px 0 8px">Gelernte Wörter · ${started} · tippe für die Karte</div>
+    <div class="section-sub" style="margin:20px 0 8px">Gelernte Wörter · tippe eine Pille für die Karte</div>
     <div class="field" style="margin:2px 0 10px"><input id="vq" placeholder="🔎 Suchen (niederländisch oder deutsch)…" value="${esc(vocabQuery)}" autocomplete="off"/></div>
     <div class="seg wrap" id="vf">${filters.map(([k, l]) => `<button data-f="${k}" class="${vocabFilter === k ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <div class="vpleg">${VP_LEGEND.map(([k, lb]) => `<span class="vpleg-i pos-${k}">${lb}</span>`).join('')}</div>
     <div class="section-sub" style="margin:12px 0 6px">${list.length} ${list.length === 1 ? 'Wort' : 'Wörter'}</div>
-    <div class="card" style="padding:6px 16px">${rows}</div>`;
-  app.querySelectorAll('.play').forEach(b => b.onclick = (e) => { e.stopPropagation(); speak(b.dataset.say); });
-  app.querySelectorAll('.vrow[data-card]').forEach(r => r.onclick = () => openCard(r.dataset.card));
+    <div class="card vpills-card"><div class="vpills">${pills}</div></div>`;
+  app.querySelectorAll('.vpill[data-card]').forEach(r => r.onclick = () => openCard(r.dataset.card));
   const pr = app.querySelector('#practice'); if (pr) pr.onclick = () => openPractice();
   const rv = app.querySelector('#review'); if (rv) rv.onclick = () => openReview();
   const wk = app.querySelector('#weak'); if (wk) wk.onclick = () => openWeak();
@@ -605,24 +601,30 @@ function renderNumbers() {
   app.querySelector('#drill').onclick = () => openNumberDrill();
   app.querySelectorAll('.numchip').forEach(b => b.onclick = () => speak(b.dataset.say));
 }
+function readNumberQ(n, rnd) {
+  const opts = new Set([n]); while (opts.size < 4) opts.add(rnd());
+  const options = shuffle([...opts]);
+  return { kind: 'read', n, options, answer: options.indexOf(n) };
+}
 function numberDrillQuestions(count = 10) {
+  // NIE nach der Schreibweise fragen — nur Lese-Versteh (Wort → Ziffer wählen)
+  // und Hör-Versteh (hören → Ziffer eintippen). User tippt immer nur eine Zahl.
   const qs = [], used = new Set();
   const rnd = () => Math.floor(Math.random() * 100); // 0–99
   let guard = 0;
   while (qs.length < count && guard++ < 300) {
     const n = rnd(); if (used.has(n)) continue; used.add(n);
-    const kind = ['write', 'read', 'listen'][qs.length % 3];
-    if (kind === 'read') {
-      const opts = new Set([n]); while (opts.size < 4) opts.add(rnd());
-      const options = shuffle([...opts]);
-      qs.push({ kind: 'read', n, options, answer: options.indexOf(n) });
-    } else qs.push({ kind, n });
+    const kind = ['read', 'listen'][qs.length % 2];
+    if (kind === 'read') qs.push(readNumberQ(n, rnd));
+    else qs.push({ kind: 'listen', n });
   }
   return shuffle(qs);
 }
 function openNumberDrill() {
+  const rnd = () => Math.floor(Math.random() * 100);
   let qs = numberDrillQuestions(10);
-  if (!ttsSupported()) qs = qs.map(q => q.kind === 'listen' ? { kind: 'write', n: q.n } : q);
+  // Ohne TTS kein Hör-Versteh → auf Lese-Versteh (Ziffer wählen) umstellen, nie Schreibweise.
+  if (!ttsSupported()) qs = qs.map(q => q.kind === 'listen' ? readNumberQ(q.n, rnd) : q);
   const total = qs.length, score = { correct: 0 };
   openFlow(qs.map((q, i) => numDrillStep(q, i + 1, total, score)), (fe) => {
     const pct = Math.round(score.correct / total * 100);
@@ -666,19 +668,6 @@ function numDrillStep(question, num, total, score) {
         nextBtn(foot, done);
       };
       foot.querySelector('#chk').onclick = check; inp.onkeydown = (e) => { if (e.key === 'Enter') check(); };
-    } else { // write
-      body.innerHTML = `${head}<div class="step-title">Schreib auf Niederländisch:</div>
-        <div class="bignum">${question.n}</div>
-        <div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="op zijn Nederlands…"></div><div id="fb" class="afb"></div>`;
-      const inp = body.querySelector('#ans'); inp.focus();
-      foot.innerHTML = `<button class="btn" id="chk">Prüfen</button>`;
-      const check = () => {
-        const r = gradeAnswer(inp.value, word); inp.disabled = true; if (r.ok) score.correct++; recordAnswer(r.ok);
-        body.querySelector('#fb').innerHTML = `<div class="${r.ok ? 'ok' : 'bad'}">${r.ok ? (r.typo ? '✓ Fast — ' : '✓ Richtig! ') : '✗ '}<b>${esc(word)}</b></div>`;
-        if (r.ok) speak(word);
-        nextBtn(foot, done);
-      };
-      foot.querySelector('#chk').onclick = check; inp.onkeydown = (e) => { if (e.key === 'Enter') check(); };
     }
   }};
 }
@@ -687,8 +676,8 @@ function numDrillStep(question, num, total, score) {
 function openLearnNew(n = null) {
   const pool = unstartedVocab(n || dailyNewLimit());
   if (!pool.length) { toast('Alle Wörter sind schon im Training! 🎉', '➕'); return; }
-  openFlow([stepIntro(pool)], (fe) =>
-    finishScreen(fe, '➕', `${pool.length} neue ${pool.length === 1 ? 'Wort' : 'Wörter'}`, 'Mit Abruf eingeführt — jetzt im Training.', 'vocab'));
+  openFlow([stepIntro(pool), ...practiceModules(pool)], (fe) =>
+    finishScreen(fe, '➕', `${pool.length} neue ${pool.length === 1 ? 'Wort' : 'Wörter'}`, 'Mit Abfrage eingeführt — jetzt im Training.', 'vocab'));
 }
 
 /* ============================ PROFIL ============================ */
@@ -916,7 +905,7 @@ function stepMatch(l) {
   }};
 }
 
-// Lückentext (Cloze) — produktiver gestützter Abruf.
+// Lückentext (Cloze) — produktiver gestützte Abfrage.
 // Nimmt Vokabel-Beispielsätze (v.ex/v.exDe), blankt das Zielwort im NL-Satz aus,
 // zeigt den (farbcodierten) DE-Satz als Hilfe. 3 Items nacheinander.
 // Robust: Items ohne auffindbares Zielwort werden übersprungen; keine → NO-OP.
@@ -1633,7 +1622,7 @@ function gradeAnswer(input, target) {
   if (lev(a2, t2) <= 1) return { ok: true, typo: true };
   return { ok: false, typo: false };
 }
-// Abruf-Format nach Reife: Wiedererkennen → gestützter Abruf → freie Produktion.
+// Abruf-Format nach Reife: Wiedererkennen → gestützte Abfrage → freie Produktion.
 function fmtByCard(card) {
   const S = (card && card.S) || 0, reps = (card && card.reps) || 0;
   if (reps < 2 || S < 2) return 'mc';
@@ -1653,12 +1642,17 @@ function dutchNum(n) {
   return String(n);
 }
 function numberQuestions(count, max = 100) {
+  // Zahlen NIE als Schreibweise abfragen — immer Lese-Versteh: NL-Wort lesen, die
+  // richtige ZIFFER wählen (User tippt/wählt nur eine Zahl, nie das ausgeschriebene Wort).
   const out = [], used = new Set();
   let guard = 0;
   while (out.length < count && guard++ < 200) {
     const n = Math.floor(Math.random() * (max + 1));
     if (used.has(n)) continue; used.add(n);
-    out.push({ type: 'type', q: `Schreib die Zahl auf Niederländisch: ${n}`, answer: dutchNum(n) });
+    const opts = new Set([n]);
+    while (opts.size < 4) opts.add(Math.floor(Math.random() * (max + 1)));
+    const options = shuffle([...opts]);
+    out.push({ q: `Welche Zahl ist „${dutchNum(n)}"?`, options: options.map(String), answer: options.indexOf(n) });
   }
   return out;
 }
@@ -1678,6 +1672,8 @@ function mcChoices(v, pool, n = 3) {
 
 /* ---------- VOKABEL-KARTE (Detailansicht: Wortart, Bedeutungen, Grammatik, Bild) ---------- */
 const POS_LABEL = { substantief: 'Substantiv', werkwoord: 'Verb', adjectief: 'Adjektiv', bijwoord: 'Adverb', voornaamwoord: 'Pronomen', voorzetsel: 'Präposition', telwoord: 'Zahlwort', voegwoord: 'Konjunktion', tussenwerpsel: 'Interjektion', uitdrukking: 'Ausdruck' };
+// Legende für die farbigen Wortart-Pillen (Trainingsliste) — Reihenfolge = Anzeige.
+const VP_LEGEND = [['substantief', 'Substantiv'], ['werkwoord', 'Verb'], ['adjectief', 'Adjektiv'], ['bijwoord', 'Adverb'], ['telwoord', 'Zahlwort'], ['voornaamwoord', 'Pronomen'], ['voorzetsel', 'Präposition'], ['uitdrukking', 'Ausdruck']];
 function cardHTML(v) {
   const c = CARDS[v.id] || null;
   const disp = (c && c.displayNl) || v.nl;
@@ -1759,7 +1755,7 @@ function stepIntro(vocab) {
     // ---- Abruf (Format wechselt) ----
     const optionStep = (v, prompt, keyField, doSpeak, showArt) => {
       const opts = mcChoices(v, pool.length >= 4 ? pool : ALL_VOCAB);
-      body.innerHTML = `<div class="step-label">Abruf · ${i + 1}/${total}</div>
+      body.innerHTML = `<div class="step-label">Abfrage · ${i + 1}/${total}</div>
         <div class="step-title">${prompt}</div>${showArt ? cardArtHTML(v) : ''}${doSpeak ? audioBtn() : ''}
         <div class="choices">${opts.map(o => `<button class="choice" data-id="${o.id}">${esc(o[keyField])}</button>`).join('')}</div>`;
       if (doSpeak) { speak(v.nl); const rp = body.querySelector('#rep'); if (rp) rp.onclick = () => speak(v.nl); }
@@ -1776,7 +1772,7 @@ function stepIntro(vocab) {
     };
     const inputStep = (v, prompt, doSpeak, showArt) => {
       const hint = stripArt(normalize(v.nl))[0] || '';
-      body.innerHTML = `<div class="step-label">Abruf · ${i + 1}/${total}</div>
+      body.innerHTML = `<div class="step-label">Abfrage · ${i + 1}/${total}</div>
         <div class="step-title">${prompt}</div>${showArt ? cardArtHTML(v) : ''}${doSpeak ? audioBtn() : ''}
         <div class="answer"><input id="ans" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${doSpeak ? 'auf Niederländisch…' : 'beginnt mit „' + esc(hint) + '…“'}"></div>
         <div id="fb" class="afb"></div>`;
@@ -2020,9 +2016,22 @@ function reviewStep(queue, label) {
     draw();
   }};
 }
+// Trainings-Zusatzmodule aus dem Sitzungswortschatz: Zuordnungs-Memory (stepMatch),
+// Satzergänzung/Lückentext (stepCloze) und Hör-Verstehen (stepDictation). Jedes Modul
+// ist selbst NO-OP, wenn zu wenig Material vorhanden ist — dann wird es einfach übersprungen.
+function practiceModules(vocab) {
+  const uniq = [], seen = new Set();
+  (vocab || []).forEach(v => { if (v && !seen.has(v.id)) { seen.add(v.id); uniq.push(v); } });
+  if (uniq.length < 2) return [];
+  const speak = uniq
+    .filter(v => v && v.ex && v.exDe && (() => { const w = String(v.ex).trim().split(/\s+/).length; return w >= 2 && w <= 9; })())
+    .map(v => ({ nl: String(v.ex).trim(), de: String(v.exDe).trim() }));
+  const l = { vocab: uniq, speak };
+  return [stepMatch(l), stepCloze(l), stepDictation(l)];
+}
 function runReview(cards, opts) {
   if (!cards.length) { toast(opts.empty, opts.emoji); return; }
-  openFlow([reviewStep(shuffle(cards.slice()), opts.label)], (fe) =>
+  openFlow([reviewStep(shuffle(cards.slice()), opts.label), ...practiceModules(cards)], (fe) =>
     finishScreen(fe, opts.emoji, opts.title, `${cards.length} Wörter · 🔥 ${state.streak}`, opts.returnTab));
 }
 function openReview() {
@@ -2039,6 +2048,7 @@ function openPractice() {
   const steps = [];
   if (news.length) steps.push(stepIntro(news));
   if (due.length) steps.push(reviewStep(shuffle(due.slice()), 'Wiederholen'));
+  steps.push(...practiceModules([...news, ...due]));   // Memory · Satzergänzung · Hör-Verstehen
   openFlow(steps, (fe) =>
     finishScreen(fe, '💪', 'Stark geübt!', `${news.length} neu · ${due.length} wiederholt · 🔥 ${state.streak}`, 'vocab'));
 }

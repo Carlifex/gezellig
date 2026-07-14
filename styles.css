@@ -251,6 +251,36 @@ button{font-family:inherit}
 .vrow-txt{min-width:0}
 .vrow .nl{font-weight:700}.vrow .de{color:var(--muted);font-size:13.5px}
 
+/* ---- Trainings-Header Wortzähler ---- */
+.tcount{font-family:system-ui,sans-serif;font-size:13px;font-weight:700;color:var(--muted);
+  background:var(--bg-2);border:1px solid var(--line);border-radius:999px;padding:3px 10px;
+  vertical-align:middle;margin-left:8px;white-space:nowrap}
+
+/* ---- Wortart-Pillen (kompakte, klickbare Trainingsliste) ---- */
+.vpills-card{padding:12px 14px}
+.vpills{display:flex;flex-wrap:wrap;gap:7px}
+.vpill,.vpleg-i{--c:154,164,178}
+.vpill{border:1.4px solid rgba(var(--c),.85);background:rgba(var(--c),.15);color:rgb(var(--c));
+  border-radius:999px;padding:6px 12px;font-size:14px;font-weight:650;line-height:1.15;cursor:pointer;
+  transition:transform .05s ease,background .12s ease}
+.vpill:active{transform:scale(.95);background:rgba(var(--c),.28)}
+.vpleg{display:flex;flex-wrap:wrap;gap:6px 10px;margin:2px 0 4px}
+.vpleg-i{font-size:11.5px;font-weight:700;color:rgb(var(--c));display:inline-flex;align-items:center}
+.vpleg-i::before{content:"";width:9px;height:9px;border-radius:50%;background:rgb(var(--c));
+  margin-right:5px;display:inline-block}
+/* Farb-Zuordnung je Wortart */
+.pos-substantief{--c:74,163,255}      /* Substantiv — Blau */
+.pos-werkwoord{--c:255,93,177}        /* Verb — Magenta */
+.pos-adjectief{--c:255,159,69}        /* Adjektiv — Orange */
+.pos-bijwoord{--c:185,140,255}        /* Adverb — Violett */
+.pos-telwoord{--c:70,209,158}         /* Zahlwort — Grün */
+.pos-voornaamwoord{--c:53,201,201}    /* Pronomen — Türkis */
+.pos-voorzetsel{--c:240,196,64}       /* Präposition — Amber */
+.pos-voegwoord{--c:143,166,201}       /* Konjunktion — Blaugrau */
+.pos-tussenwerpsel{--c:255,122,156}   /* Interjektion — Rosa */
+.pos-uitdrukking{--c:154,160,255}     /* Ausdruck — Indigo */
+.pos-other{--c:154,164,178}           /* ohne Wortart — Grau */
+
 /* ---- Vokabelkarte (Detailansicht) ---- */
 .cardflow .flow-body{padding-top:8px}
 .cardview{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
