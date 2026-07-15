@@ -192,7 +192,9 @@ Pro Lieferung immer **beides** liefern: (1) das Referenzmaterial als **einen** L
   History-Scrub der `_refs/`).
 - **Prompts:** **JEDER Prompt EINZELN inline im Chat als eigenes kopierbares Code-Element**
   (ein Code-Block pro Prompt, mit Copy-Button). **NICHT** als Sammel-Datei/-Link und
-  **nicht** mehrere Prompts in einem Block. Optional zusätzlich dauerhaft in der privaten
+  **nicht** mehrere Prompts in einem Block. **Gilt auch für 4er-Sammel-Batches**
+  (ChatGPT-Mehrfachgenerierung): jeder Batch = EIN eigener Code-Block inline im Chat,
+  niemals als Datei-Anhang ausliefern. Optional zusätzlich dauerhaft in der privaten
   `welt-bibel.md` (Abschnitt „Bild-Prompts").
 - **Nach jedem größeren Baustein** fragen, ob nach `main` gepusht/live geschaltet werden soll.
 
